@@ -1,0 +1,15 @@
+{
+  "name": "bang-parser",
+  "version": "0.0.1",
+  "description": "Blazing-fast binary parser for node.js",
+  "main": "lib/bang.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "binary",
+    "parser"
+  ],
+  "author": "Keichi Takahashi",
+  "license": "MIT"
+}
