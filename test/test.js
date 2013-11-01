@@ -113,6 +113,8 @@ describe('Parser', function(){
                     type: elementParser
                 });
 
+            parser.compile();
+
             var buffer = new Buffer([0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
             assert.deepEqual(parser.parse(buffer), {
                 length: 0x02,
@@ -138,6 +140,8 @@ describe('Parser', function(){
                     length: 'length',
                     type: rowParser
                 });
+
+            parser.compile();
 
             var buffer = new Buffer(1 + 10 * (1 + 5 * 4));
             var i, j;
