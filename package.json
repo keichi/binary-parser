@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Blazing-fast binary parser for node.js",
   "main": "lib/bang.js",
+  "devDependencies": {
+        "mocha": "*"
+  },
   "scripts": {
     "test": "mocha"
   },
