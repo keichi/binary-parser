@@ -72,6 +72,12 @@ describe('Parser', function(){
 
             assert.equal(parser.parse(buffer).msg, 'hello, world');
         });
+        it('should parse zero terminated string', function(){
+            var buffer = new Buffer('68656c6c6f2c20776f726c6400', 'hex');
+            var parser = Parser.start().string('msg', {zeroTerminated: true, encoding: 'ascii'});
+
+            assert.deepEqual(parser.parse(buffer), {msg: 'hello, world'});
+        });
     });
 
     describe('Array parser', function() {
