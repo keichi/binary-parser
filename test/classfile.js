@@ -142,8 +142,6 @@ describe('Java class file parser', function() {
         ]
     };
 
-    ClassFile.compile();
-
     it('should parse class file', function() {
         fs.readFile('test/Hello.class', function(err, data) {
             assert.deepEqual(ClassFile.parse(data), expect);
