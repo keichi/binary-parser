@@ -166,6 +166,19 @@ describe('Parser', function(){
                 ]
             });
         });
+        it('should parse until eof when readUnitl is specified', function(){
+            var parser =
+                Parser.start()
+                .array('data', {
+                    readUntil: 'eof',
+                    type: 'uint8'
+                });
+
+            var buffer = new Buffer([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+            assert.deepEqual(parser.parse(buffer), {
+                data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+            });
+        });
     });
 
     describe('Choice parser', function() {
@@ -195,6 +208,27 @@ describe('Parser', function(){
                 data1: 12345678,
                 tag2: 1,
                 data2: 1234
+            });
+        });
+        it('should parse default choice', function() {
+            var parser =
+                Parser.start()
+                .uint8('tag')
+                .choice('data', {
+                    tag: 'tag',
+                    choices: {
+                        0: 'int32le',
+                        1: 'int16le'
+                    },
+                    defaultChoice: 'uint8'
+                })
+                .int32le('test');
+
+            buffer = new Buffer([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
+            assert.deepEqual(parser.parse(buffer), {
+                tag: 3,
+                data: 0xff,
+                test: 314159
             });
         });
         it('should parse choices of user defied types', function() {
