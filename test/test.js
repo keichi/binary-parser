@@ -264,7 +264,7 @@ describe('Parser', function(){
         });
     });
 
-    describe('Size counter', function() {
+    describe('Utilities', function() {
         it('should count size for fixed size structs', function() {
             var parser =
                 Parser.start()
@@ -278,6 +278,24 @@ describe('Parser', function(){
                 });
 
             assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3);
+        });
+        it('should assert parsed values', function() {
+            var parser =
+                Parser.start()
+                .string('msg', {
+                    encoding: 'ascii',
+                    zeroTerminated: true,
+                    assert: function(x) { return x === 'hello, world'; }
+                });
+            var buffer = new Buffer('68656c6c6f2c20776f726c6400', 'hex');
+            assert.doesNotThrow(function() {
+                parser.parse(buffer);
+            });
+
+            buffer = new Buffer('68656c6c6f2c206a7300', 'hex');
+            assert.throws(function() {
+                parser.parse(buffer);
+            });
         });
     });
 });

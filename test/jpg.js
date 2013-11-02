@@ -1,5 +1,5 @@
 var fs = require('fs');
-var util = require('util');
+var assert = require('assert');
 var Parser = require('../lib/bang').Parser;
 
 var SOI = Parser.start();
@@ -102,6 +102,52 @@ var JPEG = Parser.start()
         readUntil: 'eof'
     });
 
-fs.readFile('kindle.jpg', function(err, data) {
-    console.log(util.inspect(JPEG.parse(data), {depth: null}));
+describe('JPG file parser', function() {
+    it('should parse JPG file header', function() {
+        fs.readFile('test/kindle.jpg', function(err, data) {
+            JPEG.parse(data).segments.forEach(function(item) {
+                if (item.marker === 0xffd8) {
+                    assert.deepEqual(item.segment, {});
+                } else if (item.marker === 0xffe0) {
+                    assert.deepEqual(item.segment, {
+                        length: 16,
+                        id: 'JFIF',
+                        version: 257,
+                        unit: 1,
+                        xDensity: 72,
+                        yDensity: 72,
+                        thumbWidth: 0,
+                        thumbHeight: 0,
+                        thumbData: []
+                    });
+                } else if (item.marker === 0xffc0) {
+                    assert.deepEqual(item.segment, {
+                        length: 17,
+                        precision: 8,
+                        width: 1024,
+                        height: 768,
+                        componentCount: 3,
+                        components: [
+                            { id: 1, samplingFactor: 34, quantizationTableId: 0 },
+                            { id: 2, samplingFactor: 17, quantizationTableId: 1 },
+                            { id: 3, samplingFactor: 17, quantizationTableId: 1 }
+                        ]
+                    });
+                } else if (item.marker === 0xffda) {
+                    assert.deepEqual(item.segment, {
+                        length: 12,
+                        componentCount: 3,
+                        components: [
+                            { id: 1, dht: 0 },
+                            { id: 2, dht: 17 },
+                            { id: 3, dht: 17 }
+                        ],
+                        spectrumStart: 0,
+                        spectrumEnd: 63,
+                        spectrumSelect: 0
+                    });
+                }
+            });
+        });
+    });
 });
