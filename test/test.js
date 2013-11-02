@@ -11,6 +11,8 @@ describe('Parser', function(){
             .int16le('b')
             .uint32be('c');
 
+            parser.compile();
+
             var buffer = new Buffer([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
             assert.deepEqual(parser.parse(buffer), {a: 0, b: 1234, c: 12345678});
         });
@@ -19,6 +21,8 @@ describe('Parser', function(){
             Parser.start()
             .int32le('little')
             .int32be('big');
+
+            parser.compile();
 
             var buffer = new Buffer([0x4e, 0x61, 0xbc, 0x00, 0x00, 0xbc, 0x61, 0x4e]);
             assert.deepEqual(parser.parse(buffer), {little: 12345678, big: 12345678});
@@ -31,6 +35,8 @@ describe('Parser', function(){
             .uint16le('b')
             .uint32be('c');
 
+            parser.compile();
+
             var buffer = new Buffer([0x00, 0xff, 0xff, 0xfe, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
             assert.deepEqual(parser.parse(buffer), {a: 0, b: 1234, c: 12345678});
         });
@@ -42,12 +48,16 @@ describe('Parser', function(){
             var buffer = new Buffer(text, 'ascii');
             var parser = Parser.start().string('msg', {length: buffer.length, encoding: 'ascii'});
 
+            parser.compile();
+
             assert.equal(parser.parse(buffer).msg, text);
         });
         it('should parse UTF8 encoded string', function(){
             var text = 'こんにちは、せかい。';
             var buffer = new Buffer(text, 'utf8');
             var parser = Parser.start().string('msg', {length: buffer.length, encoding: 'utf8'});
+
+            parser.compile();
 
             assert.equal(parser.parse(buffer).msg, text);
         });
@@ -56,7 +66,19 @@ describe('Parser', function(){
             var buffer = new Buffer(text, 'hex');
             var parser = Parser.start().string('msg', {length: buffer.length, encoding: 'hex'});
 
+            parser.compile();
+
             assert.equal(parser.parse(buffer).msg, text);
+        });
+        it('should parse variable length string', function(){
+            var buffer = new Buffer('0c68656c6c6f2c20776f726c64', 'hex');
+            var parser = Parser.start()
+                .uint8('length')
+                .string('msg', {length: 'length', encoding: 'utf8'});
+
+            parser.compile();
+
+            assert.equal(parser.parse(buffer).msg, 'hello, world');
         });
     });
 
@@ -69,6 +91,8 @@ describe('Parser', function(){
                     length: 'length',
                     type: 'uint8'
                 });
+
+            parser.compile();
 
             var buffer = new Buffer([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
             assert.deepEqual(parser.parse(buffer), {
@@ -88,6 +112,8 @@ describe('Parser', function(){
                     length: 'length',
                     type: elementParser
                 });
+
+            parser.compile();
 
             var buffer = new Buffer([0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
             assert.deepEqual(parser.parse(buffer), {
@@ -114,6 +140,8 @@ describe('Parser', function(){
                     length: 'length',
                     type: rowParser
                 });
+
+            parser.compile();
 
             var buffer = new Buffer(1 + 10 * (1 + 5 * 4));
             var i, j;
@@ -169,6 +197,8 @@ describe('Parser', function(){
                     }
                 });
 
+            parser.compile();
+
             var buffer = new Buffer([0x0, 0x4e, 0x61, 0xbc, 0x00, 0x01, 0xd2, 0x04]);
             assert.deepEqual(parser.parse(buffer), {
                 tag1: 0,
@@ -191,6 +221,8 @@ describe('Parser', function(){
                             .int32le('number')
                     }
                 });
+
+            parser.compile();
 
             var buffer = new Buffer([0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64]);
             assert.deepEqual(parser.parse(buffer), {
