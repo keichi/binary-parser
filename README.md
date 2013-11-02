@@ -1,5 +1,7 @@
 # Bang-parser -- blazing-fast binary parser
 
+[![Build Status](https://travis-ci.org/Keichi/bang-parser.png?branch=master)](https://travis-ci.org/Keichi/bang-parser)
+
 Bang-parser is a simple and fast binary parser for [node](http://nodejs.org). It includes various parser
 builders for parsing complex binary file formats or network protocols.
 Parser code is dynamically generated and compiled on-the-fly, 
