@@ -8,8 +8,17 @@
   },
   "keywords": [
     "binary",
-    "parser"
+    "parser",
+    "decode",
+    "unpack",
+    "struct",
+    "buffer"
   ],
   "author": "Keichi Takahashi",
-  "license": "MIT"
+  "license": "MIT",
+  "repository" : {
+    "type" : "git",
+    "url" : "http://github.com/Keichi/bang-parser.git"
+  },
+  "bugs" : "http://github.com/Keichi/bang-parser/issues"
 }
