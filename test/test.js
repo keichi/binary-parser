@@ -4,6 +4,12 @@ var Parser = require('../lib/bang').Parser;
 
 describe('Parser', function(){
     describe('Primitive parsers', function(){
+        it('should nothing', function(){
+            var parser = Parser.start();
+
+            var buffer = new Buffer([0xa, 0x14, 0x1e, 0x28, 0x32]);
+            assert.deepEqual(parser.parse(buffer), {});
+        });
         it('should parse primitive types', function(){
             var parser =
             Parser.start()
