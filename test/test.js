@@ -166,6 +166,19 @@ describe('Parser', function(){
                 ]
             });
         });
+        it('should parse until eof when readUnitl is specified', function(){
+            var parser =
+                Parser.start()
+                .array('data', {
+                    readUntil: 'eof',
+                    type: 'uint8'
+                });
+
+            var buffer = new Buffer([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+            assert.deepEqual(parser.parse(buffer), {
+                data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+            });
+        });
     });
 
     describe('Choice parser', function() {
