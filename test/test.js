@@ -197,6 +197,8 @@ describe('Parser', function(){
                     }
                 });
 
+            parser.compile();
+
             var buffer = new Buffer([0x0, 0x4e, 0x61, 0xbc, 0x00, 0x01, 0xd2, 0x04]);
             assert.deepEqual(parser.parse(buffer), {
                 tag1: 0,
@@ -219,6 +221,8 @@ describe('Parser', function(){
                             .int32le('number')
                     }
                 });
+
+            parser.compile();
 
             var buffer = new Buffer([0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64]);
             assert.deepEqual(parser.parse(buffer), {
