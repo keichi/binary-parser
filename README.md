@@ -20,6 +20,8 @@ First create an empty Parser object with `new Parser()`, then chain methods to b
 Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
+var Parser = require('bang-parser').Parser;
+
 var keyValue = new Parser()
     .int32le('key')
     .int16le('length')
