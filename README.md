@@ -36,7 +36,7 @@ parser.parse(buffer);
     
 ```
 
-##API
+## API
 
 ### new Parser()
 Constructs a Parser object. Returned object represents a parser which parses nothing.
@@ -172,6 +172,7 @@ You can do assertions during the parsing. (Useful for checking magic numbers and
 In the `options` hash, define `assert` with an assertion function.
 This assertion function should take one argument, which is the parsed result, and return
 `true` if assertion successes or `false` when assertion fails.
+An exception is thrown during the parsing when assertion fails.
 
 ```javascript
 var ClassFile =
