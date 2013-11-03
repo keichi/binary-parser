@@ -16,7 +16,8 @@ In your project's directory,
 `$ npm install bang-parser`
 
 ## Quick Start
-First create a empty Parser object with `new Parser()`, then chain methods to build the desired parser. Calling `Parser.parse` with an `Buffer` object returns the result object.
+First create a empty Parser object with `new Parser()`, then chain methods to build the desired parser.
+Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
 var keyValue = new Parser()
@@ -81,7 +82,8 @@ with an alphabet. `options` is an object; following options are available:
 ### array(name [,options])
 Parse bytes as an array. `options` is an object; following options are available: 
 
-- `type` - (Required) Type of the array element. Can be a string or an user defined Parser object. If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
+- `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
+    If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
 - `length` - (either `length` or `readUntil` is required) Length of the array. Can be a number, string or a function.
 	Use number for statically sized arrays.
 - `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
@@ -117,7 +119,8 @@ var parser = new Parser()
 
 ### choice(name [,options])
 Choose one parser from several choices accrding to a field value.
-Combining `choice` with `array` is useful for parsing a typical [Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
+Combining `choice` with `array` is useful for parsing a typical
+[Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
 	Can be a string pointing to another field or a function. 
