@@ -8,15 +8,15 @@ Parser code is dynamically generated and compiled on-the-fly,
 so it's fast enough for practical use.
 
 Bang-parser's features are inspired by [BinData](https://github.com/dmendel/bindata)
-Ruby gem and its syntax by [binary](https://github.com/substack/node-binary) npm module.
+, its syntax by [binary](https://github.com/substack/node-binary).
 
 ## Installation
-In your project's directory,
+In your project's directory, execute:
 
 `$ npm install bang-parser`
 
 ## Quick Start
-First create a empty Parser object with `new Parser()`, then chain methods to build the desired parser.
+First create an empty Parser object with `new Parser()`, then chain methods to build the desired parser.
 Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
@@ -42,8 +42,8 @@ parser.parse(buffer);
 Constructs a Parser object. Returned object represents a parser which parses nothing.
 
 ### parse(buffer)
-Parse `buffer` with this parser and return the resulting object.
-When `parse` is called for the first time, parser code is compiled on-the-fly
+Parse a `Buffer` object `buffer` with this parser and return the resulting object.
+When `parse(buffer)` is called for the first time, parser code is compiled on-the-fly
 and internally cached.
 
 ### [u]int{8, 16, 32}{le, be}(name [,options])
@@ -73,7 +73,7 @@ Parse bytes as a string. `name` should consist only of alpha numeric characters 
 with an alphabet. `options` is an object; following options are available: 
 
 - `encoding` - (Optional) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
-	are valid. See more in [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)'s doumentation.
+	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
 - `length `- (Required) Length of the string. Can be a number, string or a function.
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
