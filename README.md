@@ -181,6 +181,9 @@ var ClassFile =
     .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
 ```
 
+## Examples
+See `test/` for more complex examples.
+
 ## License
 The MIT License (MIT)
 
