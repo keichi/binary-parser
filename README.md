@@ -125,7 +125,7 @@ Combining `choice` with `array` is useful for parsing a typical [Type-Length-Val
 	when `tag` equals to the key value.
 - `defaultChoice` - (Optional) If tag value doesn't exist in the `choices` use this parser.
 
-```
+```javascript
 var parser1 = ...;
 var parser2 = ...;
 var parser3 = ...;
