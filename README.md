@@ -8,17 +8,20 @@ Parser code is dynamically generated and compiled on-the-fly,
 so it's fast enough for practical use.
 
 Bang-parser's features are inspired by [BinData](https://github.com/dmendel/bindata)
-Ruby gem and its syntax by [binary](https://github.com/substack/node-binary) npm module.
+, its syntax by [binary](https://github.com/substack/node-binary).
 
 ## Installation
-In your project's directory,
+In your project's directory, execute:
 
 `$ npm install bang-parser`
 
 ## Quick Start
-First create a empty Parser object with `new Parser()`, then chain methods to build the desired parser. Calling `Parser.parse` with an `Buffer` object returns the result object.
+First create an empty Parser object with `new Parser()`, then chain methods to build the desired parser.
+Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
+var Parser = require('bang-parser').Parser;
+
 var keyValue = new Parser()
     .int32le('key')
     .int16le('length')
@@ -35,14 +38,14 @@ parser.parse(buffer);
     
 ```
 
-##API
+## API
 
 ### new Parser()
 Constructs a Parser object. Returned object represents a parser which parses nothing.
 
 ### parse(buffer)
-Parse `buffer` with this parser and return the resulting object.
-When `parse` is called for the first time, parser code is compiled on-the-fly
+Parse a `Buffer` object `buffer` with this parser and return the resulting object.
+When `parse(buffer)` is called for the first time, parser code is compiled on-the-fly
 and internally cached.
 
 ### [u]int{8, 16, 32}{le, be}(name [,options])
@@ -72,7 +75,7 @@ Parse bytes as a string. `name` should consist only of alpha numeric characters 
 with an alphabet. `options` is an object; following options are available: 
 
 - `encoding` - (Optional) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
-	are valid. See more in [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)'s doumentation.
+	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
 - `length `- (Required) Length of the string. Can be a number, string or a function.
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
@@ -81,7 +84,8 @@ with an alphabet. `options` is an object; following options are available:
 ### array(name [,options])
 Parse bytes as an array. `options` is an object; following options are available: 
 
-- `type` - (Required) Type of the array element. Can be a string or an user defined Parser object. If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
+- `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
+    If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
 - `length` - (either `length` or `readUntil` is required) Length of the array. Can be a number, string or a function.
 	Use number for statically sized arrays.
 - `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
@@ -117,7 +121,8 @@ var parser = new Parser()
 
 ### choice(name [,options])
 Choose one parser from several choices accrding to a field value.
-Combining `choice` with `array` is useful for parsing a typical [Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
+Combining `choice` with `array` is useful for parsing a typical
+[Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
 	Can be a string pointing to another field or a function. 
@@ -125,7 +130,7 @@ Combining `choice` with `array` is useful for parsing a typical [Type-Length-Val
 	when `tag` equals to the key value.
 - `defaultChoice` - (Optional) If tag value doesn't exist in the `choices` use this parser.
 
-```
+```javascript
 var parser1 = ...;
 var parser2 = ...;
 var parser3 = ...;
@@ -135,9 +140,9 @@ var parser = new Parser()
 	.choice('data', {
 		tag: 'tagValue',
 		choices: [
-			1: parser1, // When tagValue == 1, executer parser1
-			4: parser2, // When tagValue == 4, executer parser2
-			5: parser3  // When tagValue == 5, executer parser3
+			1: parser1, // When tagValue == 1, execute parser1
+			4: parser2, // When tagValue == 4, execute parser2
+			5: parser3  // When tagValue == 5, execute parser3
 		]
 	});
 ```
@@ -169,6 +174,7 @@ You can do assertions during the parsing. (Useful for checking magic numbers and
 In the `options` hash, define `assert` with an assertion function.
 This assertion function should take one argument, which is the parsed result, and return
 `true` if assertion successes or `false` when assertion fails.
+An exception is thrown during the parsing when assertion fails.
 
 ```javascript
 var ClassFile =
@@ -176,6 +182,9 @@ var ClassFile =
     .endianess('big')
     .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
 ```
+
+## Examples
+See `test/` for more complex examples.
 
 ## License
 The MIT License (MIT)
