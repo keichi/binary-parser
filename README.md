@@ -138,9 +138,9 @@ var parser = new Parser()
 	.choice('data', {
 		tag: 'tagValue',
 		choices: [
-			1: parser1, // When tagValue == 1, executer parser1
-			4: parser2, // When tagValue == 4, executer parser2
-			5: parser3  // When tagValue == 5, executer parser3
+			1: parser1, // When tagValue == 1, execute parser1
+			4: parser2, // When tagValue == 4, execute parser2
+			5: parser3  // When tagValue == 5, execute parser3
 		]
 	});
 ```
