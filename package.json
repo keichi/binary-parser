@@ -7,7 +7,7 @@
         "mocha": "*"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --reporter spec"
   },
   "keywords": [
     "binary",
