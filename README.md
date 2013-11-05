@@ -79,10 +79,24 @@ with an alphabet. `options` is an object; following options are available:
 
 - `encoding` - (Optional) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
 	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
-- `length `- (Required) Length of the string. Can be a number, string or a function.
+- `length ` - (Required) Length of the string. Can be a number, string or a function.
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
 - `zeroTerminated` - (Optional) If true, then this parser reads until it reaches zero.
+
+### buffer(name [,options])
+Parse bytes as a string. `name` should consist only of alpha numeric characters and start
+with an alphabet. `options` is an object; following options are available: 
+
+- `clone` - (Optional, defaults to `false`) By default, `buffer(name [,options])` returns a new buffer which references
+    the same memory as the parser input, but offset and cropped by a certain range. If this option is true, input buffer
+    will be cloned and a new buffer referncing another memory is returned.
+- `length ` - (either `length` or `readUntil` is required) Length of the buffer. Can be a number, string or a function.
+    Use number for statically sized buffers, string to reference another variable and
+    function to do some calculation.
+- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
+    will read till it reaches end of the `Buffer` object.
+
 
 ### array(name [,options])
 Parse bytes as an array. `options` is an object; following options are available: 
