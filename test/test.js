@@ -80,6 +80,35 @@ describe('Parser', function(){
         });
     });
 
+    describe('Buffer parser', function() {
+        it('should parse as buffer', function() {
+            var parser = new Parser()
+                .uint8('len')
+                .buffer('raw', {
+                    length: 'len'
+                });
+
+            var buf = new Buffer('deadbeefdeadbeef', 'hex');
+            var result = parser.parse(Buffer.concat([new Buffer([8]), buf]));
+
+            assert.deepEqual(result.raw, buf);
+        });
+
+        it('should clone buffer if options.clone is true', function() {
+            var parser = new Parser()
+                .buffer('raw', {
+                    length: 8,
+                    clone: true
+                });
+
+            var buf = new Buffer('deadbeefdeadbeef', 'hex');
+            var result = parser.parse(buf);
+            assert.deepEqual(result.raw, buf);
+            result.raw[0] = 0xff;
+            assert.notDeepEqual(result.raw, buf);
+        });
+    });
+
     describe('Array parser', function() {
         it('should parse array of primitive types', function(){
             var parser =
