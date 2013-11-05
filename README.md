@@ -1,26 +1,29 @@
-# Bang-parser -- blazing-fast binary parser
+# Binary-parser
 
-[![Build Status](https://travis-ci.org/Keichi/bang-parser.png?branch=master)](https://travis-ci.org/Keichi/bang-parser)
+[![Build Status](https://travis-ci.org/Keichi/binary-parser.png?branch=master)](https://travis-ci.org/Keichi/binary-parser)
 
-Bang-parser is a simple and fast binary parser for [node](http://nodejs.org). It includes various parser
-builders for parsing complex binary file formats or network protocols.
-Parser code is dynamically generated and compiled on-the-fly, 
-so it's fast enough for practical use.
+Binary-parser is a parser builder library for [node](http://nodejs.org),
+which enables you to write efficient binary parsers in a simple & declarative way.
+It supports all common data types required to parse a structured binary data,
+such as integers, floating point numbers, strings, arrays (both fixed length and variable length), etc.
+Binary-parser dynamically generates and compiles the parser code on-the-fly.
 
-Bang-parser's features are inspired by [BinData](https://github.com/dmendel/bindata)
+This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
 , its syntax by [binary](https://github.com/substack/node-binary).
 
 ## Installation
 In your project's directory, execute:
 
-`$ npm install bang-parser`
+```shell
+$ npm install binary-parser
+```
 
 ## Quick Start
 First create an empty Parser object with `new Parser()`, then chain methods to build the desired parser.
 Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
-var Parser = require('bang-parser').Parser;
+var Parser = require('binary-parser').Parser;
 
 var keyValue = new Parser()
     .int32le('key')
@@ -53,7 +56,7 @@ Parse bytes as an integer and store it in a variable named `name`. `name` should
 only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16 and 32.
 Byte-ordering can be either `l` for litte endian or `b` for big endian.
-With no prefix, it parses as a signed number, with `u` prefixed as an unsiged number. 
+With no prefix, it parses as a signed number, with `u` prefixed as an unsigned number. 
 
 ```javascript
 var parser = new Parser()
@@ -120,15 +123,15 @@ var parser = new Parser()
 ```
 
 ### choice(name [,options])
-Choose one parser from several choices accrding to a field value.
+Choose one parser from several choices according to a field value.
 Combining `choice` with `array` is useful for parsing a typical
 [Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
 	Can be a string pointing to another field or a function. 
-- `choices` - (Required) An object. Key is an integer, value is the parser which is executed
-	when `tag` equals to the key value.
-- `defaultChoice` - (Optional) If tag value doesn't exist in the `choices` use this parser.
+- `choices` - (Required) An object which key is an integer and value is the parser which is executed
+	when `tag` equals the key value.
+- `defaultChoice` - (Optional) In case of the tag value doesn't match any of `choices` use this parser.
 
 ```javascript
 var parser1 = ...;
@@ -170,7 +173,7 @@ call this method directly, since it's called when `parse(buffer)` is executed
 for the first time.
 
 ### Assertion
-You can do assertions during the parsing. (Useful for checking magic numbers and so on)
+You can do assertions during the parsing (useful for checking magic numbers and so on).
 In the `options` hash, define `assert` with an assertion function.
 This assertion function should take one argument, which is the parsed result, and return
 `true` if assertion successes or `false` when assertion fails.

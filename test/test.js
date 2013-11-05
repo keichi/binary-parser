@@ -1,6 +1,6 @@
 var assert = require('assert');
 var util = require('util');
-var Parser = require('../lib/bang').Parser;
+var Parser = require('../lib/binary_parser').Parser;
 
 describe('Parser', function(){
     describe('Primitive parsers', function(){
