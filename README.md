@@ -186,6 +186,10 @@ Compile this parser on-the-fly and chache its result. Usually, there is no need 
 call this method directly, since it's called when `parse(buffer)` is executed
 for the first time.
 
+### getCode()
+Dynamically generates the code for this parser and returns it as a string.
+Usually used for debugging.
+
 ### Assertion
 You can do assertions during the parsing (useful for checking magic numbers and so on).
 In the `options` hash, define `assert` with an assertion function.
