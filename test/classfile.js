@@ -1,6 +1,6 @@
 var fs = require('fs');
 var assert = require('assert');
-var Parser = require('../lib/bang').Parser;
+var Parser = require('../lib/binary_parser').Parser;
 
 var ConstantClassInfo =
 	Parser.start()

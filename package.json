@@ -1,8 +1,8 @@
 {
-  "name": "bang-parser",
+  "name": "binary-parser",
   "version": "0.0.1",
-  "description": "Blazing-fast binary parser for node.js",
-  "main": "lib/bang.js",
+  "description": "Blazing-fast binary parser builder",
+  "main": "lib/binary_parser.js",
   "devDependencies": {
         "mocha": "*"
   },
@@ -21,7 +21,7 @@
   "license": "MIT",
   "repository" : {
     "type" : "git",
-    "url" : "http://github.com/Keichi/bang-parser.git"
+    "url" : "http://github.com/Keichi/binary-parser.git"
   },
-  "bugs" : "http://github.com/Keichi/bang-parser/issues"
+  "bugs" : "http://github.com/Keichi/binary-parser/issues"
 }

@@ -1,12 +1,12 @@
-# Bang-parser -- blazing-fast binary parser
+# Binary-parser
 
-[![Build Status](https://travis-ci.org/Keichi/bang-parser.png?branch=master)](https://travis-ci.org/Keichi/bang-parser)
+[![Build Status](https://travis-ci.org/Keichi/binary-parser.png?branch=master)](https://travis-ci.org/Keichi/binary-parser)
 
-Bang-parser is a parser builder library for [node](http://nodejs.org),
+Binary-parser is a parser builder library for [node](http://nodejs.org),
 which enables you to write efficient binary parsers in a simple & declarative way.
 It supports all common data types required to parse a structured binary data,
 such as integers, floating point numbers, strings, arrays (both fixed length and variable length), etc.
-Bang-parser dynamically generates and compiles the parser code on-the-fly.
+Binary-parser dynamically generates and compiles the parser code on-the-fly.
 
 This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
 , its syntax by [binary](https://github.com/substack/node-binary).
@@ -15,7 +15,7 @@ This library's features are inspired by [BinData](https://github.com/dmendel/bin
 In your project's directory, execute:
 
 ```shell
-$ npm install bang-parser
+$ npm install binary-parser
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ First create an empty Parser object with `new Parser()`, then chain methods to b
 Calling `Parser.parse` with an `Buffer` object returns the result object.
 
 ```javascript
-var Parser = require('bang-parser').Parser;
+var Parser = require('binary-parser').Parser;
 
 var keyValue = new Parser()
     .int32le('key')
