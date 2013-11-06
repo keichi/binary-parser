@@ -326,5 +326,16 @@ describe('Parser', function(){
                 parser.parse(buffer);
             });
         });
+        it('should parse asynchronously', function() {
+            var parser = new Parser()
+                .uint8('len')
+                .string('text', {length: 'len', async: true});
+
+            var buf = new Buffer('0c68656c6c6f2c20776f726c64', 'hex');
+
+            parser.parse(buf, function(err, result) {
+                assert.deepEqual(result, {len: 12, text: 'hello, world'});
+            });
+        });
     });
 });
