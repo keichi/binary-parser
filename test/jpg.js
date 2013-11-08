@@ -104,7 +104,8 @@ var JPEG = Parser.start()
 
 describe('JPG file parser', function() {
     it('should parse JPG file header', function() {
-        fs.readFile('test/kindle.jpg', function(err, data) {
+        fs.readFile('test/test.jpg', function(err, data) {
+
             JPEG.parse(data).segments.forEach(function(item) {
                 if (item.marker === 0xffd8) {
                     assert.deepEqual(item.segment, {});
@@ -112,26 +113,13 @@ describe('JPG file parser', function() {
                     assert.deepEqual(item.segment, {
                         length: 16,
                         id: 'JFIF',
-                        version: 257,
-                        unit: 1,
-                        xDensity: 72,
-                        yDensity: 72,
+                        version: 258,
+                        unit: 0,
+                        xDensity: 100,
+                        yDensity: 100,
                         thumbWidth: 0,
                         thumbHeight: 0,
                         thumbData: []
-                    });
-                } else if (item.marker === 0xffc0) {
-                    assert.deepEqual(item.segment, {
-                        length: 17,
-                        precision: 8,
-                        width: 1024,
-                        height: 768,
-                        componentCount: 3,
-                        components: [
-                            { id: 1, samplingFactor: 34, quantizationTableId: 0 },
-                            { id: 2, samplingFactor: 17, quantizationTableId: 1 },
-                            { id: 3, samplingFactor: 17, quantizationTableId: 1 }
-                        ]
                     });
                 } else if (item.marker === 0xffda) {
                     assert.deepEqual(item.segment, {
@@ -143,7 +131,7 @@ describe('JPG file parser', function() {
                             { id: 3, dht: 17 }
                         ],
                         spectrumStart: 0,
-                        spectrumEnd: 63,
+                        spectrumEnd: 0,
                         spectrumSelect: 0
                     });
                 }

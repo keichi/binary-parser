@@ -293,6 +293,38 @@ describe('Parser', function(){
         });
     });
 
+    describe('Nest parser', function() {
+        it('should parse nested parsers', function() {
+            var nameParser = new Parser()
+                .string('firstName', {
+                    zeroTerminated: true
+                })
+                .string('lastName', {
+                    zeroTerminated: true
+                });
+            var infoParser = new Parser()
+                .uint8('age');
+            var personParser = new Parser()
+                .nest('name', {
+                    type: nameParser
+                })
+                .nest('info', {
+                    type: infoParser
+                });
+
+            var buffer = Buffer.concat([new Buffer('John\0Doe\0'), new Buffer([0x20])]);
+            assert.deepEqual(personParser.parse(buffer), {
+                name: {
+                    firstName: 'John',
+                    lastName: 'Doe'
+                },
+                info: {
+                    age: 0x20
+                }
+            });
+        });
+    });
+
     describe('Utilities', function() {
         it('should count size for fixed size structs', function() {
             var parser =

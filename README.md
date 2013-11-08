@@ -168,6 +168,12 @@ var parser = new Parser()
 	});
 ```
 
+### nest(name [,options])
+Nest a parser in this position. Parse result of the nested parser is stored in the variable
+`name`.
+
+- `type` - (Required) A `Parser` object.
+
 ### skip(length)
 Skip parsing for `length` bytes.
 
