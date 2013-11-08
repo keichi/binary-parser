@@ -42,6 +42,15 @@ describe('Parser', function(){
         });
     });
 
+    describe('Bit field parsers', function() {
+        it('should parse 1-byte-length bit field sequence', function() {
+        });
+        it('should parse 2-byte-length bit field sequence', function() {
+        });
+        it('should parse 4-byte-length bit field sequence', function() {
+        });
+    });
+
     describe('String parser', function() {
         it('should parse ASCII encoded string', function(){
             var text = 'hello, world';
