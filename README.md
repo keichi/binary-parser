@@ -46,10 +46,14 @@ parser.parse(buffer);
 ### new Parser()
 Constructs a Parser object. Returned object represents a parser which parses nothing.
 
-### parse(buffer)
+### parse(buffer[, callback])
 Parse a `Buffer` object `buffer` with this parser and return the resulting object.
 When `parse(buffer)` is called for the first time, parser code is compiled on-the-fly
 and internally cached.
+
+If parser's `async` option is `true`, then a callback function has to be passed as an
+argument. This callback should take two arguements like other node.js callbacks:
+`function(err, result)`.
 
 ### [u]int{8, 16, 32}{le, be}(name [,options])
 Parse bytes as an integer and store it in a variable named `name`. `name` should consist
@@ -77,12 +81,12 @@ with an alphabet.
 Parse bytes as a string. `name` should consist only of alpha numeric characters and start
 with an alphabet. `options` is an object; following options are available: 
 
-- `encoding` - (Optional) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
+- `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
 	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
 - `length ` - (Required) Length of the string. Can be a number, string or a function.
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
-- `zeroTerminated` - (Optional) If true, then this parser reads until it reaches zero.
+- `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
 
 ### buffer(name [,options])
 Parse bytes as a string. `name` should consist only of alpha numeric characters and start
@@ -190,19 +194,23 @@ for the first time.
 Dynamically generates the code for this parser and returns it as a string.
 Usually used for debugging.
 
-### Assertion
-You can do assertions during the parsing (useful for checking magic numbers and so on).
-In the `options` hash, define `assert` with an assertion function.
+### Common options
+These are common options that can be specified in all parsers.
+
+- `assert` - A predicate function. You can do assertions during the parsing (useful for checking magic numbers and so on).
 This assertion function should take one argument, which is the parsed result, and return
 `true` if assertion successes or `false` when assertion fails.
 An exception is thrown during the parsing when assertion fails.
 
-```javascript
-var ClassFile =
-	Parser.start()
-    .endianess('big')
-    .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
-```
+    ```javascript
+    var ClassFile =
+    	Parser.start()
+        .endianess('big')
+        .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
+    ```
+
+- `async` - If `true`, then this parser will be executed asynchronously. You also have
+to pass a callback function to `Parser.parse(buffer, callback)`.
 
 ## Examples
 See `test/` for more complex examples.
