@@ -357,11 +357,7 @@ describe('Parser', function(){
 
             buf = new Buffer('cafebabe', 'hex');
 
-            console.log(parser.getCode());
-            
             parser.parse(buf, function(err, result) {
-                console.log('ほげーーー');
-                console.log(err, result);
                 assert(err);
             });
         });
