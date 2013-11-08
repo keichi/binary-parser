@@ -215,6 +215,12 @@ to pass a callback function to `Parser.parse(buffer, callback)`.
 ## Examples
 See `test/` for more complex examples.
 
+## Support
+Please report issues to the [issue tracker](https://github.com/Keichi/binary-parser/issues) if you
+have any difficulties using this module, found a bug, or request a new feature.
+
+Pull requests with fixes and improvements are welcomed!
+
 ## License
 The MIT License (MIT)
 
