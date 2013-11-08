@@ -5,7 +5,8 @@
 Binary-parser is a parser builder library for [node](http://nodejs.org),
 which enables you to write efficient binary parsers in a simple & declarative way.
 It supports all common data types required to parse a structured binary data,
-such as integers, floating point numbers, strings, arrays (both fixed length and variable length), etc.
+such as integers, bit fields, floating point numbers, strings, arrays 
+(both fixed length and variable length), etc.
 Binary-parser dynamically generates and compiles the parser code on-the-fly.
 
 This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
@@ -71,6 +72,10 @@ var parser = new Parser()
     // Signed 16-bit integer (big endian)
     .int16be('c')
 ```
+
+### bit\[1-32\](name [,options])
+Parse bytes as a bit field and store it in variable `name`. There are 32 methods from
+`bit1` to `bit32` each corresponding to 1-bit-length to 32-bits-length bit field.
 
 ### {float, double}{le, be}(name [,options])
 Parse bytes as an floating-point value and store it in a variable
