@@ -42,6 +42,53 @@ describe('Parser', function(){
         });
     });
 
+    describe('Bit field parsers', function() {
+        it('should parse 1-byte-length bit field sequence', function() {
+            var parser = new Parser()
+                .bit1('a')
+                .bit2('b')
+                .bit4('c')
+                .bit1('d');
+
+            var buf = new Buffer([parseInt('11010100', 2)]);
+            assert.deepEqual(parser.parse(buf), {
+                a: 1,
+                b: 2,
+                c: 10,
+                d: 0
+            });
+        });
+        it('should parse 2-byte-length bit field sequence', function() {
+            var parser = new Parser()
+                .bit3('a')
+                .bit9('b')
+                .bit4('c');
+
+            var buf = new Buffer([parseInt('10111100', 2), parseInt('01110101', 2)]);
+            assert.deepEqual(parser.parse(buf), {
+                a: 5,
+                b: 455,
+                c: 5
+            });
+        });
+        it('should parse 4-byte-length bit field sequence', function() {
+            var parser = new Parser()
+                .bit1('a')
+                .bit24('b')
+                .bit4('c')
+                .bit2('d')
+                .bit1('e');
+            var buf = new Buffer([parseInt('11010101', 2), parseInt('01010101', 2), parseInt('01010101', 2), parseInt('01111011', 2)]);
+            assert.deepEqual(parser.parse(buf), {
+                a: 1,
+                b: 11184810,
+                c: 15,
+                d: 1,
+                e: 1
+            });
+        });
+    });
+
     describe('String parser', function() {
         it('should parse ASCII encoded string', function(){
             var text = 'hello, world';

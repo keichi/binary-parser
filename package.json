@@ -1,6 +1,7 @@
 {
   "name": "binary-parser",
   "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
   "devDependencies": {
@@ -15,7 +16,8 @@
     "decode",
     "unpack",
     "struct",
-    "buffer"
+    "buffer",
+    "bit"
   ],
   "author": {
     "name" : "Keichi Takahashi",
