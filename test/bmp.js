@@ -55,31 +55,6 @@ var bmpFile = new Parser()
         type: bmpInfoHeader
     });
 
-describe('BMP file parser', function() {
-    it('should parse bmp file header', function() {
-        require('fs').readFile('test/test.bmp', function(err, data) {
-            require('assert').deepEqual(bmpFile.parse(data), {
-                fileHeader: {
-                    type: 'BM',
-                    size: 46182,
-                    reserved1: 0,
-                    reserved2: 0,
-                    offBits: 54
-                },
-                infoHeader: {
-                    size: 40,
-                    width: 124,
-                    height: 124,
-                    planes: 1,
-                    bitCount: 24,
-                    compression: 0,
-                    sizeImage: 0,
-                    xPelsPerMeter: 0,
-                    yPelsPerMeter: 0,
-                    clrUsed: 0,
-                    clrImportant: 0
-                }
-            });
-        });
-    });
+require('fs').readFile('test.bmp', function(err, data) {
+    console.log(bmpFile.parse(data));
 });

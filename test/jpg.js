@@ -1,5 +1,3 @@
-var fs = require('fs');
-var assert = require('assert');
 var Parser = require('../lib/binary_parser').Parser;
 
 var SOI = Parser.start();
@@ -102,40 +100,6 @@ var JPEG = Parser.start()
         readUntil: 'eof'
     });
 
-describe('JPG file parser', function() {
-    it('should parse JPG file header', function() {
-        fs.readFile('test/test.jpg', function(err, data) {
-
-            JPEG.parse(data).segments.forEach(function(item) {
-                if (item.marker === 0xffd8) {
-                    assert.deepEqual(item.segment, {});
-                } else if (item.marker === 0xffe0) {
-                    assert.deepEqual(item.segment, {
-                        length: 16,
-                        id: 'JFIF',
-                        version: 258,
-                        unit: 0,
-                        xDensity: 100,
-                        yDensity: 100,
-                        thumbWidth: 0,
-                        thumbHeight: 0,
-                        thumbData: []
-                    });
-                } else if (item.marker === 0xffda) {
-                    assert.deepEqual(item.segment, {
-                        length: 12,
-                        componentCount: 3,
-                        components: [
-                            { id: 1, dht: 0 },
-                            { id: 2, dht: 17 },
-                            { id: 3, dht: 17 }
-                        ],
-                        spectrumStart: 0,
-                        spectrumEnd: 0,
-                        spectrumSelect: 0
-                    });
-                }
-            });
-        });
-    });
+require('fs').readFile('test.jpg', function(err, data) {
+    console.log(require('util').inspect(JPEG.parse(data), {depth: null}));
 });

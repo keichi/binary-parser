@@ -1,5 +1,3 @@
-var fs = require('fs');
-var assert = require('assert');
 var Parser = require('../lib/binary_parser').Parser;
 
 var ConstantClassInfo =
@@ -104,47 +102,6 @@ var ClassFile =
         }
     });
 
-describe('Java class file parser', function() {
-    var expect = {
-        magic: 0xcafebabe,
-        minor_version: 0,
-        major_version: 50,
-        constant_pool_count: 29,
-        cp_info: [
-            { tag: 10, info: { class_index: 6, name_and_type_index: 15 } },
-            { tag: 9, info: { class_index: 16, name_and_type_index: 17 } },
-            { tag: 8, info: { string_index: 18 } },
-            { tag: 10, info: { class_index: 19, name_and_type_index: 20 } },
-            { tag: 7, info: { name_index: 21 } },
-            { tag: 7, info: { name_index: 22 } },
-            { tag: 1, info: { len: 6, bytes: '<init>' } },
-            { tag: 1, info: { len: 3, bytes: '()V' } },
-            { tag: 1, info: { len: 4, bytes: 'Code' } },
-            { tag: 1, info: { len: 15, bytes: 'LineNumberTable' } },
-            { tag: 1, info: { len: 4, bytes: 'main' } },
-            { tag: 1, info: { len: 22, bytes: '([Ljava/lang/String;)V' } },
-            { tag: 1, info: { len: 10, bytes: 'SourceFile' } },
-            { tag: 1, info: { len: 10, bytes: 'Hello.java' } },
-            { tag: 12, info: { name_index: 7, descriptor_index: 8 } },
-            { tag: 7, info: { name_index: 23 } },
-            { tag: 12, info: { name_index: 24, descriptor_index: 25 } },
-            { tag: 1, info: { len: 13, bytes: 'Hello, world!' } },
-            { tag: 7, info: { name_index: 26 } },
-            { tag: 12, info: { name_index: 27, descriptor_index: 28 } },
-            { tag: 1, info: { len: 5, bytes: 'Hello' } },
-            { tag: 1, info: { len: 16, bytes: 'java/lang/Object' } },
-            { tag: 1, info: { len: 16, bytes: 'java/lang/System' } },
-            { tag: 1, info: { len: 3, bytes: 'out' } },
-            { tag: 1, info: { len: 21, bytes: 'Ljava/io/PrintStream;' } },
-            { tag: 1, info: { len: 19, bytes: 'java/io/PrintStream' } },
-            { tag: 1, info: { len: 7, bytes: 'println' } },
-            { tag: 1, info: { len: 21, bytes: '(Ljava/lang/String;)V' } }
-        ]
-    };
-
-    it('should parse class file', function() {
-        fs.readFile('test/Hello.class', function(err, data) {
-            assert.deepEqual(ClassFile.parse(data), expect);
-        });
-    });
+require('fs').readFile('Hello.class', function(err, data) {
+    console.log(require('util').inspect(ClassFile.parse(data), {depth: null}));
 });
