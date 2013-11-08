@@ -15,7 +15,8 @@
     "decode",
     "unpack",
     "struct",
-    "buffer"
+    "buffer",
+    "bit"
   ],
   "author": {
     "name" : "Keichi Takahashi",
