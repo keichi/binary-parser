@@ -337,5 +337,33 @@ describe('Parser', function(){
                 assert.deepEqual(result, {len: 12, text: 'hello, world'});
             });
         });
+        it('should emit error asynchronously', function() {
+            var parser = new Parser()
+                .uint8('len')
+                .string('text', {length: 'len', async: true});
+
+            var buf = null;
+
+            parser.parse(buf, function(err, result) {
+                assert(err);
+            });
+
+            parser = new Parser().uint32be('val', {
+                assert: function(x) {
+                    return x === 0xdeadbeef;
+                },
+                async: true
+            });
+
+            buf = new Buffer('cafebabe', 'hex');
+
+            console.log(parser.getCode());
+            
+            parser.parse(buf, function(err, result) {
+                console.log('ほげーーー');
+                console.log(err, result);
+                assert(err);
+            });
+        });
     });
 });
