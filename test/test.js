@@ -64,11 +64,11 @@ describe('Parser', function(){
                 .bit9('b')
                 .bit4('c');
 
-            var buf = new Buffer([parseInt('10111100', 2), parseInt('01110101', 2)]);
+            var buf = new Buffer([parseInt('10111100', 2), parseInt('01110111', 2)]);
             assert.deepEqual(parser.parse(buf), {
                 a: 5,
                 b: 455,
-                c: 5
+                c: 7
             });
         });
         it('should parse 4-byte-length bit field sequence', function() {
