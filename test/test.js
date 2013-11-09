@@ -144,6 +144,28 @@ describe('Parser', function(){
                 e: 1
             });
         });
+        it('should parse nested bit fields', function() {
+            var parser = new Parser()
+                .bit1('a')
+                .nest('x', {
+                    type: new Parser()
+                        .bit2('b')
+                        .bit4('c')
+                        .bit1('d')
+                });
+
+            var buf = binaryLiteral('11010100');
+
+            console.log(parser.getCode());
+            assert.deepEqual(parser.parse(buf), {
+                a: 1,
+                x: {
+                    b: 2,
+                    c: 10,
+                    d: 0
+                }
+            });
+        });
     });
 
     describe('String parser', function() {
