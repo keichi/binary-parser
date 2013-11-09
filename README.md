@@ -224,7 +224,7 @@ An exception is thrown during the parsing when assertion fails.
 to pass a callback function to `Parser.parse(buffer, callback)`.
 
 ## Examples
-See `test/` for more complex examples.
+See `example` for more complex examples.
 
 ## License
 The MIT License (MIT)
