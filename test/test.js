@@ -156,7 +156,6 @@ describe('Parser', function(){
 
             var buf = binaryLiteral('11010100');
 
-            console.log(parser.getCode());
             assert.deepEqual(parser.parse(buf), {
                 a: 1,
                 x: {
