@@ -7,7 +7,7 @@ which enables you to write efficient parsers in a simple & declarative way.
 
 It supports all common data types required to analyze a structured binary data.
 Binary-parser dynamically generates and compiles the parser code on-the-fly,
-which runs as fast as a hand-written parser (which takes much time and effort to write).
+which runs as fast as a hand-written parser (which takes much more time and effort to write).
 Supported data types are:
 
 - Integers (supports 8, 16, 32 bit signed- and unsigned integers)
@@ -22,7 +22,7 @@ This library's features are inspired by [BinData](https://github.com/dmendel/bin
 , its syntax by [binary](https://github.com/substack/node-binary).
 
 ## Installation
-In your project's directory, execute:
+Binary-parser can be installed with [npm](https://npmjs.org/):
 
 ```shell
 $ npm install binary-parser
@@ -30,28 +30,42 @@ $ npm install binary-parser
 
 ## Quick Start
 1. Create an empty Parser object with `new Parser()`.
-2. Chain builder methods to build the desired parser. (See below for detailed document
+2. Chain builder methods to build the desired parser. (See [API](https://github.com/Keichi/binary-parser#api) for detailed document
 of each methods)
 3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
 4. Parsed result will be returned as an object.
 
 ```javascript
+// Module import
 var Parser = require('binary-parser').Parser;
 
-var keyValue = new Parser()
-    .int32le('key')
-    .int16le('length')
-    .string('message', {length: 'length'});
-
-var parser = new Parser()
-    .uint16le('count')
-    .array('kvs', {
-        type: keyValueParser,
-        length: 'count'
+// Build an IP packet header Parser
+var ipHeader = new Parser()
+    .endianess('big')
+    .bit4('version')
+    .bit4('headerLength')
+    .uint8('tos')
+    .uint16('packetLength')
+    .uint16('id')
+    .bit3('offset')
+    .bit13('fragOffset')
+    .uint8('ttl')
+    .uint8('protocol')
+    .uint16('checksum')
+    .array('src', {
+        type: 'uint8',
+        length: 4
     })
+    .array('dst', {
+        type: 'uint8',
+        length: 4
+    });
 
-parser.parse(buffer);
-    
+// Prepare buffer to parse.
+var buf = new Buffer('450002c5939900002c06ef98adc24f6c850186d1', 'hex');
+
+// Parse buffer and show result
+console.log(ipHeader.parse(buf)); 
 ```
 
 ## API
