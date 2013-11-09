@@ -43,6 +43,23 @@ describe('Parser', function(){
     });
 
     describe('Bit field parsers', function() {
+        var binaryLiteral = function(s) {
+            var i;
+            var bytes = [];
+
+            s = s.replace(/\s/g, '');
+            for (i = 0; i < s.length; i += 8) {
+                bytes.push(parseInt(s.slice(i, i + 8), 2));
+            }
+
+            return new Buffer(bytes);
+        };
+
+        it('binary literal helper should work', function() {
+            assert.deepEqual(binaryLiteral('11110000'), new Buffer([0xf0]));
+            assert.deepEqual(binaryLiteral('11110000 10100101'), new Buffer([0xf0, 0xa5]));
+        });
+
         it('should parse 1-byte-length bit field sequence', function() {
             var parser = new Parser()
                 .bit1('a')
@@ -50,12 +67,26 @@ describe('Parser', function(){
                 .bit4('c')
                 .bit1('d');
 
-            var buf = new Buffer([parseInt('11010100', 2)]);
+            var buf = binaryLiteral('1 10 1010 0');
             assert.deepEqual(parser.parse(buf), {
                 a: 1,
                 b: 2,
                 c: 10,
                 d: 0
+            });
+
+            parser = new Parser()
+                .endianess('little')
+                .bit1('a')
+                .bit2('b')
+                .bit4('c')
+                .bit1('d');
+
+            assert.deepEqual(parser.parse(buf), {
+                a: 0,
+                b: 2,
+                c: 10,
+                d: 1
             });
         });
         it('should parse 2-byte-length bit field sequence', function() {
@@ -64,11 +95,22 @@ describe('Parser', function(){
                 .bit9('b')
                 .bit4('c');
 
-            var buf = new Buffer([parseInt('10111100', 2), parseInt('01110101', 2)]);
+            var buf = binaryLiteral('101 111000111 0111');
             assert.deepEqual(parser.parse(buf), {
                 a: 5,
                 b: 455,
-                c: 5
+                c: 7
+            });
+            
+            parser = new Parser()
+                .endianess('little')
+                .bit3('a')
+                .bit9('b')
+                .bit4('c');
+            assert.deepEqual(parser.parse(buf), {
+                a: 7,
+                b: 398,
+                c: 11
             });
         });
         it('should parse 4-byte-length bit field sequence', function() {
@@ -78,13 +120,49 @@ describe('Parser', function(){
                 .bit4('c')
                 .bit2('d')
                 .bit1('e');
-            var buf = new Buffer([parseInt('11010101', 2), parseInt('01010101', 2), parseInt('01010101', 2), parseInt('01111011', 2)]);
+            var buf = binaryLiteral('1 101010101010101010101010 1111 01 1');
             assert.deepEqual(parser.parse(buf), {
                 a: 1,
                 b: 11184810,
                 c: 15,
                 d: 1,
                 e: 1
+            });
+
+            parser = new Parser()
+                .endianess('little')
+                .bit1('a')
+                .bit24('b')
+                .bit4('c')
+                .bit2('d')
+                .bit1('e');
+            assert.deepEqual(parser.parse(buf), {
+                a: 1,
+                b: 11184829,
+                c: 10,
+                d: 2,
+                e: 1
+            });
+        });
+        it('should parse nested bit fields', function() {
+            var parser = new Parser()
+                .bit1('a')
+                .nest('x', {
+                    type: new Parser()
+                        .bit2('b')
+                        .bit4('c')
+                        .bit1('d')
+                });
+
+            var buf = binaryLiteral('11010100');
+
+            assert.deepEqual(parser.parse(buf), {
+                a: 1,
+                x: {
+                    b: 2,
+                    c: 10,
+                    d: 0
+                }
             });
         });
     });
