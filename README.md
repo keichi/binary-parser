@@ -2,12 +2,21 @@
 
 [![Build Status](https://travis-ci.org/Keichi/binary-parser.png?branch=master)](https://travis-ci.org/Keichi/binary-parser)
 
-Binary-parser is a parser builder library for [node](http://nodejs.org),
-which enables you to write efficient binary parsers in a simple & declarative way.
-It supports all common data types required to parse a structured binary data,
-such as integers, bit fields, floating point numbers, strings, arrays 
-(both fixed length and variable length), etc.
-Binary-parser dynamically generates and compiles the parser code on-the-fly.
+Binary-parser is a binary parser builder library for [node](http://nodejs.org),
+which enables you to write efficient parsers in a simple & declarative way.
+
+It supports all common data types required to analyze a structured binary data.
+Binary-parser dynamically generates and compiles the parser code on-the-fly,
+which runs as fast as a hand-written parser (which takes much time and effort to write).
+Supported data types are:
+
+- Integers (supports 8, 16, 32 bit signed- and unsigned integers)
+- Floating point numbers (supports 32 and 64 bit floating point values)
+- Bit fields (supports bit fields with length from 1 to 32 bits)
+- Strings (supports various encodings, fixed-length and variable-length, zero terminated string)
+- Arrays (supports user-defined element type, fixed-length and variable-length)
+- Choices
+- User defined types
 
 This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
 , its syntax by [binary](https://github.com/substack/node-binary).
