@@ -29,8 +29,11 @@ $ npm install binary-parser
 ```
 
 ## Quick Start
-First create an empty Parser object with `new Parser()`, then chain methods to build the desired parser.
-Calling `Parser.parse` with an `Buffer` object returns the result object.
+1. Create an empty Parser object with `new Parser()`.
+2. Chain builder methods to build the desired parser. (See below for detailed document
+of each methods)
+3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
+4. Parsed result will be returned as an object.
 
 ```javascript
 var Parser = require('binary-parser').Parser;
