@@ -471,7 +471,7 @@ describe('Parser', function(){
                 .string('msg', {
                     encoding: 'ascii',
                     zeroTerminated: true,
-                    assert: function(x) { return x === 'hello, world'; }
+                    assert: 'hello, world'
                 });
             var buffer = new Buffer('68656c6c6f2c20776f726c6400', 'hex');
             assert.doesNotThrow(function() {
@@ -482,6 +482,25 @@ describe('Parser', function(){
             assert.throws(function() {
                 parser.parse(buffer);
             });
+
+            parser = new Parser()
+                .int16le('a')
+                .int16le('b')
+                .int16le('c', {
+                    assert: function(x) {
+                        return this.a + this.b === x;
+                    }
+                });
+
+            buffer = new Buffer('d2042e16001b', 'hex');
+            assert.doesNotThrow(function() {
+                parser.parse(buffer);
+            });
+            buffer = new Buffer('2e16001bd204', 'hex');
+            assert.throws(function() {
+                parser.parse(buffer);
+            });
+
         });
         it('should parse asynchronously', function() {
             var parser = new Parser()
