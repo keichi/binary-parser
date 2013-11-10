@@ -12,7 +12,7 @@ var bmpFileHeader = new Parser()
     .endianess('little')
     .string('type', {
         length: 2,
-        assert: function(s) {return s === 'BM';}
+        assert: 'BM'
     })
     .uint32('size')
     .uint16('reserved1')
