@@ -234,16 +234,28 @@ Usually used for debugging.
 ### Common options
 These are common options that can be specified in all parsers.
 
-- `assert` - A predicate function. You can do assertions during the parsing (useful for checking magic numbers and so on).
-This assertion function should take one argument, which is the parsed result, and return
-`true` if assertion successes or `false` when assertion fails.
-An exception is thrown during the parsing when assertion fails.
+- `assert` - Do assertion on the parsed result (useful for checking magic numbers and so on).
+If `assert` is a `string` or `number`, the actual parsed result will be compared with it
+with `===` (strict equality check), and an exception is thrown if they mismatch.
+On the other hand, if `assert` is a function, that function is executed with one argument
+(parsed result) and if it returns false, an exception is thrown.
 
     ```javascript
+    // simple maginc number validation
     var ClassFile =
     	Parser.start()
         .endianess('big')
-        .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
+        .uint32('magic', {assert: 0xcafebabe})
+
+    // Doing more complex assertion with a predicate function
+    var parser = new Parser()
+        .int16le('a')
+        .int16le('b')
+        .int16le('c', {
+            assert: function(x) {
+                return this.a + this.b === x;
+            }
+        });
     ```
 
 - `async` - If `true`, then this parser will be executed asynchronously. You also have
