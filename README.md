@@ -210,14 +210,15 @@ Skip parsing for `length` bytes.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either `'little'` or `'big'`.
-After this method is called, you can omit endianess postfix from primitive parsers.
+The default endianess of `Parser` is set to big-endian.
 
 ```javascript
 var parser = new Parser()
-	// usually you have to specify endianess explicitly
+    .endianess('le')
+	// You can specify endianess explicitly
 	.uint16be('a')
-	.endianess('big')
-	// you can omit le/be after endianess is called
+    .uint32le('a')
+	// Or you can omit endianess (in this case, little-endian is used)
 	.uint16('b')
 	.int32('c')
 ```
