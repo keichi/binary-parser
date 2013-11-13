@@ -7,7 +7,7 @@ which enables you to write efficient parsers in a simple & declarative way.
 
 It supports all common data types required to analyze a structured binary data.
 Binary-parser dynamically generates and compiles the parser code on-the-fly,
-which runs as fast as a hand-written parser (which takes much time and effort to write).
+which runs as fast as a hand-written parser (which takes much more time and effort to write).
 Supported data types are:
 
 - Integers (supports 8, 16, 32 bit signed- and unsigned integers)
@@ -22,7 +22,7 @@ This library's features are inspired by [BinData](https://github.com/dmendel/bin
 , its syntax by [binary](https://github.com/substack/node-binary).
 
 ## Installation
-In your project's directory, execute:
+Binary-parser can be installed with [npm](https://npmjs.org/):
 
 ```shell
 $ npm install binary-parser
@@ -30,28 +30,42 @@ $ npm install binary-parser
 
 ## Quick Start
 1. Create an empty Parser object with `new Parser()`.
-2. Chain builder methods to build the desired parser. (See below for detailed document
+2. Chain builder methods to build the desired parser. (See [API](https://github.com/Keichi/binary-parser#api) for detailed document
 of each methods)
 3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
 4. Parsed result will be returned as an object.
 
 ```javascript
+// Module import
 var Parser = require('binary-parser').Parser;
 
-var keyValue = new Parser()
-    .int32le('key')
-    .int16le('length')
-    .string('message', {length: 'length'});
-
-var parser = new Parser()
-    .uint16le('count')
-    .array('kvs', {
-        type: keyValueParser,
-        length: 'count'
+// Build an IP packet header Parser
+var ipHeader = new Parser()
+    .endianess('big')
+    .bit4('version')
+    .bit4('headerLength')
+    .uint8('tos')
+    .uint16('packetLength')
+    .uint16('id')
+    .bit3('offset')
+    .bit13('fragOffset')
+    .uint8('ttl')
+    .uint8('protocol')
+    .uint16('checksum')
+    .array('src', {
+        type: 'uint8',
+        length: 4
     })
+    .array('dst', {
+        type: 'uint8',
+        length: 4
+    });
 
-parser.parse(buffer);
-    
+// Prepare buffer to parse.
+var buf = new Buffer('450002c5939900002c06ef98adc24f6c850186d1', 'hex');
+
+// Parse buffer and show result
+console.log(ipHeader.parse(buf)); 
 ```
 
 ## API
@@ -196,14 +210,15 @@ Skip parsing for `length` bytes.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either `'little'` or `'big'`.
-After this method is called, you can omit endianess postfix from primitive parsers.
+The default endianess of `Parser` is set to big-endian.
 
 ```javascript
 var parser = new Parser()
-	// usually you have to specify endianess explicitly
+    .endianess('le')
+	// You can specify endianess explicitly
 	.uint16be('a')
-	.endianess('big')
-	// you can omit le/be after endianess is called
+    .uint32le('a')
+	// Or you can omit endianess (in this case, little-endian is used)
 	.uint16('b')
 	.int32('c')
 ```
@@ -220,16 +235,28 @@ Usually used for debugging.
 ### Common options
 These are common options that can be specified in all parsers.
 
-- `assert` - A predicate function. You can do assertions during the parsing (useful for checking magic numbers and so on).
-This assertion function should take one argument, which is the parsed result, and return
-`true` if assertion successes or `false` when assertion fails.
-An exception is thrown during the parsing when assertion fails.
+- `assert` - Do assertion on the parsed result (useful for checking magic numbers and so on).
+If `assert` is a `string` or `number`, the actual parsed result will be compared with it
+with `===` (strict equality check), and an exception is thrown if they mismatch.
+On the other hand, if `assert` is a function, that function is executed with one argument
+(parsed result) and if it returns false, an exception is thrown.
 
     ```javascript
+    // simple maginc number validation
     var ClassFile =
     	Parser.start()
         .endianess('big')
-        .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
+        .uint32('magic', {assert: 0xcafebabe})
+
+    // Doing more complex assertion with a predicate function
+    var parser = new Parser()
+        .int16le('a')
+        .int16le('b')
+        .int16le('c', {
+            assert: function(x) {
+                return this.a + this.b === x;
+            }
+        });
     ```
 
 - `async` - If `true`, then this parser will be executed asynchronously. You also have

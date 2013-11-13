@@ -91,7 +91,7 @@ var CpInfo =
 var ClassFile =
 	Parser.start()
     .endianess('big')
-    .uint32('magic', {assert: function(x) {return x === 0xcafebabe; }})
+    .uint32('magic', {assert: 0xcafebabe})
     .uint16('minor_version')
     .uint16('major_version')
     .uint16('constant_pool_count')
