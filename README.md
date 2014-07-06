@@ -1,6 +1,6 @@
 # Binary-parser
 
-[![Build Status](https://travis-ci.org/Keichi/binary-parser.png?branch=master)](https://travis-ci.org/Keichi/binary-parser)
+[![Build Status](https://api.shippable.com/projects/53b8f19825ad337601dac053/badge/master)](https://www.shippable.com/projects/53b8f19825ad337601dac053)
 
 Binary-parser is a binary parser builder library for [node](http://nodejs.org),
 which enables you to write efficient parsers in a simple & declarative way.
