@@ -23,7 +23,7 @@ describe('Parser', function(){
         it('should parse floating point types', function(){
             var parser =
             Parser.start()
-            .float('a')
+            .floatbe('a')
             .doublele('b')
 
             var FLT_EPSILON = 0.00001
