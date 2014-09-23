@@ -93,7 +93,7 @@ With no prefix, it parses as a signed number, with `u` prefixed as an unsigned n
 var parser = new Parser()
 	// Signed 32-bit integer (little endian)
     .int32le('a')
-    // Unsigned 8-bit integer (little/big endian)
+    // Unsigned 8-bit integer
     .uint8('b')
     // Signed 16-bit integer (big endian)
     .int16be('c')
@@ -107,6 +107,14 @@ Parse bytes as a bit field and store it in variable `name`. There are 32 methods
 Parse bytes as an floating-point value and store it in a variable
 named `name`. `name` should consist only of alphanumeric characters and start 
 with an alphabet.
+
+```javascript
+var parser = new Parser()
+    // 32-bit floating value (big endian)
+    .floatbe('a')
+    // 64-bit floating value (little endian)
+    .doublele('b')
+```
 
 ### string(name [,options])
 Parse bytes as a string. `name` should consist only of alpha numeric characters and start
