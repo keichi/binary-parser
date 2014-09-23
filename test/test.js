@@ -10,7 +10,7 @@ describe('Parser', function(){
             var buffer = new Buffer([0xa, 0x14, 0x1e, 0x28, 0x32]);
             assert.deepEqual(parser.parse(buffer), {});
         });
-        it('should parse primitive types', function(){
+        it('should parse integer types', function(){
             var parser =
             Parser.start()
             .uint8('a')
@@ -19,6 +19,22 @@ describe('Parser', function(){
 
             var buffer = new Buffer([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
             assert.deepEqual(parser.parse(buffer), {a: 0, b: 1234, c: 12345678});
+        });
+        it('should parse floating point types', function(){
+            var parser =
+            Parser.start()
+            .float('a')
+            .doublele('b')
+
+            var FLT_EPSILON = 0.00001
+            var buffer = new Buffer([
+                0x41, 0x45, 0x85, 0x1f,
+                0x7a, 0x36, 0xab, 0x3e, 0x57, 0x5b, 0xb1, 0xbf
+            ]);
+            var result = parser.parse(buffer);
+
+            assert(Math.abs(result.a - 12.345) < FLT_EPSILON);
+            assert(Math.abs(result.b - (-0.0678)) < FLT_EPSILON);
         });
         it('should handle endianess', function(){
             var parser =
