@@ -24,7 +24,7 @@ describe('Parser', function(){
             var parser =
             Parser.start()
             .floatbe('a')
-            .doublele('b')
+            .doublele('b');
 
             var FLT_EPSILON = 0.00001
             var buffer = new Buffer([
