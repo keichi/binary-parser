@@ -79,14 +79,14 @@ When `parse(buffer)` is called for the first time, parser code is compiled on-th
 and internally cached.
 
 If parser's `async` option is `true`, then a callback function has to be passed as an
-argument. This callback should take two arguements like other node.js callbacks:
+argument. This callback should take two arguments like other node.js callbacks:
 `function(err, result)`.
 
 ### [u]int{8, 16, 32}{le, be}(name [,options])
 Parse bytes as an integer and store it in a variable named `name`. `name` should consist
 only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16 and 32.
-Byte-ordering can be either `l` for litte endian or `b` for big endian.
+Byte-ordering can be either `l` for little endian or `b` for big endian.
 With no prefix, it parses as a signed number, with `u` prefixed as an unsigned number. 
 
 ```javascript
@@ -232,7 +232,7 @@ var parser = new Parser()
 ```
 
 ### compile()
-Compile this parser on-the-fly and chache its result. Usually, there is no need to
+Compile this parser on-the-fly and cache its result. Usually, there is no need to
 call this method directly, since it's called when `parse(buffer)` is executed
 for the first time.
 
