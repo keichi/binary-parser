@@ -128,7 +128,7 @@ with an alphabet. `options` is an object; following options are available:
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
 
 ### buffer(name [,options])
-Parse bytes as a string. `name` should consist only of alpha numeric characters and start
+Parse bytes as a buffer. `name` should consist only of alpha numeric characters and start
 with an alphabet. `options` is an object; following options are available: 
 
 - `clone` - (Optional, defaults to `false`) By default, `buffer(name [,options])` returns a new buffer which references
