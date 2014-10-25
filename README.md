@@ -82,6 +82,10 @@ If parser's `async` option is `true`, then a callback function has to be passed 
 argument. This callback should take two arguments like other node.js callbacks:
 `function(err, result)`.
 
+### create(constructorFunction)
+Set the constructor function that should be called to create the object returned from
+the `parse` method.
+
 ### [u]int{8, 16, 32}{le, be}(name [,options])
 Parse bytes as an integer and store it in a variable named `name`. `name` should consist
 only of alphanumeric characters and start with an alphabet.
