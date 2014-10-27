@@ -466,6 +466,26 @@ describe('Parser', function(){
         });
     });
 
+    describe('Constructors', function() {
+        it('should create a custom object type', function() {
+           function Person () {
+             this.name = ''
+           };
+           Person.prototype.toString = function () { return '[object Person]'; };
+           var parser =
+               Parser.start()
+               .create(Person)
+               .string('name', {
+                   zeroTerminated: true
+               });
+
+           var buffer = new Buffer('John Doe\0');
+           var person = parser.parse(buffer);
+           assert.ok(person instanceof Person);
+           assert.equal(person.name, 'John Doe');
+        });
+    });
+
     describe('Utilities', function() {
         it('should count size for fixed size structs', function() {
             var parser =
