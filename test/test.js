@@ -349,6 +349,41 @@ describe('Parser', function(){
                 data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
             });
         });
+        it('should parse associative arrays', function(){
+            var parser = 
+                Parser.start()
+                .int8('numlumps')
+                .array('lumps', {
+                    type : Parser.start()
+                        .int32le('filepos')
+                        .int32le('size')
+                        .string('name', { length: 8, encoding : 'ascii'}),
+                    length : 'numlumps',
+                    key : 'name'
+                });
+
+            var buffer = new Buffer([0x02,
+                                     0xd2, 0x04, 0x00, 0x00, 0x2e, 0x16, 0x00, 0x00,
+                                     0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
+                                     0x2e, 0x16, 0x00, 0x00, 0xd2, 0x04, 0x00, 0x00,
+                                     0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62,
+                                    ]);
+            assert.deepEqual(parser.parse(buffer), {
+                numlumps: 2,
+                lumps: {
+                    "AAAAAAAA": {
+                        filepos: 1234,
+                        size: 5678,
+                        name: "AAAAAAAA"
+                    },
+                    "bbbbbbbb": {
+                        filepos: 5678,
+                        size: 1234,
+                        name: "bbbbbbbb"
+                    }
+                }
+            });
+        });   
     });
 
     describe('Choice parser', function() {
