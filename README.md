@@ -126,10 +126,11 @@ with an alphabet. `options` is an object; following options are available:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
 	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
-- `length ` - (Required) Length of the string. Can be a number, string or a function.
+- `length ` - (Optional) Length of the string. Can be a number, string or a function.
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
+- `stripNull` - (Optional, must be used with `length`) If true, then strip null characters from end of the string
 
 ### buffer(name [,options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric characters and start
@@ -286,7 +287,7 @@ Pull requests with fixes and improvements are welcomed!
 ## License
 The MIT License (MIT)
 
-Copyright (c) 2013 Keichi Takahashi <keichi.t@me.com>
+Copyright (c) 2013-2014 Keichi Takahashi <keichi.t@me.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
