@@ -218,11 +218,11 @@ var parser = new Parser()
 	.uint8('tagValue')
 	.choice('data', {
 		tag: 'tagValue',
-		choices: [
+		choices: {
 			1: parser1, // When tagValue == 1, execute parser1
 			4: parser2, // When tagValue == 4, execute parser2
 			5: parser3  // When tagValue == 5, execute parser3
-		]
+		}
 	});
 ```
 
