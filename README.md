@@ -154,7 +154,8 @@ Parse bytes as an array. `options` is an object; following options are available
 - `length` - (either `length` or `readUntil` is required) Length of the array. Can be a number, string or a function.
 	Use number for statically sized arrays.
 - `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
-	will read till it reaches end of the `Buffer` object.
+	reads until the end of `Buffer` object. If function it reads until the function returns true.
+- `formatter` - (Optional) Function that transforms the parsed array into a more desired form.
 
 ```javascript
 var parser = new Parser()
@@ -176,12 +177,25 @@ var parser = new Parser()
 		type: 'int32',
 		length: function() { return this.dataLength - 1; } // other fields are available through this
 	});
+
+	// Dynamically sized array (with stop-check on parsed item)
+	.array('data4', {
+		type: 'int32',
+		readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
+	});
 	
 	// Use user defined parser object
-	.array('data4', {
+	.array('data5', {
 		type: userDefinedParser,
 		length: 'dataLength'
-	})
+	});
+
+	// Use formatter to transform parsed array
+	.array('ipv4', {
+		type: uint8,
+		length: '4',
+		formatter: function(arr) { return arr.join('.'); }
+	});
 ```
 
 ### choice(name [,options])
@@ -217,6 +231,7 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 `name`.
 
 - `type` - (Required) A `Parser` object.
+- `formatter` - (Optional) Function that transforms the parsed nested type into a more desired form.
 
 ### skip(length)
 Skip parsing for `length` bytes.
