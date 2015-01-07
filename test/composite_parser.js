@@ -89,7 +89,7 @@ describe('Composite parser', function(){
                 ]
             });
         });
-        it('should parse until eof when readUnitl is specified', function(){
+        it('should parse until eof when readUntil is specified', function(){
             var parser =
                 Parser.start()
                 .array('data', {
@@ -100,6 +100,32 @@ describe('Composite parser', function(){
             var buffer = new Buffer([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
             assert.deepEqual(parser.parse(buffer), {
                 data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+            });
+        });
+        it('should parse until function returns true when readUntil is function', function(){
+            var parser =
+                Parser.start()
+                .array('data', {
+                    readUntil: function (item, buf) { return item === 0 },
+                    type: 'uint8'
+                });
+
+            var buffer = new Buffer([0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff]);
+            assert.deepEqual(parser.parse(buffer), {
+                data: [0xff, 0xff, 0xff, 0x01, 0x00]
+            });
+        });
+        it('should parse until function returns true when readUntil is function (using read-ahead)', function(){
+            var parser =
+                Parser.start()
+                .array('data', {
+                    readUntil: function (item, buf) { return buf.length > 0 && buf.readUInt8(0) === 0 },
+                    type: 'uint8'
+                });
+
+            var buffer = new Buffer([0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff]);
+            assert.deepEqual(parser.parse(buffer), {
+                data: [0xff, 0xff, 0xff, 0x01]
             });
         });
         it('should parse associative arrays', function(){
@@ -136,7 +162,21 @@ describe('Composite parser', function(){
                     }
                 }
             });
-        });   
+        });
+        it('should use formatter to transform parsed array', function(){
+            var parser =
+                Parser.start()
+                .array('data', {
+                    type: 'uint8',
+                    length: 4,
+                    formatter: function(arr) { return arr.join('.'); }
+                });
+
+            var buffer = new Buffer([0x0a, 0x0a, 0x01, 0x6e]);
+            assert.deepEqual(parser.parse(buffer), {
+                data: '10.10.1.110'
+            });
+        });
     });
 
     describe('Choice parser', function() {
@@ -250,6 +290,26 @@ describe('Composite parser', function(){
                 info: {
                     age: 0x20
                 }
+            });
+        });
+
+        it('should format parsed nested parser', function() {
+            var nameParser = new Parser()
+                .string('firstName', {
+                    zeroTerminated: true
+                })
+                .string('lastName', {
+                    zeroTerminated: true
+                });
+            var personParser = new Parser()
+                .nest('name', {
+                    type: nameParser,
+                    formatter: function(name) { return name.firstName + ' ' + name.lastName }
+                })
+
+            var buffer = new Buffer('John\0Doe\0');
+            assert.deepEqual(personParser.parse(buffer), {
+                name: 'John Doe'
             });
         });
     });
