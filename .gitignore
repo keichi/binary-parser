@@ -1,24 +1,3 @@
-# Created by http://gitignore.io
-
-### OSX ###
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-
-
-# Thumbnails
-._*
-
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
-
-### SublimeText ###
-# SublimeText project files
-*.sublime-project
-*.sublime-workspace
-
 ### Node ###
 lib-cov
 *.seed
@@ -35,3 +14,4 @@ results
 
 npm-debug.log
 node_modules
+
