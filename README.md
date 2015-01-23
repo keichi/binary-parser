@@ -151,7 +151,6 @@ Parse bytes as an array. `options` is an object; following options are available
 	Use number for statically sized arrays.
 - `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
 	reads until the end of `Buffer` object. If function it reads until the function returns true.
-- `formatter` - (Optional) Function that transforms the parsed array into a more desired form.
 
 ```javascript
 var parser = new Parser()
@@ -184,13 +183,6 @@ var parser = new Parser()
 	.array('data5', {
 		type: userDefinedParser,
 		length: 'dataLength'
-	});
-
-	// Use formatter to transform parsed array
-	.array('ipv4', {
-		type: uint8,
-		length: '4',
-		formatter: function(arr) { return arr.join('.'); }
 	});
 ```
 
@@ -227,7 +219,6 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 `name`.
 
 - `type` - (Required) A `Parser` object.
-- `formatter` - (Optional) Function that transforms the parsed nested type into a more desired form.
 
 ### skip(length)
 Skip parsing for `length` bytes.
@@ -258,6 +249,16 @@ Usually used for debugging.
 
 ### Common options
 These are common options that can be specified in all parsers.
+
+- `formatter` - Function that transforms the parsed value into a more desired form.
+```javascript
+var parser = new Parser()
+  .array('ipv4', {
+    type: uint8,
+    length: '4',
+    formatter: function(arr) { return arr.join('.'); }
+  });
+```
 
 - `assert` - Do assertion on the parsed result (useful for checking magic numbers and so on).
 If `assert` is a `string` or `number`, the actual parsed result will be compared with it
