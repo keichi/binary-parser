@@ -65,7 +65,7 @@ var ipHeader = new Parser()
 var buf = new Buffer('450002c5939900002c06ef98adc24f6c850186d1', 'hex');
 
 // Parse buffer and show result
-console.log(ipHeader.parse(buf)); 
+console.log(ipHeader.parse(buf));
 ```
 
 ## API
@@ -78,10 +78,6 @@ Parse a `Buffer` object `buffer` with this parser and return the resulting objec
 When `parse(buffer)` is called for the first time, parser code is compiled on-the-fly
 and internally cached.
 
-If parser's `async` option is `true`, then a callback function has to be passed as an
-argument. This callback should take two arguments like other node.js callbacks:
-`function(err, result)`.
-
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object returned from
 the `parse` method.
@@ -91,7 +87,7 @@ Parse bytes as an integer and store it in a variable named `name`. `name` should
 only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16 and 32.
 Byte-ordering can be either `l` for little endian or `b` for big endian.
-With no prefix, it parses as a signed number, with `u` prefixed as an unsigned number. 
+With no prefix, it parses as a signed number, with `u` prefixed as an unsigned number.
 
 ```javascript
 var parser = new Parser()
@@ -109,7 +105,7 @@ Parse bytes as a bit field and store it in variable `name`. There are 32 methods
 
 ### {float, double}{le, be}(name [,options])
 Parse bytes as an floating-point value and store it in a variable
-named `name`. `name` should consist only of alphanumeric characters and start 
+named `name`. `name` should consist only of alphanumeric characters and start
 with an alphabet.
 
 ```javascript
@@ -122,7 +118,7 @@ var parser = new Parser()
 
 ### string(name [,options])
 Parse bytes as a string. `name` should consist only of alpha numeric characters and start
-with an alphabet. `options` is an object; following options are available: 
+with an alphabet. `options` is an object; following options are available:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
 	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
@@ -134,7 +130,7 @@ with an alphabet. `options` is an object; following options are available:
 
 ### buffer(name [,options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric characters and start
-with an alphabet. `options` is an object; following options are available: 
+with an alphabet. `options` is an object; following options are available:
 
 - `clone` - (Optional, defaults to `false`) By default, `buffer(name [,options])` returns a new buffer which references
     the same memory as the parser input, but offset and cropped by a certain range. If this option is true, input buffer
@@ -147,7 +143,7 @@ with an alphabet. `options` is an object; following options are available:
 
 
 ### array(name [,options])
-Parse bytes as an array. `options` is an object; following options are available: 
+Parse bytes as an array. `options` is an object; following options are available:
 
 - `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
     If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
@@ -164,14 +160,14 @@ var parser = new Parser()
 		type: 'int32',
 		length: 8
 	})
-	
+
 	// Dynamically sized array (reference another variable)
 	.uint8('dataLength')
 	.array('data2', {
 		type: 'int32',
 		length: 'dataLength'
 	})
-	
+
 	// Dynamically sized array (with some calculation)
 	.array('data3', {
 		type: 'int32',
@@ -183,7 +179,7 @@ var parser = new Parser()
 		type: 'int32',
 		readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
 	});
-	
+
 	// Use user defined parser object
 	.array('data5', {
 		type: userDefinedParser,
@@ -204,7 +200,7 @@ Combining `choice` with `array` is useful for parsing a typical
 [Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
-	Can be a string pointing to another field or a function. 
+	Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the parser which is executed
 	when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case of the tag value doesn't match any of `choices` use this parser.
@@ -286,9 +282,6 @@ On the other hand, if `assert` is a function, that function is executed with one
             }
         });
     ```
-
-- `async` - If `true`, then this parser will be executed asynchronously. You also have
-to pass a callback function to `Parser.parse(buffer, callback)`.
 
 ## Examples
 See `example` for more complex examples.
