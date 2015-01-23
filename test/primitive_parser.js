@@ -20,6 +20,19 @@ describe('Primitive parser', function(){
             var buffer = new Buffer([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
             assert.deepEqual(parser.parse(buffer), {a: 0, b: 1234, c: 12345678});
         });
+        it('should use formatter to transform parsed integer', function(){
+            var parser =
+            Parser.start()
+            .uint8('a', {
+                formatter: function(val) { return val * 2; }
+            })
+            .int16le('b', {
+                formatter: function(val) { return "test" + String(val); }
+            });
+
+            var buffer = new Buffer([0x01, 0xd2, 0x04]);
+            assert.deepEqual(parser.parse(buffer), {a: 2, b: "test1234"});
+        });
         it('should parse floating point types', function(){
             var parser =
             Parser.start()
@@ -117,7 +130,7 @@ describe('Primitive parser', function(){
                 b: 455,
                 c: 7
             });
-            
+
             parser = new Parser()
                 .endianess('little')
                 .bit3('a')
