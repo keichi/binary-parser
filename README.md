@@ -127,6 +127,9 @@ with an alphabet. `options` is an object; following options are available:
 	function to do some calculation.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
 - `stripNull` - (Optional, must be used with `length`) If true, then strip null characters from end of the string
+- `prefixLengthType` - (Optional), can be a primitive type, then this parser reads the primitive
+        from the buffer, and use it as the array length to be read.
+
 
 ### buffer(name [,options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric characters and start
@@ -147,10 +150,12 @@ Parse bytes as an array. `options` is an object; following options are available
 
 - `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
     If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
-- `length` - (either `length` or `readUntil` is required) Length of the array. Can be a number, string or a function.
+- `length` - (either `length` or `readUntil` or `prefixLengthType` is required) Length of the array. Can be a number, string or a function.
 	Use number for statically sized arrays.
-- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
+- `readUntil` - (either `length` or `readUntil` or `prefixLengthType` is required) If `'eof'`, then this parser
 	reads until the end of `Buffer` object. If function it reads until the function returns true.
+- `prefixLengthType` - (either `length` or `readUntil` or `prefixLengthType` is required), can be a primitive type, then this parser reads the primitive
+        from the buffer, and use it as the array length to be read.
 
 ```javascript
 var parser = new Parser()

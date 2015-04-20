@@ -177,6 +177,19 @@ describe('Composite parser', function(){
                 data: '10.10.1.110'
             });
         });
+
+	it('should parse array with option prefixLengthType', function () {
+	    var parser =
+		Parser.start()
+		.array('data', {
+		    prefixLengthType: 'uint8',
+		    type: 'uint8',
+		});
+	    var buffer = new Buffer([3, 2, 3, 4]);
+	    assert.deepEqual(parser.parse(buffer), {
+		data: [2, 3, 4],
+	    });
+	});
     });
 
     describe('Choice parser', function() {
