@@ -232,6 +232,15 @@ describe('Primitive parser', function(){
 
             assert.deepEqual(parser.parse(buffer), {msg: 'hello, world'});
         });
+	it('should parse string with option prefixLengthType', function() {
+            var buffer = new Buffer('0c68656c6c6f2c20776f726c64', 'hex');
+            var parser = Parser.start()
+                .string('msg', {
+		    encoding: 'utf8',
+		    prefixLengthType: 'uint8',
+		});
+            assert.equal(parser.parse(buffer).msg, 'hello, world');
+	});
     });
 
     describe('Buffer parser', function() {
