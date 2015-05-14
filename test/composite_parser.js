@@ -387,4 +387,19 @@ describe('Composite parser', function(){
 
         });
     });
+
+    describe('Parse other fields after bit', function() {
+        it('Parse uint8', function() {
+            var buffer = new Buffer([0, 1, 0, 4]);
+            for (var i = 17; i <= 24; i++) {
+                var parser =
+                    Parser.start()['bit' + i]('a').uint8('b');
+
+                assert.deepEqual(parser.parse(buffer), {
+                    a: 1 << (i - 16),
+                    b: 4,
+                });
+            }
+        });
+    });
 });
