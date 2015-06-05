@@ -4,10 +4,12 @@
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
   "devDependencies": {
-        "mocha": "*"
+    "istanbul": "^0.3.14",
+    "mocha": "^2.2.5"
   },
   "scripts": {
-    "test": "mocha --reporter spec"
+    "test": "mocha --reporter spec",
+    "cover": "istanbul cover --report html node_modules/.bin/_mocha"
   },
   "keywords": [
     "binary",
@@ -19,14 +21,15 @@
     "bit"
   ],
   "author": {
-    "name" : "Keichi Takahashi",
-    "email" : "keichi.t@me.com",
-    "url" : "http://blog.keichi.net/"
+    "name": "Keichi Takahashi",
+    "email": "keichi.t@me.com",
+    "url": "http://blog.keichi.net/"
   },
   "license": "MIT",
-  "repository" : {
-    "type" : "git",
-    "url" : "http://github.com/Keichi/binary-parser.git"
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Keichi/binary-parser.git"
   },
-  "bugs" : "http://github.com/Keichi/binary-parser/issues"
+  "bugs": "http://github.com/Keichi/binary-parser/issues",
+  "dependencies": {}
 }
