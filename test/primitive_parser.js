@@ -232,6 +232,27 @@ describe('Primitive parser', function(){
 
             assert.deepEqual(parser.parse(buffer), {msg: 'hello, world'});
         });
+        it('should parser zero terminated fixed-length string', function() {
+            var buffer = new Buffer('abc\u0000defghij\u0000');
+            var parser = Parser.start()
+                .string('a', {length: 5, zeroTerminated: true})
+                .string('b', {length: 5, zeroTerminated: true})
+                .string('c', {length: 5, zeroTerminated: true})
+
+            assert.deepEqual(parser.parse(buffer), {
+                a: 'abc',
+                b: 'defgh',
+                c: 'ij'
+            });
+        });
+        it('should strip trailing null characters', function() {
+            var buffer = new Buffer('746573740000', 'hex');
+            var parser1 = Parser.start().string('str', {length: 7, stripNull: false});
+            var parser2 = Parser.start().string('str', {length: 7, stripNull: true});
+
+            assert.equal(parser1.parse(buffer).str, 'test\u0000\u0000');
+            assert.equal(parser2.parse(buffer).str, 'test');
+        });
     });
 
     describe('Buffer parser', function() {
