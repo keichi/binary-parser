@@ -12,5 +12,5 @@ before_script:
 
 script:
   - ./node_modules/.bin/mocha -R xunit test/ > shippable/testresults/test-report.xml
-  - ./node_modules/.bin/istanbul cover --report html node_modules/.bin/_mocha -- test/ > shippable/codecoverage/coverage.xml
+  - ./node_modules/.bin/istanbul cover --dir shippable/codecoverage --report cobertura node_modules/.bin/_mocha -- test/
 
