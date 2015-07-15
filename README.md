@@ -225,7 +225,7 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 - `type` - (Required) A `Parser` object.
 
 ### skip(length)
-Skip parsing for `length` bytes.
+Skip parsing of bytes. `length` can be either a number, a string or a function.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either `'little'` or `'big'`.
