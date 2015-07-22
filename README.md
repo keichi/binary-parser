@@ -211,11 +211,36 @@ var parser = new Parser()
 	.choice('data', {
 		tag: 'tagValue',
 		choices: {
-			1: parser1, // When tagValue == 1, execute parser1
-			4: parser2, // When tagValue == 4, execute parser2
-			5: parser3  // When tagValue == 5, execute parser3
+			1: parser1, // if tagValue == 1, execute parser1
+			4: parser2, // if tagValue == 4, execute parser2
+			5: parser3  // if tagValue == 5, execute parser3
 		}
 	});
+```
+
+### loop(lookahead, [,options])
+Choose and execute parsers which are matching the referenced tag value.
+The `lookahead` parser provides information about upcoming fields to determine the selection.
+As long as one of the `choices` options fits, it continues parsing the buffer.
+
+- `tag` - (Required) The value used to determine which parser to use from the `choices`
+	Can be a string pointing to another field or a function.
+- `choices` - (Required) An object which key is an integer/string and value is the parser which is executed
+	when `tag` equals the key value. The key of a choice is used as the property name and will hold an array
+  of results if multiple instances are matched.
+
+```javascript
+var parser1 = ...;
+var parser2 = ...;
+
+var parser = new Parser()
+  .loop(new Parser().skip(4).string('type', { length: 4 })), {
+    tag: 'type',
+    choices: {
+      ftyp: parser1, // if type == 'ftyp', execute parser1
+      moov: parser2  // if type == 'ftyp', execute parser2
+    }
+  });
 ```
 
 ### nest(name [,options])

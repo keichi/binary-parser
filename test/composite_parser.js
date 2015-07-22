@@ -262,6 +262,24 @@ describe('Composite parser', function(){
         });
     });
 
+    describe('Loop parser', function(){
+        it('should parse looped parsers', function(){
+            var parser = Parser.start()
+                            .loop(Parser.start().uint8('tag'), {
+                              tag: 'tag',
+                              choices: {
+                                0: 'int32le',
+                                1: 'int16le'
+                              }
+                            });
+            var buffer = new Buffer([0x0, 0x4e, 0x61, 0xbc, 0x00, 0x01, 0xd2, 0x04]);
+            assert.deepEqual(parser.parse(buffer), {
+                0: 12345678,
+                1: 1234
+            });
+        });
+    });
+
     describe('Nest parser', function() {
         it('should parse nested parsers', function() {
             var nameParser = new Parser()
