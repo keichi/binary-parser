@@ -176,7 +176,7 @@ var parser = new Parser()
 	});
 
 	// Statically sized array
-	.array('dat4', {
+	.array('data4', {
 		type: 'int32',
 		lengthInBytes: 16
 	})
