@@ -147,9 +147,11 @@ Parse bytes as an array. `options` is an object; following options are available
 
 - `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
     If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
-- `length` - (either `length` or `readUntil` is required) Length of the array. Can be a number, string or a function.
+- `length` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array. Can be a number, string or a function.
 	Use number for statically sized arrays.
-- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
+- `lengthInBytes` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array expressed in bytes. Can be a number, string or a function.
+	Use number for statically sized arrays.
+- `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required) If `'eof'`, then this parser
 	reads until the end of `Buffer` object. If function it reads until the function returns true.
 
 ```javascript
@@ -173,14 +175,33 @@ var parser = new Parser()
 		length: function() { return this.dataLength - 1; } // other fields are available through this
 	});
 
+	// Statically sized array
+	.array('dat4', {
+		type: 'int32',
+		lengthInBytes: 16
+	})
+
+	// Dynamically sized array (reference another variable)
+	.uint8('dataLengthInBytes')
+	.array('data5', {
+		type: 'int32',
+		lengthInBytes: 'dataLengthInBytes'
+	})
+
+	// Dynamically sized array (with some calculation)
+	.array('data6', {
+		type: 'int32',
+		lengthInBytes: function() { return this.dataLengthInBytes - 4; } // other fields are available through this
+	})
+
 	// Dynamically sized array (with stop-check on parsed item)
-	.array('data4', {
+	.array('data7', {
 		type: 'int32',
 		readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
 	});
 
 	// Use user defined parser object
-	.array('data5', {
+	.array('data8', {
 		type: userDefinedParser,
 		length: 'dataLength'
 	});
