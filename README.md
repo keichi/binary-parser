@@ -220,6 +220,24 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 
 - `type` - (Required) A `Parser` object.
 
+If a constructor is required for a nested parser, then the constructor function should be a selector
+for the corresponding constructor (none, `main` or nested Parser variable name).
+
+```javascript
+new Parser()
+        .create(function(param) {
+          if (!param) {
+            return {};
+          } else if (param == 'main') {
+            //replace mainConstructorFn with main parser constructor function
+            return new mainConstructorFn();
+          } else if (param === 'nested1') {
+            //replace nestedConstructorFn with nested parser constructor function
+            //nested1 is the varName of the nested parser
+            return new nestedConstructorFn();//call;
+          }
+        })
+```
 ### skip(length)
 Skip parsing for `length` bytes.
 
