@@ -1,6 +1,6 @@
 # Binary-parser
 
-[![Build Status](https://api.shippable.com/projects/540e7af73479c5ea8f9ebc33/badge?branchName=master)](https://app.shippable.com/projects/540e7af73479c5ea8f9ebc33/builds/latest)
+[![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
 
 Binary-parser is a binary parser builder library for [node](http://nodejs.org),
 which enables you to write efficient parsers in a simple & declarative way.
