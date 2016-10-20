@@ -177,6 +177,27 @@ describe('Composite parser', function(){
                 data: '10.10.1.110'
             });
         });
+        it('should be able to go into recursion', function(){
+            var parser =
+                Parser.start().recursiveAs('self')
+                .uint8('length')
+                .array('data', {
+                    type: 'self',
+                    length: 'length'
+                });
+
+            var buffer = new Buffer([ 1, 1, 1, 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                length: 1,
+                data: [ {
+                    length: 1,
+                    data: [ {
+                        length: 1,
+                        data: [ { length: 0, data: [] } ]
+                    } ]
+                } ]
+            });
+        });
     });
 
     describe('Choice parser', function() {
@@ -257,6 +278,32 @@ describe('Composite parser', function(){
                 tag: 3,
                 data: {
                     number: 12345678
+                }
+            });
+        });
+        it('should be able to go into recursion', function(){
+            var stop = Parser.start();
+
+            var parser =
+                Parser.start().recursiveAs('self')
+                .uint8('type')
+                .choice('data', {
+                    'tag': 'type',
+                    'choices': {
+                        0: stop,
+                        1: 'self'
+                    }
+                });
+
+            var buffer = new Buffer([ 1, 1, 1, 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                type: 1,
+                data: {
+                    type: 1,
+                    data: {
+                        type: 1,
+                        data: { type: 0, data: {} }
+                    }
                 }
             });
         });
