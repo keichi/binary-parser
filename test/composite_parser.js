@@ -179,7 +179,7 @@ describe('Composite parser', function(){
         });
         it('should be able to go into recursion', function(){
             var parser =
-                Parser.start().recursiveAs('self')
+                Parser.start().namely('self')
                 .uint8('length')
                 .array('data', {
                     type: 'self',
@@ -195,6 +195,50 @@ describe('Composite parser', function(){
                         length: 1,
                         data: [ { length: 0, data: [] } ]
                     } ]
+                } ]
+            });
+        });
+        it('should be able to go into even deeper recursion', function(){
+            var parser =
+                Parser.start().namely('self')
+                .uint8('length')
+                .array('data', {
+                    type: 'self',
+                    length: 'length'
+                });
+
+            //        2
+            //       / \
+            //      3   1
+            //    / | \  \
+            //   1  0  2  0
+            //  /     / \
+            // 0     1   0
+            //      /
+            //     0
+
+            var buffer = new Buffer([ 2,
+                                    /* 0 */ 3,
+                                        /* 0 */ 1,
+                                            /* 0 */ 0,
+                                        /* 1 */ 0,
+                                        /* 2 */ 2,
+                                            /* 0 */ 1,
+                                                /* 0 */ 0,
+                                            /* 1 */ 0,
+                                    /* 1 */ 1,
+                                        /* 0 */ 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                length: 2,
+                data: [ {
+                    length: 3,
+                    data: [ { length: 1, data: [ { length: 0, data: [] } ] },
+                            { length: 0, data: [] },
+                            { length: 2, data: [ { length: 1, data: [ { length: 0, data: [] } ] },
+                                                 { length: 0, data: [] } ] } ]
+                }, {
+                    length: 1,
+                    data: [ { length: 0, data: [] } ]
                 } ]
             });
         });
@@ -285,7 +329,7 @@ describe('Composite parser', function(){
             var stop = Parser.start();
 
             var parser =
-                Parser.start().recursiveAs('self')
+                Parser.start().namely('self')
                 .uint8('type')
                 .choice('data', {
                     'tag': 'type',
@@ -301,6 +345,95 @@ describe('Composite parser', function(){
                 data: {
                     type: 1,
                     data: {
+                        type: 1,
+                        data: { type: 0, data: {} }
+                    }
+                }
+            });
+        });
+        it('should be able to go into recursion with simple nesting', function(){
+            var stop = Parser.start();
+
+            var parser =
+                Parser.start().namely('self')
+                .uint8('type')
+                .choice('data', {
+                    'tag': 'type',
+                    'choices': {
+                        0: stop,
+                        1: 'self',
+                        2: Parser.start().nest('left',  { type: 'self' })
+                                         .nest('right', { type: stop })
+                    }
+                });
+
+            var buffer = new Buffer([ 2,
+                                        /* left */  1, 1, 0,
+                                        /* right */ 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                type: 2,
+                data: {
+                    left: {
+                        type: 1,
+                        data: { type: 1, data: { type: 0, data: {} } },
+                    },
+                    right: { }
+                }
+            });
+        });
+        it('should be able to go into recursion with complex nesting', function(){
+            var stop = Parser.start();
+
+            var parser =
+                Parser.start().namely('self')
+                .uint8('type')
+                .choice('data', {
+                    'tag': 'type',
+                    'choices': {
+                        0: stop,
+                        1: 'self',
+                        2: Parser.start().nest('left',  { type: 'self' })
+                                         .nest('right', { type: 'self' }),
+                        3: Parser.start().nest('one',   { type: 'self' })
+                                         .nest('two',   { type: 'self' })
+                                         .nest('three', { type: 'self' })
+                    }
+                });
+
+            //        2
+            //       / \
+            //      3   1
+            //    / | \  \
+            //   1  0  2  0
+            //  /     / \
+            // 0     1   0
+            //      /
+            //     0
+
+            var buffer = new Buffer([ 2,
+                                    /* left -> */ 3,
+                                        /* one   -> */ 1, /* -> */ 0,
+                                        /* two   -> */ 0,
+                                        /* three -> */ 2,
+                                            /* left  -> */ 1, /* -> */ 0,
+                                            /* right -> */ 0,
+                                    /* right -> */ 1, /* -> */ 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                type: 2,
+                data: {
+                    left: {
+                        type: 3,
+                        data: {
+                            one: { type: 1, data: { type: 0, data: {} } },
+                            two: { type: 0, data: {} },
+                            three: { type: 2,
+                                     data: {
+                                        left: { type: 1, data: { type: 0, data: {} } },
+                                        right: { type: 0, data: {} }
+                                     } },
+                        }
+                    },
+                    right: {
                         type: 1,
                         data: { type: 0, data: {} }
                     }
