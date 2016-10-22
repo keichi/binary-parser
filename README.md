@@ -238,6 +238,89 @@ var parser = new Parser()
 	.int32('c')
 ```
 
+### namely(alias)
+Set an alias to this parser, so there will be an opportunity to refer to it by name in methods like `.array`, `.nest` and `.choice`, instead of requirement to have an instance of it.
+
+Especially, the parser may reference itself:
+
+```javascript
+var stop = new Parser();
+
+var parser =
+    new Parser().namely('self') // use 'self' to refer to the parser itself
+    .uint8('type')
+    .choice('data', {
+        'tag': 'type',
+        'choices': {
+            0: stop,
+            1: 'self',
+            2: Parser.start().nest('left',  { type: 'self' })
+                             .nest('right', { type: 'self' }),
+            3: Parser.start().nest('one',   { type: 'self' })
+                             .nest('two',   { type: 'self' })
+                             .nest('three', { type: 'self' })
+        }
+    });
+
+//        2
+//       / \
+//      3   1
+//    / | \  \
+//   1  0  2  0
+//  /     / \
+// 0     1   0
+//      /
+//     0
+
+var buffer = new Buffer([ 2,
+                        /* left -> */ 3,
+                            /* one   -> */ 1, /* -> */ 0,
+                            /* two   -> */ 0,
+                            /* three -> */ 2,
+                                /* left  -> */ 1, /* -> */ 0,
+                                /* right -> */ 0,
+                        /* right -> */ 1, /* -> */ 0 ]);
+
+parser.parse(buffer);
+```
+
+For most of the cases there is almost no difference to the instance-way of referencing, but this method provides the way to parse recursive trees, where each node could reference the node of the same type from the inside.
+
+Also, when you reference a parser using its instance twice, the generated code will contain two similar parts of the code included, while with the named approach, it will include a function with a name, and will just call this function for every case of usage.
+
+NB: This style could lead to circular references and infinite recursion, to avoid this, ensure that every possible path has its end. Also, this recursion is not tail-optimized, so could lead to memory leaks when it goes too deep.
+
+An example of referencing other patches:
+
+```javascript
+// the line below registers the name 'self', so we will be able to use it in
+// `twoCells` as a reference
+var parser = Parser.start().namely('self');
+
+var stop = Parser.start().namely('stop');
+
+var twoCells = Parser.start().namely('twoCells')
+                             .nest('left',  { type: 'self' })
+                             .nest('right', { type: 'stop' })
+
+parser
+    .uint8('type')
+    .choice('data', {
+        'tag': 'type',
+        'choices': {
+            0: 'stop',
+            1: 'self',
+            2: 'twoCells'
+        }
+    });
+
+var buffer = new Buffer([ 2,
+                            /* left */  1, 1, 0,
+                            /* right */ 0 ]);
+
+parser.parse(buffer);
+```
+
 ### compile()
 Compile this parser on-the-fly and cache its result. Usually, there is no need to
 call this method directly, since it's called when `parse(buffer)` is executed
