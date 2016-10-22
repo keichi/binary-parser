@@ -415,6 +415,39 @@ describe('Composite parser', function(){
                 }
             });
         });
+        it('should be able to refer to other parsers both directly and by name', function(){
+            var parser = Parser.start().namely('self');
+
+            var stop = Parser.start();
+
+            var twoCells = Parser.start().nest('left',  { type: 'self' })
+                                         .nest('right', { type: stop })
+
+            parser
+                .uint8('type')
+                .choice('data', {
+                    'tag': 'type',
+                    'choices': {
+                        0: stop,
+                        1: 'self',
+                        2: twoCells
+                    }
+                });
+
+            var buffer = new Buffer([ 2,
+                                        /* left */  1, 1, 0,
+                                        /* right */ 0 ]);
+            assert.deepEqual(parser.parse(buffer), {
+                type: 2,
+                data: {
+                    left: {
+                        type: 1,
+                        data: { type: 1, data: { type: 0, data: {} } },
+                    },
+                    right: { }
+                }
+            });
+        });
         it('should be able to go into recursion with complex nesting', function(){
             var stop = Parser.start();
 
