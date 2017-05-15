@@ -314,6 +314,25 @@ describe('Composite parser', function(){
         });
     });
 
+    describe('Buffer parser', function() {
+            //this is a test for testing a fix of a bug, that removed the last byte of the 
+            //buffer parser
+            it('should return a buffer with same size', function() {
+                
+                var bufferParser = new Parser()
+                    .buffer('buf', {
+                        readUntil: 'eof',
+                        formatter: function(buffer) { 
+                            return buffer;
+                        }
+                    })
+
+                var buffer = new Buffer('John\0Doe\0');
+                assert.deepEqual(bufferParser.parse(buffer),{buf:buffer});
+            });
+    });
+
+
     describe('Constructors', function() {
         it('should create a custom object type', function() {
            function Person () {
