@@ -641,14 +641,14 @@ describe('Composite parser', function(){
     });
 
     describe('Buffer parser', function() {
-            //this is a test for testing a fix of a bug, that removed the last byte of the 
+            //this is a test for testing a fix of a bug, that removed the last byte of the
             //buffer parser
             it('should return a buffer with same size', function() {
-                
+
                 var bufferParser = new Parser()
                     .buffer('buf', {
                         readUntil: 'eof',
-                        formatter: function(buffer) { 
+                        formatter: function(buffer) {
                             return buffer;
                         }
                     })
@@ -690,9 +690,10 @@ describe('Composite parser', function(){
                 .array('data', {
                     length: 3,
                     type: 'int8'
-                });
+                })
+                .buffer('raw', {length:8});
 
-            assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3);
+            assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
         });
         it('should assert parsed values', function() {
             var parser =
