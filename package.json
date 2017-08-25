@@ -4,8 +4,8 @@
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
   "devDependencies": {
-    "istanbul": "^0.3.14",
-    "mocha": "^2.2.5"
+    "istanbul": "^0.4.5",
+    "mocha": "^3.5.0"
   },
   "scripts": {
     "test": "mocha --reporter spec",
