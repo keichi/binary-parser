@@ -1,6 +1,6 @@
 {
   "name": "binary-parser",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
   "devDependencies": {
@@ -23,13 +23,13 @@
   "author": {
     "name": "Keichi Takahashi",
     "email": "keichi.t@me.com",
-    "url": "http://blog.keichi.net/"
+    "url": "https://keichi.net/"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/Keichi/binary-parser.git"
+    "url": "http://github.com/keichi/binary-parser.git"
   },
-  "bugs": "http://github.com/Keichi/binary-parser/issues",
+  "bugs": "http://github.com/keichi/binary-parser/issues",
   "dependencies": {}
 }
