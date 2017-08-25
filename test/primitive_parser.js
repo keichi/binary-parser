@@ -253,6 +253,15 @@ describe('Primitive parser', function(){
             assert.equal(parser1.parse(buffer).str, 'test\u0000\u0000');
             assert.equal(parser2.parse(buffer).str, 'test');
         });
+        it('should parse string greedily with zero-bytes internally', function() {
+            var buffer = new Buffer('abc\u0000defghij\u0000');
+            var parser = Parser.start()
+                .string('a', {greedy: true});
+
+            assert.deepEqual(parser.parse(buffer), {
+                a: 'abc\u0000defghij\u0000'
+            });
+        });
     });
 
     describe('Buffer parser', function() {

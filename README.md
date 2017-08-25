@@ -126,6 +126,7 @@ with an alphabet. `options` is an object; following options are available:
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
+- `greedy - (Optional, defaults to `false`) If true, then this parser reads until it reaches the end of the buffer. Will consume zero-bytes.
 - `stripNull` - (Optional, must be used with `length`) If true, then strip null characters from end of the string
 
 ### buffer(name [,options])
