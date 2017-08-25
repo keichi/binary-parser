@@ -154,6 +154,8 @@ Parse bytes as an array. `options` is an object; following options are available
 	Use number for statically sized arrays.
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required) If `'eof'`, then this parser
 	reads until the end of `Buffer` object. If function it reads until the function returns true.
+- `$parent` - (Optional) An array with selected properties from the parental scope. References can be
+  accessed inside functions using `this.$parent[...]`.
 
 ```javascript
 var parser = new Parser()
@@ -215,9 +217,11 @@ Combining `choice` with `array` is useful for parsing a typical
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
 	Can be a string pointing to another field or a function.
-- `choices` - (Required) An object which key is an integer and value is the parser which is executed
+- `choices` - (Required) An object which key is an integer/string and value is the parser which is executed
 	when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case of the tag value doesn't match any of `choices` use this parser.
+- `$parent` - (Optional) An array with selected properties from the parental scope. References can be
+accessed inside functions using `this.$parent[...]`.
 
 ```javascript
 var parser1 = ...;
@@ -229,11 +233,36 @@ var parser = new Parser()
 	.choice('data', {
 		tag: 'tagValue',
 		choices: {
-			1: parser1, // When tagValue == 1, execute parser1
-			4: parser2, // When tagValue == 4, execute parser2
-			5: parser3  // When tagValue == 5, execute parser3
+			1: parser1, // if tagValue == 1, execute parser1
+			4: parser2, // if tagValue == 4, execute parser2
+			5: parser3  // if tagValue == 5, execute parser3
 		}
 	});
+```
+
+### loop(lookahead, [,options])
+Choose and execute parsers which are matching the referenced tag value.
+The `lookahead` parser provides information about upcoming fields to determine the selection.
+As long as one of the `choices` options fits, it continues parsing the buffer.
+
+- `tag` - (Required) The value used to determine which parser to use from the `choices`
+	Can be a string pointing to another field or a function.
+- `choices` - (Required) An object which key is an integer/string and value is the parser which is executed
+	when `tag` equals the key value. The key of a choice is used as the property name and will hold an array
+  of results if multiple instances are matched.
+
+```javascript
+var parser1 = ...;
+var parser2 = ...;
+
+var parser = new Parser()
+  .loop(new Parser().skip(4).string('type', { length: 4 })), {
+    tag: 'type',
+    choices: {
+      ftyp: parser1, // if type == 'ftyp', execute parser1
+      moov: parser2  // if type == 'ftyp', execute parser2
+    }
+  });
 ```
 
 ### nest(name [,options])
@@ -243,7 +272,7 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 - `type` - (Required) A `Parser` object.
 
 ### skip(length)
-Skip parsing for `length` bytes.
+Skip parsing of bytes. `length` can be either a number, a string or a function.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either `'little'` or `'big'`.
@@ -359,7 +388,7 @@ These are common options that can be specified in all parsers.
 ```javascript
 var parser = new Parser()
   .array('ipv4', {
-    type: uint8,
+    type: 'uint8',
     length: '4',
     formatter: function(arr) { return arr.join('.'); }
   });
