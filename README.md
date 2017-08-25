@@ -91,7 +91,7 @@ With no prefix, it parses as a signed number, with `u` prefixed as an unsigned n
 
 ```javascript
 var parser = new Parser()
-	// Signed 32-bit integer (little endian)
+    // Signed 32-bit integer (little endian)
     .int32le('a')
     // Unsigned 8-bit integer
     .uint8('b')
@@ -126,7 +126,7 @@ with an alphabet. `options` is an object; following options are available:
 	Use number for statically sized arrays, string to reference another variable and
 	function to do some calculation.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
-- `greedy - (Optional, defaults to `false`) If true, then this parser reads until it reaches the end of the buffer. Will consume zero-bytes.
+- `greedy` - (Optional, defaults to `false`) If true, then this parser reads until it reaches the end of the buffer. Will consume zero-bytes.
 - `stripNull` - (Optional, must be used with `length`) If true, then strip null characters from end of the string
 
 ### buffer(name [,options])
@@ -149,63 +149,63 @@ Parse bytes as an array. `options` is an object; following options are available
 - `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
     If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
 - `length` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array. Can be a number, string or a function.
-	Use number for statically sized arrays.
+    Use number for statically sized arrays.
 - `lengthInBytes` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array expressed in bytes. Can be a number, string or a function.
-	Use number for statically sized arrays.
+    Use number for statically sized arrays.
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required) If `'eof'`, then this parser
-	reads until the end of `Buffer` object. If function it reads until the function returns true.
+    reads until the end of `Buffer` object. If function it reads until the function returns true.
 
 ```javascript
 var parser = new Parser()
-	// Statically sized array
-	.array('data', {
-		type: 'int32',
-		length: 8
-	})
+    // Statically sized array
+    .array('data', {
+        type: 'int32',
+        length: 8
+    })
 
-	// Dynamically sized array (reference another variable)
-	.uint8('dataLength')
-	.array('data2', {
-		type: 'int32',
-		length: 'dataLength'
-	})
+    // Dynamically sized array (references another variable)
+    .uint8('dataLength')
+    .array('data2', {
+        type: 'int32',
+        length: 'dataLength'
+    })
 
-	// Dynamically sized array (with some calculation)
-	.array('data3', {
-		type: 'int32',
-		length: function() { return this.dataLength - 1; } // other fields are available through this
-	});
+    // Dynamically sized array (with some calculation)
+    .array('data3', {
+        type: 'int32',
+        length: function() { return this.dataLength - 1; } // other fields are available through this
+    });
 
-	// Statically sized array
-	.array('data4', {
-		type: 'int32',
-		lengthInBytes: 16
-	})
+    // Statically sized array
+    .array('data4', {
+        type: 'int32',
+        lengthInBytes: 16
+    })
 
-	// Dynamically sized array (reference another variable)
-	.uint8('dataLengthInBytes')
-	.array('data5', {
-		type: 'int32',
-		lengthInBytes: 'dataLengthInBytes'
-	})
+    // Dynamically sized array (references another variable)
+    .uint8('dataLengthInBytes')
+    .array('data5', {
+        type: 'int32',
+        lengthInBytes: 'dataLengthInBytes'
+    })
 
-	// Dynamically sized array (with some calculation)
-	.array('data6', {
-		type: 'int32',
-		lengthInBytes: function() { return this.dataLengthInBytes - 4; } // other fields are available through this
-	})
+    // Dynamically sized array (with some calculation)
+    .array('data6', {
+        type: 'int32',
+        lengthInBytes: function() { return this.dataLengthInBytes - 4; } // other fields are available through this
+    })
 
-	// Dynamically sized array (with stop-check on parsed item)
-	.array('data7', {
-		type: 'int32',
-		readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
-	});
+    // Dynamically sized array (with stop-check on parsed item)
+    .array('data7', {
+        type: 'int32',
+        readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
+    });
 
-	// Use user defined parser object
-	.array('data8', {
-		type: userDefinedParser,
-		length: 'dataLength'
-	});
+    // Use user defined parser object
+    .array('data8', {
+        type: userDefinedParser,
+        length: 'dataLength'
+    });
 ```
 
 ### choice(name [,options])
@@ -214,9 +214,9 @@ Combining `choice` with `array` is useful for parsing a typical
 [Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
 
 - `tag` - (Required) The value used to determine which parser to use from the `choices`
-	Can be a string pointing to another field or a function.
+    Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the parser which is executed
-	when `tag` equals the key value.
+    when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case of the tag value doesn't match any of `choices` use this parser.
 
 ```javascript
@@ -225,15 +225,15 @@ var parser2 = ...;
 var parser3 = ...;
 
 var parser = new Parser()
-	.uint8('tagValue')
-	.choice('data', {
-		tag: 'tagValue',
-		choices: {
-			1: parser1, // When tagValue == 1, execute parser1
-			4: parser2, // When tagValue == 4, execute parser2
-			5: parser3  // When tagValue == 5, execute parser3
-		}
-	});
+    .uint8('tagValue')
+    .choice('data', {
+        tag: 'tagValue',
+        choices: {
+            1: parser1, // When tagValue == 1, execute parser1
+            4: parser2, // When tagValue == 4, execute parser2
+            5: parser3  // When tagValue == 5, execute parser3
+        }
+    });
 ```
 
 ### nest(name [,options])
@@ -252,12 +252,12 @@ The default endianess of `Parser` is set to big-endian.
 ```javascript
 var parser = new Parser()
     .endianess('le')
-	// You can specify endianess explicitly
-	.uint16be('a')
+    // You can specify endianess explicitly
+    .uint16be('a')
     .uint32le('a')
-	// Or you can omit endianess (in this case, little-endian is used)
-	.uint16('b')
-	.int32('c')
+    // Or you can omit endianess (in this case, little-endian is used)
+    .uint16('b')
+    .int32('c')
 ```
 
 ### namely(alias)
@@ -356,14 +356,14 @@ Usually used for debugging.
 These are common options that can be specified in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired form.
-```javascript
-var parser = new Parser()
-  .array('ipv4', {
-    type: uint8,
-    length: '4',
-    formatter: function(arr) { return arr.join('.'); }
-  });
-```
+    ```javascript
+    var parser = new Parser()
+      .array('ipv4', {
+        type: uint8,
+        length: '4',
+        formatter: function(arr) { return arr.join('.'); }
+      });
+    ```
 
 - `assert` - Do assertion on the parsed result (useful for checking magic numbers and so on).
 If `assert` is a `string` or `number`, the actual parsed result will be compared with it
@@ -374,7 +374,7 @@ On the other hand, if `assert` is a function, that function is executed with one
     ```javascript
     // simple maginc number validation
     var ClassFile =
-    	Parser.start()
+        Parser.start()
         .endianess('big')
         .uint32('magic', {assert: 0xcafebabe})
 
