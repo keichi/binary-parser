@@ -321,6 +321,33 @@ describe('Composite parser', function(){
                 } ]
             });
         });
+
+        it('should allow parent parser attributes as choice key', function() {
+            var ChildParser = Parser.start()
+                .choice('data', {
+                    tag: function(vars) {
+                        return vars.version;
+                    },
+                    choices: {
+                        1: Parser.start().uint8('v1'),
+                        2: Parser.start().uint16('v2'),
+                    }
+                });
+
+            var ParentParser = Parser.start()
+                .uint8('version')
+                .nest('child', { type: ChildParser });
+
+            var buffer = new Buffer([0x1, 0x2]);
+            assert.deepEqual(ParentParser.parse(buffer), {
+                version: 1, child: { data: { v1: 2 } }
+            });
+
+            buffer = new Buffer([0x2, 0x3, 0x4]);
+            assert.deepEqual(ParentParser.parse(buffer), {
+                version: 2, child: { data: { v2: 0x0304 } }
+            });
+        });
     });
 
     describe('Choice parser', function() {
