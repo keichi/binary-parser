@@ -1,6 +1,7 @@
 # Binary-parser
 
 [![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkeichi%2Fbinary-parser.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkeichi%2Fbinary-parser?ref=badge_shield)
 
 Binary-parser is a binary parser builder library for [node](http://nodejs.org),
 which enables you to write efficient parsers in a simple & declarative way.
@@ -397,3 +398,7 @@ Please report issues to the [issue tracker](https://github.com/Keichi/binary-par
 have any difficulties using this module, found a bug, or request a new feature.
 
 Pull requests with fixes and improvements are welcomed!
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkeichi%2Fbinary-parser.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkeichi%2Fbinary-parser?ref=badge_large)
