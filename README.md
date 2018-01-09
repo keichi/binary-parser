@@ -2,18 +2,19 @@
 
 [![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
 
-Binary-parser is a binary parser builder library for [node](http://nodejs.org),
-which enables you to write efficient parsers in a simple & declarative way.
+Binary-parser is a binary parser builder for [node](http://nodejs.org) that
+enables you to write efficient parsers in a simple and declarative manner.
 
-It supports all common data types required to analyze a structured binary data.
-Binary-parser dynamically generates and compiles the parser code on-the-fly,
-which runs as fast as a hand-written parser (which takes much more time and effort to write).
-Supported data types are:
+It supports all common data types required to analyze a structured binary
+data. Binary-parser dynamically generates and compiles the parser code
+on-the-fly, which runs as fast as a hand-written parser (which takes much more
+time and effort to write). Supported data types are:
 
 - Integers (supports 8, 16, 32 bit signed- and unsigned integers)
 - Floating point numbers (supports 32 and 64 bit floating point values)
 - Bit fields (supports bit fields with length from 1 to 32 bits)
-- Strings (supports various encodings, fixed-length and variable-length, zero terminated string)
+- Strings (supports various encodings, fixed-length and variable-length, zero
+  terminated string)
 - Arrays (supports user-defined element type, fixed-length and variable-length)
 - Choices
 - User defined types
@@ -30,8 +31,9 @@ $ npm install binary-parser
 
 ## Quick Start
 1. Create an empty Parser object with `new Parser()`.
-2. Chain builder methods to build the desired parser. (See [API](https://github.com/Keichi/binary-parser#api) for detailed document
-of each methods)
+2. Chain builder methods to build the desired parser. (See
+   [API](https://github.com/Keichi/binary-parser#api) for detailed document of
+   each methods)
 3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
 4. Parsed result will be returned as an object.
 
@@ -71,23 +73,24 @@ console.log(ipHeader.parse(buf));
 ## API
 
 ### new Parser()
-Constructs a Parser object. Returned object represents a parser which parses nothing.
+Constructs a Parser object. Returned object represents a parser which parses
+nothing.
 
 ### parse(buffer[, callback])
-Parse a `Buffer` object `buffer` with this parser and return the resulting object.
-When `parse(buffer)` is called for the first time, parser code is compiled on-the-fly
-and internally cached.
+Parse a `Buffer` object `buffer` with this parser and return the resulting
+object. When `parse(buffer)` is called for the first time, parser code is
+compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
-Set the constructor function that should be called to create the object returned from
-the `parse` method.
+Set the constructor function that should be called to create the object
+returned from the `parse` method.
 
 ### [u]int{8, 16, 32}{le, be}(name [,options])
-Parse bytes as an integer and store it in a variable named `name`. `name` should consist
-only of alphanumeric characters and start with an alphabet.
-Number of bits can be chosen from 8, 16 and 32.
-Byte-ordering can be either `l` for little endian or `b` for big endian.
-With no prefix, it parses as a signed number, with `u` prefixed as an unsigned number.
+Parse bytes as an integer and store it in a variable named `name`. `name`
+should consist only of alphanumeric characters and start with an alphabet.
+Number of bits can be chosen from 8, 16 and 32. Byte-ordering can be either
+`l` for little endian or `b` for big endian. With no prefix, it parses as a
+signed number, with `u` prefixed as an unsigned number.
 
 ```javascript
 var parser = new Parser()
@@ -100,13 +103,14 @@ var parser = new Parser()
 ```
 
 ### bit\[1-32\](name [,options])
-Parse bytes as a bit field and store it in variable `name`. There are 32 methods from
-`bit1` to `bit32` each corresponding to 1-bit-length to 32-bits-length bit field.
+Parse bytes as a bit field and store it in variable `name`. There are 32
+methods from `bit1` to `bit32` each corresponding to 1-bit-length to
+32-bits-length bit field.
 
 ### {float, double}{le, be}(name [,options])
-Parse bytes as an floating-point value and store it in a variable
-named `name`. `name` should consist only of alphanumeric characters and start
-with an alphabet.
+Parse bytes as an floating-point value and store it in a variable named
+`name`. `name` should consist only of alphanumeric characters and start with
+an alphabet.
 
 ```javascript
 var parser = new Parser()
@@ -117,43 +121,57 @@ var parser = new Parser()
 ```
 
 ### string(name [,options])
-Parse bytes as a string. `name` should consist only of alpha numeric characters and start
-with an alphabet. `options` is an object; following options are available:
+Parse bytes as a string. `name` should consist only of alpha numeric
+characters and start with an alphabet. `options` is an object; following
+options are available:
 
-- `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use. `'utf8'`, `'ascii'`, `'hex'` and else
-	are valid. See [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end) for more info.
-- `length ` - (Optional) Length of the string. Can be a number, string or a function.
-	Use number for statically sized arrays, string to reference another variable and
-	function to do some calculation.
-- `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser reads until it reaches zero.
-- `greedy` - (Optional, defaults to `false`) If true, then this parser reads until it reaches the end of the buffer. Will consume zero-bytes.
-- `stripNull` - (Optional, must be used with `length`) If true, then strip null characters from end of the string
+- `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
+  `'utf8'`, `'ascii'`, `'hex'` and else are valid. See
+  [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
+  for more info.
+- `length ` - (Optional) Length of the string. Can be a number, string or a
+  function. Use number for statically sized arrays, string to reference
+  another variable and function to do some calculation.
+- `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
+  reads until it reaches zero.
+- `greedy` - (Optional, defaults to `false`) If true, then this parser reads
+  until it reaches the end of the buffer. Will consume zero-bytes.
+- `stripNull` - (Optional, must be used with `length`) If true, then strip
+  null characters from end of the string
 
 ### buffer(name [,options])
-Parse bytes as a buffer. `name` should consist only of alpha numeric characters and start
-with an alphabet. `options` is an object; following options are available:
+Parse bytes as a buffer. `name` should consist only of alpha numeric
+characters and start with an alphabet. `options` is an object; following
+options are available:
 
-- `clone` - (Optional, defaults to `false`) By default, `buffer(name [,options])` returns a new buffer which references
-    the same memory as the parser input, but offset and cropped by a certain range. If this option is true, input buffer
-    will be cloned and a new buffer referncing another memory is returned.
-- `length ` - (either `length` or `readUntil` is required) Length of the buffer. Can be a number, string or a function.
-    Use number for statically sized buffers, string to reference another variable and
-    function to do some calculation.
-- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then this parser
-    will read till it reaches end of the `Buffer` object.
-
+- `clone` - (Optional, defaults to `false`) By default,
+  `buffer(name [,options])` returns a new buffer which references the same
+  memory as the parser input, but offset and cropped by a certain range. If
+  this option is true, input buffer will be cloned and a new buffer referncing
+  another memory is returned.
+- `length ` - (either `length` or `readUntil` is required) Length of the
+  buffer. Can be a number, string or a function. Use number for statically
+  sized buffers, string to reference another variable and function to do some
+  calculation.
+- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then
+  this parser will read till it reaches end of the `Buffer` object.
 
 ### array(name [,options])
-Parse bytes as an array. `options` is an object; following options are available:
+Parse bytes as an array. `options` is an object; following options are
+available:
 
-- `type` - (Required) Type of the array element. Can be a string or an user defined Parser object.
-    If it's a string, you have to choose from [u]int{8, 16, 32}{le, be}.
-- `length` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array. Can be a number, string or a function.
-    Use number for statically sized arrays.
-- `lengthInBytes` - (either `length`, `lengthInBytes`, or `readUntil` is required) Length of the array expressed in bytes. Can be a number, string or a function.
-    Use number for statically sized arrays.
-- `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required) If `'eof'`, then this parser
-    reads until the end of `Buffer` object. If function it reads until the function returns true.
+- `type` - (Required) Type of the array element. Can be a string or an user
+  defined Parser object. If it's a string, you have to choose from [u]int{8,
+  16, 32}{le, be}.
+- `length` - (either `length`, `lengthInBytes`, or `readUntil` is required)
+  Length of the array. Can be a number, string or a function. Use number for
+  statically sized arrays.
+- `lengthInBytes` - (either `length`, `lengthInBytes`, or `readUntil` is
+  required) Length of the array expressed in bytes. Can be a number, string or
+  a function. Use number for statically sized arrays.
+- `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
+  If `'eof'`, then this parser reads until the end of `Buffer` object. If
+  function it reads until the function returns true.
 
 ```javascript
 var parser = new Parser()
@@ -209,15 +227,17 @@ var parser = new Parser()
 ```
 
 ### choice(name [,options])
-Choose one parser from several choices according to a field value.
-Combining `choice` with `array` is useful for parsing a typical
-[Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled format.
+Choose one parser from several choices according to a field value. Combining
+`choice` with `array` is useful for parsing a typical
+[Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled
+format.
 
-- `tag` - (Required) The value used to determine which parser to use from the `choices`
-    Can be a string pointing to another field or a function.
-- `choices` - (Required) An object which key is an integer and value is the parser which is executed
-    when `tag` equals the key value.
-- `defaultChoice` - (Optional) In case of the tag value doesn't match any of `choices` use this parser.
+- `tag` - (Required) The value used to determine which parser to use from the
+  `choices` Can be a string pointing to another field or a function.
+- `choices` - (Required) An object which key is an integer and value is the
+  parser which is executed when `tag` equals the key value.
+- `defaultChoice` - (Optional) In case of the tag value doesn't match any of
+  `choices` use this parser.
 
 ```javascript
 var parser1 = ...;
@@ -246,8 +266,8 @@ Nest a parser in this position. Parse result of the nested parser is stored in t
 Skip parsing for `length` bytes.
 
 ### endianess(endianess)
-Define what endianess to use in this parser. `endianess` can be either `'little'` or `'big'`.
-The default endianess of `Parser` is set to big-endian.
+Define what endianess to use in this parser. `endianess` can be either
+`'little'` or `'big'`. The default endianess of `Parser` is set to big-endian.
 
 ```javascript
 var parser = new Parser()
@@ -261,7 +281,9 @@ var parser = new Parser()
 ```
 
 ### namely(alias)
-Set an alias to this parser, so there will be an opportunity to refer to it by name in methods like `.array`, `.nest` and `.choice`, instead of requirement to have an instance of it.
+Set an alias to this parser, so there will be an opportunity to refer to it by
+name in methods like `.array`, `.nest` and `.choice`, instead of requirement
+to have an instance of it.
 
 Especially, the parser may reference itself:
 
@@ -306,11 +328,18 @@ var buffer = new Buffer([ 2,
 parser.parse(buffer);
 ```
 
-For most of the cases there is almost no difference to the instance-way of referencing, but this method provides the way to parse recursive trees, where each node could reference the node of the same type from the inside.
+For most of the cases there is almost no difference to the instance-way of
+referencing, but this method provides the way to parse recursive trees, where
+each node could reference the node of the same type from the inside.
 
-Also, when you reference a parser using its instance twice, the generated code will contain two similar parts of the code included, while with the named approach, it will include a function with a name, and will just call this function for every case of usage.
+Also, when you reference a parser using its instance twice, the generated code
+will contain two similar parts of the code included, while with the named
+approach, it will include a function with a name, and will just call this
+function for every case of usage.
 
-NB: This style could lead to circular references and infinite recursion, to avoid this, ensure that every possible path has its end. Also, this recursion is not tail-optimized, so could lead to memory leaks when it goes too deep.
+NB: This style could lead to circular references and infinite recursion, to
+avoid this, ensure that every possible path has its end. Also, this recursion
+is not tail-optimized, so could lead to memory leaks when it goes too deep.
 
 An example of referencing other patches:
 
@@ -344,9 +373,9 @@ parser.parse(buffer);
 ```
 
 ### compile()
-Compile this parser on-the-fly and cache its result. Usually, there is no need to
-call this method directly, since it's called when `parse(buffer)` is executed
-for the first time.
+Compile this parser on-the-fly and cache its result. Usually, there is no need
+to call this method directly, since it's called when `parse(buffer)` is
+executed for the first time.
 
 ### getCode()
 Dynamically generates the code for this parser and returns it as a string.
@@ -355,7 +384,8 @@ Usually used for debugging.
 ### Common options
 These are common options that can be specified in all parsers.
 
-- `formatter` - Function that transforms the parsed value into a more desired form.
+- `formatter` - Function that transforms the parsed value into a more desired
+  form.
     ```javascript
     var parser = new Parser()
       .array('ipv4', {
@@ -365,11 +395,12 @@ These are common options that can be specified in all parsers.
       });
     ```
 
-- `assert` - Do assertion on the parsed result (useful for checking magic numbers and so on).
-If `assert` is a `string` or `number`, the actual parsed result will be compared with it
-with `===` (strict equality check), and an exception is thrown if they mismatch.
-On the other hand, if `assert` is a function, that function is executed with one argument
-(parsed result) and if it returns false, an exception is thrown.
+- `assert` - Do assertion on the parsed result (useful for checking magic
+  numbers and so on). If `assert` is a `string` or `number`, the actual parsed
+  result will be compared with it with `===` (strict equality check), and an
+  exception is thrown if they mismatch. On the other hand, if `assert` is a
+  function, that function is executed with one argument (parsed result) and if
+  it returns false, an exception is thrown.
 
     ```javascript
     // simple maginc number validation
@@ -393,7 +424,8 @@ On the other hand, if `assert` is a function, that function is executed with one
 See `example` for more complex examples.
 
 ## Support
-Please report issues to the [issue tracker](https://github.com/Keichi/binary-parser/issues) if you
-have any difficulties using this module, found a bug, or request a new feature.
+Please report issues to the
+[issue tracker](https://github.com/Keichi/binary-parser/issues) if you have
+any difficulties using this module, found a bug, or request a new feature.
 
 Pull requests with fixes and improvements are welcomed!
