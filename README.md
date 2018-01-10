@@ -39,32 +39,32 @@ $ npm install binary-parser
 
 ```javascript
 // Module import
-var Parser = require('binary-parser').Parser;
+var Parser = require("binary-parser").Parser;
 
 // Build an IP packet header Parser
 var ipHeader = new Parser()
-    .endianess('big')
-    .bit4('version')
-    .bit4('headerLength')
-    .uint8('tos')
-    .uint16('packetLength')
-    .uint16('id')
-    .bit3('offset')
-    .bit13('fragOffset')
-    .uint8('ttl')
-    .uint8('protocol')
-    .uint16('checksum')
-    .array('src', {
-        type: 'uint8',
-        length: 4
-    })
-    .array('dst', {
-        type: 'uint8',
-        length: 4
-    });
+  .endianess("big")
+  .bit4("version")
+  .bit4("headerLength")
+  .uint8("tos")
+  .uint16("packetLength")
+  .uint16("id")
+  .bit3("offset")
+  .bit13("fragOffset")
+  .uint8("ttl")
+  .uint8("protocol")
+  .uint16("checksum")
+  .array("src", {
+    type: "uint8",
+    length: 4
+  })
+  .array("dst", {
+    type: "uint8",
+    length: 4
+  });
 
 // Prepare buffer to parse.
-var buf = new Buffer('450002c5939900002c06ef98adc24f6c850186d1', 'hex');
+var buf = new Buffer("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 // Parse buffer and show result
 console.log(ipHeader.parse(buf));
@@ -94,12 +94,12 @@ signed number, with `u` prefixed as an unsigned number.
 
 ```javascript
 var parser = new Parser()
-    // Signed 32-bit integer (little endian)
-    .int32le('a')
-    // Unsigned 8-bit integer
-    .uint8('b')
-    // Signed 16-bit integer (big endian)
-    .int16be('c')
+  // Signed 32-bit integer (little endian)
+  .int32le("a")
+  // Unsigned 8-bit integer
+  .uint8("b")
+  // Signed 16-bit integer (big endian)
+  .int16be("c");
 ```
 
 ### bit\[1-32\](name [,options])
@@ -114,10 +114,10 @@ an alphabet.
 
 ```javascript
 var parser = new Parser()
-    // 32-bit floating value (big endian)
-    .floatbe('a')
-    // 64-bit floating value (little endian)
-    .doublele('b')
+  // 32-bit floating value (big endian)
+  .floatbe("a")
+  // 64-bit floating value (little endian)
+  .doublele("b");
 ```
 
 ### string(name [,options])
@@ -175,55 +175,61 @@ available:
 
 ```javascript
 var parser = new Parser()
-    // Statically sized array
-    .array('data', {
-        type: 'int32',
-        length: 8
-    })
+  // Statically sized array
+  .array("data", {
+    type: "int32",
+    length: 8
+  })
 
-    // Dynamically sized array (references another variable)
-    .uint8('dataLength')
-    .array('data2', {
-        type: 'int32',
-        length: 'dataLength'
-    })
+  // Dynamically sized array (references another variable)
+  .uint8("dataLength")
+  .array("data2", {
+    type: "int32",
+    length: "dataLength"
+  })
 
-    // Dynamically sized array (with some calculation)
-    .array('data3', {
-        type: 'int32',
-        length: function() { return this.dataLength - 1; } // other fields are available through this
-    });
+  // Dynamically sized array (with some calculation)
+  .array("data3", {
+    type: "int32",
+    length: function() {
+      return this.dataLength - 1;
+    } // other fields are available through this
+  })
 
-    // Statically sized array
-    .array('data4', {
-        type: 'int32',
-        lengthInBytes: 16
-    })
+  // Statically sized array
+  .array("data4", {
+    type: "int32",
+    lengthInBytes: 16
+  })
 
-    // Dynamically sized array (references another variable)
-    .uint8('dataLengthInBytes')
-    .array('data5', {
-        type: 'int32',
-        lengthInBytes: 'dataLengthInBytes'
-    })
+  // Dynamically sized array (references another variable)
+  .uint8("dataLengthInBytes")
+  .array("data5", {
+    type: "int32",
+    lengthInBytes: "dataLengthInBytes"
+  })
 
-    // Dynamically sized array (with some calculation)
-    .array('data6', {
-        type: 'int32',
-        lengthInBytes: function() { return this.dataLengthInBytes - 4; } // other fields are available through this
-    })
+  // Dynamically sized array (with some calculation)
+  .array("data6", {
+    type: "int32",
+    lengthInBytes: function() {
+      return this.dataLengthInBytes - 4;
+    } // other fields are available through this
+  })
 
-    // Dynamically sized array (with stop-check on parsed item)
-    .array('data7', {
-        type: 'int32',
-        readUntil: function(item, buffer) { return item === 42 } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
-    });
+  // Dynamically sized array (with stop-check on parsed item)
+  .array("data7", {
+    type: "int32",
+    readUntil: function(item, buffer) {
+      return item === 42;
+    } // stop when specific item is parsed. buffer can be used to perform a read-ahead.
+  })
 
-    // Use user defined parser object
-    .array('data8', {
-        type: userDefinedParser,
-        length: 'dataLength'
-    });
+  // Use user defined parser object
+  .array("data8", {
+    type: userDefinedParser,
+    length: "dataLength"
+  });
 ```
 
 ### choice(name [,options])
@@ -244,16 +250,14 @@ var parser1 = ...;
 var parser2 = ...;
 var parser3 = ...;
 
-var parser = new Parser()
-    .uint8('tagValue')
-    .choice('data', {
-        tag: 'tagValue',
-        choices: {
-            1: parser1, // When tagValue == 1, execute parser1
-            4: parser2, // When tagValue == 4, execute parser2
-            5: parser3  // When tagValue == 5, execute parser3
-        }
-    });
+var parser = new Parser().uint8("tagValue").choice("data", {
+  tag: "tagValue",
+  choices: {
+    1: parser1, // When tagValue == 1, execute parser1
+    4: parser2, // When tagValue == 4, execute parser2
+    5: parser3 // When tagValue == 5, execute parser3
+  }
+});
 ```
 
 ### nest(name [,options])
@@ -271,13 +275,13 @@ Define what endianess to use in this parser. `endianess` can be either
 
 ```javascript
 var parser = new Parser()
-    .endianess('le')
-    // You can specify endianess explicitly
-    .uint16be('a')
-    .uint32le('a')
-    // Or you can omit endianess (in this case, little-endian is used)
-    .uint16('b')
-    .int32('c')
+  .endianess("le")
+  // You can specify endianess explicitly
+  .uint16be("a")
+  .uint32le("a")
+  // Or you can omit endianess (in this case, little-endian is used)
+  .uint16("b")
+  .int32("c");
 ```
 
 ### namely(alias)
@@ -290,21 +294,23 @@ Especially, the parser may reference itself:
 ```javascript
 var stop = new Parser();
 
-var parser =
-    new Parser().namely('self') // use 'self' to refer to the parser itself
-    .uint8('type')
-    .choice('data', {
-        'tag': 'type',
-        'choices': {
-            0: stop,
-            1: 'self',
-            2: Parser.start().nest('left',  { type: 'self' })
-                             .nest('right', { type: 'self' }),
-            3: Parser.start().nest('one',   { type: 'self' })
-                             .nest('two',   { type: 'self' })
-                             .nest('three', { type: 'self' })
-        }
-    });
+var parser = new Parser()
+  .namely("self") // use 'self' to refer to the parser itself
+  .uint8("type")
+  .choice("data", {
+    tag: "type",
+    choices: {
+      0: stop,
+      1: "self",
+      2: Parser.start()
+        .nest("left", { type: "self" })
+        .nest("right", { type: "self" }),
+      3: Parser.start()
+        .nest("one", { type: "self" })
+        .nest("two", { type: "self" })
+        .nest("three", { type: "self" })
+    }
+  });
 
 //        2
 //       / \
@@ -316,14 +322,16 @@ var parser =
 //      /
 //     0
 
-var buffer = new Buffer([ 2,
-                        /* left -> */ 3,
-                            /* one   -> */ 1, /* -> */ 0,
-                            /* two   -> */ 0,
-                            /* three -> */ 2,
-                                /* left  -> */ 1, /* -> */ 0,
-                                /* right -> */ 0,
-                        /* right -> */ 1, /* -> */ 0 ]);
+var buffer = new Buffer([
+  2,
+  /* left -> */ 3,
+    /* one   -> */ 1, /* -> */ 0,
+    /* two   -> */ 0,
+    /* three -> */ 2,
+      /* left  -> */ 1, /* -> */ 0,
+      /* right -> */ 0,
+  /* right -> */ 1, /* -> */ 0
+]);
 
 parser.parse(buffer);
 ```
@@ -346,28 +354,25 @@ An example of referencing other patches:
 ```javascript
 // the line below registers the name 'self', so we will be able to use it in
 // `twoCells` as a reference
-var parser = Parser.start().namely('self');
+var parser = Parser.start().namely("self");
 
-var stop = Parser.start().namely('stop');
+var stop = Parser.start().namely("stop");
 
-var twoCells = Parser.start().namely('twoCells')
-                             .nest('left',  { type: 'self' })
-                             .nest('right', { type: 'stop' })
+var twoCells = Parser.start()
+  .namely("twoCells")
+  .nest("left", { type: "self" })
+  .nest("right", { type: "stop" });
 
-parser
-    .uint8('type')
-    .choice('data', {
-        'tag': 'type',
-        'choices': {
-            0: 'stop',
-            1: 'self',
-            2: 'twoCells'
-        }
-    });
+parser.uint8("type").choice("data", {
+  tag: "type",
+  choices: {
+    0: "stop",
+    1: "self",
+    2: "twoCells"
+  }
+});
 
-var buffer = new Buffer([ 2,
-                            /* left */  1, 1, 0,
-                            /* right */ 0 ]);
+var buffer = new Buffer([2, /* left */ 1, 1, 0, /* right */ 0]);
 
 parser.parse(buffer);
 ```
@@ -387,12 +392,13 @@ These are common options that can be specified in all parsers.
 - `formatter` - Function that transforms the parsed value into a more desired
   form.
     ```javascript
-    var parser = new Parser()
-      .array('ipv4', {
-        type: uint8,
-        length: '4',
-        formatter: function(arr) { return arr.join('.'); }
-      });
+    var parser = new Parser().array("ipv4", {
+      type: uint8,
+      length: "4",
+      formatter: function(arr) {
+        return arr.join(".");
+      }
+    });
     ```
 
 - `assert` - Do assertion on the parsed result (useful for checking magic
@@ -404,20 +410,19 @@ These are common options that can be specified in all parsers.
 
     ```javascript
     // simple maginc number validation
-    var ClassFile =
-        Parser.start()
-        .endianess('big')
-        .uint32('magic', {assert: 0xcafebabe})
+    var ClassFile = Parser.start()
+      .endianess("big")
+      .uint32("magic", { assert: 0xcafebabe });
 
     // Doing more complex assertion with a predicate function
     var parser = new Parser()
-        .int16le('a')
-        .int16le('b')
-        .int16le('c', {
-            assert: function(x) {
-                return this.a + this.b === x;
-            }
-        });
+      .int16le("a")
+      .int16le("b")
+      .int16le("c", {
+        assert: function(x) {
+          return this.a + this.b === x;
+        }
+      });
     ```
 
 ## Examples
