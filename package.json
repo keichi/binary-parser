@@ -5,9 +5,11 @@
   "main": "lib/binary_parser.js",
   "devDependencies": {
     "istanbul": "^0.4.5",
-    "mocha": "^3.5.0"
+    "mocha": "^3.5.0",
+    "prettier": "^1.9.2"
   },
   "scripts": {
+    "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
     "test": "mocha --reporter spec",
     "cover": "istanbul cover --report html node_modules/.bin/_mocha"
   },
