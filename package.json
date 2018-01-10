@@ -10,8 +10,8 @@
   },
   "scripts": {
     "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
-    "test": "mocha --reporter spec",
-    "cover": "istanbul cover --report html node_modules/.bin/_mocha"
+    "test": "npx mocha --reporter spec",
+    "cover": "npx istanbul cover --report html node_modules/.bin/_mocha"
   },
   "keywords": [
     "binary",
