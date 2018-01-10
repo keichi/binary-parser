@@ -21,7 +21,7 @@ var tcpHeader = new Parser()
   .uint16("checksum")
   .uint16("urgentPointer");
 
-var buf = new Buffer(
+var buf = Buffer.from(
   "e8a203e108e177e13d20756b801829d3004100000101080a2ea486ba793310bc",
   "hex"
 );
