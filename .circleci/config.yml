@@ -11,6 +11,8 @@ jobs:
           command: npm install
       - run:
           command: npm test
+      - run:
+          command: npm run check-fmt
       - save_cache:
           key: deps-{{ checksum "package-lock.json" }}
           paths:

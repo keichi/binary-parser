@@ -10,6 +10,7 @@
   },
   "scripts": {
     "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
+    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.js'",
     "test": "npx mocha --reporter spec",
     "cover": "npx istanbul cover --report html node_modules/.bin/_mocha"
   },
