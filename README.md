@@ -126,7 +126,7 @@ characters and start with an alphabet. `options` is an object; following
 options are available:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
-  `'utf8'`, `'ascii'`, `'hex'` and else are valid. See
+  `"utf8"`, `"ascii"`, `"hex"` and else are valid. See
   [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
   for more info.
 - `length ` - (Optional) Length of the string. Can be a number, string or a
@@ -153,7 +153,7 @@ options are available:
   buffer. Can be a number, string or a function. Use number for statically
   sized buffers, string to reference another variable and function to do some
   calculation.
-- `readUntil` - (either `length` or `readUntil` is required) If `'eof'`, then
+- `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
   this parser will read till it reaches end of the `Buffer` object.
 
 ### array(name [,options])
@@ -170,7 +170,7 @@ available:
   required) Length of the array expressed in bytes. Can be a number, string or
   a function. Use number for statically sized arrays.
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
-  If `'eof'`, then this parser reads until the end of `Buffer` object. If
+  If `"eof"`, then this parser reads until the end of `Buffer` object. If
   function it reads until the function returns true.
 
 ```javascript
@@ -271,11 +271,11 @@ Skip parsing for `length` bytes.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either
-`'little'` or `'big'`. The default endianess of `Parser` is set to big-endian.
+`"little"` or `"big"`. The default endianess of `Parser` is set to big-endian.
 
 ```javascript
 var parser = new Parser()
-  .endianess("le")
+  .endianess("little")
   // You can specify endianess explicitly
   .uint16be("a")
   .uint32le("a")
