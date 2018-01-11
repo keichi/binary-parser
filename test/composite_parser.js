@@ -943,6 +943,58 @@ describe('Composite parser', function() {
     });
   });
 
+  describe('Pointer parser', function() {
+    it('should move pointer to specified offset', function() {
+      var parser = Parser.start().pointer('x', { type: 'uint8', offset: 2 });
+      var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
+
+      assert.deepEqual(parser.parse(buf), { x: 3 });
+    });
+
+    it('should restore pointer to original position', function() {
+      var parser = Parser.start()
+        .pointer('x', { type: 'uint8', offset: 2 })
+        .uint16be('y');
+      var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
+
+      assert.deepEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
+    });
+
+    it('should work with child parser', function() {
+      var parser = Parser.start()
+        .uint32le('x')
+        .pointer('y', {
+          type: Parser.start().string('s', { zeroTerminated: true }),
+          offset: 4,
+        });
+      var buf = Buffer.from('\1\2\3\4hello\0\6', 'ascii');
+
+      assert.deepEqual(parser.parse(buf), {
+        x: 0x04030201,
+        y: { s: 'hello' },
+      });
+    });
+
+    it('should pass variable context to child parser', function() {});
+    var parser = Parser.start()
+      .uint16be('len')
+      .pointer('child', {
+        offset: 4,
+        type: Parser.start().array('a', {
+          type: 'uint8',
+          length: function(vars) {
+            return vars.len;
+          },
+        }),
+      });
+    var buf = Buffer.from('\0\6\0\0\1\2\3\4\5\6');
+
+    assert.deepEqual(parser.parse(buf), {
+      len: 6,
+      child: { a: [1, 2, 3, 4, 5, 6] },
+    });
+  });
+
   describe('Utilities', function() {
     it('should count size for fixed size structs', function() {
       var parser = Parser.start()

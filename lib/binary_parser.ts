@@ -522,7 +522,7 @@ export class Parser {
       throw new Error('Type option of pointer is not defined.');
     } else if (typeof options.type === 'string') {
       if (
-        Object.keys(PRIMITIVE_SIZES).indexOf(this.type) < 0 &&
+        Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0 &&
         !aliasRegistry[options.type]
       ) {
         throw new Error(
@@ -1099,10 +1099,7 @@ export class Parser {
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
       );
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
-      // ctx.pushScope(item);
-      // type.generate(ctx);
-      // ctx.popScope();
-    } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
+    } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
       const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
       ctx.pushCode(`${nestVar} = buffer.read${typeName}(offset);`);
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
