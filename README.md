@@ -280,6 +280,15 @@ current object. `options` is an object which can have the following keys:
 
 - `type` - (Required) A `Parser` object.
 
+### pointer(name [,options])
+Jump to `offset`, execute parser for `type` and rewind to current offset.
+
+- `type` - (Required) A `Parser` object.
+- `offset` - (Required) Note that this is abosolute offset
+    Type of the array element. Can be a string or an user defined Parser
+    object. If it's a string, you have to choose from [u]int{8, 16, 32}{le,
+    be}.
+
 ### skip(length)
 Skip parsing for `length` bytes.
 
