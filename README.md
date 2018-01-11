@@ -23,11 +23,10 @@ time and effort to write). Supported data types are:
 - [Choices](##choicename-options)
 - User defined types
 
-This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
-, its syntax by [binary](https://github.com/substack/node-binary).
+Binary-parser is insipired by [BinData](https://github.com/dmendel/bindata)
+and [binary](https://github.com/substack/node-binary).
 
 ## Installation
-Binary-parser can be installed with [npm](https://npmjs.org/):
 
 ```shell
 $ npm install binary-parser
@@ -82,8 +81,8 @@ nothing.
 
 ### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
-object. When `parse(buffer)` is called for the first time, parser code is
-compiled on-the-fly and internally cached.
+object. When `parse(buffer)` is called for the first time, the associated
+parser code is compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
@@ -402,7 +401,7 @@ Dynamically generates the code for this parser and returns it as a string.
 Usually used for debugging.
 
 ### Common options
-These are common options that can be specified in all parsers.
+These options can be used in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired
   form.
@@ -441,11 +440,10 @@ These are common options that can be specified in all parsers.
     ```
 
 ## Examples
-See `example` for more complex examples.
+See `example/` for real-world examples.
 
 ## Support
 Please report issues to the
-[issue tracker](https://github.com/Keichi/binary-parser/issues) if you have
+[issue tracker](https://github.com/keichi/binary-parser/issues) if you have
 any difficulties using this module, found a bug, or request a new feature.
-
-Pull requests with fixes and improvements are welcomed!
+Pull requests are welcomed.
