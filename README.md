@@ -64,7 +64,7 @@ var ipHeader = new Parser()
   });
 
 // Prepare buffer to parse.
-var buf = new Buffer("450002c5939900002c06ef98adc24f6c850186d1", "hex");
+var buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 // Parse buffer and show result
 console.log(ipHeader.parse(buf));
@@ -322,7 +322,7 @@ var parser = new Parser()
 //      /
 //     0
 
-var buffer = new Buffer([
+var buffer = Buffer.from([
   2,
   /* left -> */ 3,
     /* one   -> */ 1, /* -> */ 0,
@@ -372,7 +372,7 @@ parser.uint8("type").choice("data", {
   }
 });
 
-var buffer = new Buffer([2, /* left */ 1, 1, 0, /* right */ 0]);
+var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
 
 parser.parse(buffer);
 ```

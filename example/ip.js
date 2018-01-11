@@ -21,6 +21,6 @@ var ipHeader = new Parser()
     length: 4
   });
 
-var buf = new Buffer("450002c5939900002c06ef98adc24f6c850186d1", "hex");
+var buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 console.log(ipHeader.parse(buf));
