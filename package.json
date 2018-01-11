@@ -34,5 +34,8 @@
     "url": "http://github.com/keichi/binary-parser.git"
   },
   "bugs": "http://github.com/keichi/binary-parser/issues",
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+      "node": ">=5.10.0"
+  }
 }
