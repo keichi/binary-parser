@@ -784,7 +784,7 @@ describe("Composite parser", function() {
     });
     it("should be able to use function as the choice selector", function() {
       var parser = Parser.start()
-        .string("selector", {length: 4})
+        .string("selector", { length: 4 })
         .choice(null, {
           tag: function() {
             return parseInt(this.selector, 2); // string base 2 to integer decimal
@@ -798,7 +798,10 @@ describe("Composite parser", function() {
         });
 
       var buffer = Buffer.from([
-        48, 48, 49, 48,
+        48,
+        48,
+        49,
+        48,
         0xc,
         0x68,
         0x65,
@@ -814,7 +817,7 @@ describe("Composite parser", function() {
         0x64
       ]);
       assert.deepEqual(parser.parse(buffer), {
-        selector: "0010",  // -> choice 2
+        selector: "0010", // -> choice 2
         length: 12,
         message: "hello, world"
       });
