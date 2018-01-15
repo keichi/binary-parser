@@ -702,6 +702,131 @@ describe("Composite parser", function() {
         }
       });
     });
+    it("should be able to 'flatten' choices when using null varName", function() {
+      var parser = Parser.start()
+        .uint8("tag")
+        .choice(null, {
+          tag: "tag",
+          choices: {
+            1: Parser.start()
+              .uint8("length")
+              .string("message", { length: "length" }),
+            3: Parser.start().int32le("number")
+          }
+        });
+
+      var buffer = Buffer.from([
+        0x1,
+        0xc,
+        0x68,
+        0x65,
+        0x6c,
+        0x6c,
+        0x6f,
+        0x2c,
+        0x20,
+        0x77,
+        0x6f,
+        0x72,
+        0x6c,
+        0x64
+      ]);
+      assert.deepEqual(parser.parse(buffer), {
+        tag: 1,
+        length: 12,
+        message: "hello, world"
+      });
+      buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
+      assert.deepEqual(parser.parse(buffer), {
+        tag: 3,
+        number: 12345678
+      });
+    });
+    it("should be able to 'flatten' choices when omitting varName paramater", function() {
+      var parser = Parser.start()
+        .uint8("tag")
+        .choice({
+          tag: "tag",
+          choices: {
+            1: Parser.start()
+              .uint8("length")
+              .string("message", { length: "length" }),
+            3: Parser.start().int32le("number")
+          }
+        });
+
+      var buffer = Buffer.from([
+        0x1,
+        0xc,
+        0x68,
+        0x65,
+        0x6c,
+        0x6c,
+        0x6f,
+        0x2c,
+        0x20,
+        0x77,
+        0x6f,
+        0x72,
+        0x6c,
+        0x64
+      ]);
+      assert.deepEqual(parser.parse(buffer), {
+        tag: 1,
+        length: 12,
+        message: "hello, world"
+      });
+      buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
+      assert.deepEqual(parser.parse(buffer), {
+        tag: 3,
+        number: 12345678
+      });
+    });
+    it("should be able to use function as the choice selector", function() {
+      var parser = Parser.start()
+        .string("selector", { length: 4 })
+        .choice(null, {
+          tag: function() {
+            return parseInt(this.selector, 2); // string base 2 to integer decimal
+          },
+          choices: {
+            2: Parser.start()
+              .uint8("length")
+              .string("message", { length: "length" }),
+            7: Parser.start().int32le("number")
+          }
+        });
+
+      var buffer = Buffer.from([
+        48,
+        48,
+        49,
+        48,
+        0xc,
+        0x68,
+        0x65,
+        0x6c,
+        0x6c,
+        0x6f,
+        0x2c,
+        0x20,
+        0x77,
+        0x6f,
+        0x72,
+        0x6c,
+        0x64
+      ]);
+      assert.deepEqual(parser.parse(buffer), {
+        selector: "0010", // -> choice 2
+        length: 12,
+        message: "hello, world"
+      });
+      buffer = Buffer.from([48, 49, 49, 49, 0x4e, 0x61, 0xbc, 0x00]);
+      assert.deepEqual(parser.parse(buffer), {
+        selector: "0111", // -> choice 7
+        number: 12345678
+      });
+    });
   });
 
   describe("Nest parser", function() {
