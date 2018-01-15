@@ -882,6 +882,28 @@ describe("Composite parser", function() {
         name: "John Doe"
       });
     });
+
+    it("should 'flatten' output when using null varName", function() {
+      var parser = new Parser()
+        .string("s1", { zeroTerminated: true })
+        .nest(null, {
+          type: new Parser().string("s2", { zeroTerminated: true })
+        });
+
+      var buf = Buffer.from("foo\0bar\0");
+
+      assert.deepEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
+    });
+
+    it("should 'flatten' output when omitting varName", function() {
+      var parser = new Parser().string("s1", { zeroTerminated: true }).nest({
+        type: new Parser().string("s2", { zeroTerminated: true })
+      });
+
+      var buf = Buffer.from("foo\0bar\0");
+
+      assert.deepEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
+    });
   });
 
   describe("Buffer parser", function() {
