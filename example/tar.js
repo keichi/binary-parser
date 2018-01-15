@@ -25,11 +25,11 @@ var tarHeader = new Parser()
   .skip(12);
 
 var tarItem = new Parser()
-  .nest("header", {
+  .nest({
     type: tarHeader
   })
   .skip(function() {
-    return Math.ceil(this.header.size / 512) * 512;
+    return Math.ceil(this.size / 512) * 512;
   });
 
 var tarArchive = new Parser().array("files", {
