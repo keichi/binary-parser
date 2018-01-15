@@ -76,7 +76,7 @@ console.log(ipHeader.parse(buf));
 Constructs a Parser object. Returned object represents a parser which parses
 nothing.
 
-### parse(buffer[, callback])
+### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
 object. When `parse(buffer)` is called for the first time, parser code is
 compiled on-the-fly and internally cached.
@@ -85,7 +85,7 @@ compiled on-the-fly and internally cached.
 Set the constructor function that should be called to create the object
 returned from the `parse` method.
 
-### [u]int{8, 16, 32}{le, be}(name [,options])
+### [u]int{8, 16, 32}{le, be}(name[, options])
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16 and 32. Byte-ordering can be either
@@ -102,12 +102,12 @@ var parser = new Parser()
   .int16be("c");
 ```
 
-### bit\[1-32\](name [,options])
+### bit\[1-32\](name[, options])
 Parse bytes as a bit field and store it in variable `name`. There are 32
 methods from `bit1` to `bit32` each corresponding to 1-bit-length to
 32-bits-length bit field.
 
-### {float, double}{le, be}(name [,options])
+### {float, double}{le, be}(name[, options])
 Parse bytes as an floating-point value and store it in a variable named
 `name`. `name` should consist only of alphanumeric characters and start with
 an alphabet.
@@ -120,10 +120,10 @@ var parser = new Parser()
   .doublele("b");
 ```
 
-### string(name [,options])
+### string(name[, options])
 Parse bytes as a string. `name` should consist only of alpha numeric
-characters and start with an alphabet. `options` is an object; following
-options are available:
+characters and start with an alphabet. `options` is an object which can have
+the following keys:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
   `"utf8"`, `"ascii"`, `"hex"` and else are valid. See
@@ -139,10 +139,10 @@ options are available:
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
   null characters from end of the string
 
-### buffer(name [,options])
+### buffer(name[, options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric
-characters and start with an alphabet. `options` is an object; following
-options are available:
+characters and start with an alphabet. `options` is an object which can have
+the following keys:
 
 - `clone` - (Optional, defaults to `false`) By default,
   `buffer(name [,options])` returns a new buffer which references the same
@@ -156,9 +156,9 @@ options are available:
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
   this parser will read till it reaches end of the `Buffer` object.
 
-### array(name [,options])
-Parse bytes as an array. `options` is an object; following options are
-available:
+### array(name, options)
+Parse bytes as an array. `options` is an object which can have the following
+keys:
 
 - `type` - (Required) Type of the array element. Can be a string or an user
   defined Parser object. If it's a string, you have to choose from [u]int{8,
@@ -232,18 +232,18 @@ var parser = new Parser()
   });
 ```
 
-### choice(name [,options])
-Choose one parser from several choices according to a field value. Combining
-`choice` with `array` is useful for parsing a typical
-[Type-Length-Value](http://en.wikipedia.org/wiki/Type-length-value) styled
-format.
+### choice([name,] options)
+Choose one parser from multiple parsers according to a field value and store
+its parsed result to key `name`. If `name` is null or omitted, the result of
+the chosen parser is directly embedded into the current object. `options` is
+an object which can have the following keys:
 
 - `tag` - (Required) The value used to determine which parser to use from the
   `choices` Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the
   parser which is executed when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case of the tag value doesn't match any of
-  `choices` use this parser.
+  `choices`, this parser is used.
 
 ```javascript
 var parser1 = ...;
@@ -260,9 +260,13 @@ var parser = new Parser().uint8("tagValue").choice("data", {
 });
 ```
 
-### nest(name [,options])
-Nest a parser in this position. Parse result of the nested parser is stored in the variable
-`name`.
+Combining `choice` with `array` is an idiom to parse
+[TLV](http://en.wikipedia.org/wiki/Type-length-value)-based formats.
+
+### nest([name,] options)
+Execute an inner parser and store its result to key `name`. If `name` is null
+or omitted, the result of the inner parser is directly embedded into the
+current object. `options` is an object which can have the following keys:
 
 - `type` - (Required) A `Parser` object.
 
