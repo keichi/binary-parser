@@ -2,12 +2,12 @@
 
 [![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
 
-Binary-parser is a binary parser builder for [node](http://nodejs.org) that
-enables you to write efficient parsers in a simple and declarative manner.
+Binary-parser is a binary parser/encoder builder for [node](http://nodejs.org) that
+enables you to write efficient parsers/encoders in a simple and declarative manner.
 
 It supports all common data types required to analyze a structured binary
-data. Binary-parser dynamically generates and compiles the parser code
-on-the-fly, which runs as fast as a hand-written parser (which takes much more
+data. Binary-parser dynamically generates and compiles the parser and encoder code
+on-the-fly, which runs as fast as a hand-written parser/encoder (which takes much more
 time and effort to write). Supported data types are:
 
 - Integers (supports 8, 16, 32 bit signed- and unsigned integers)
@@ -31,11 +31,13 @@ $ npm install binary-parser
 
 ## Quick Start
 1. Create an empty Parser object with `new Parser()`.
-2. Chain builder methods to build the desired parser. (See
+2. Chain builder methods to build the desired parser and/or encoder. (See
    [API](https://github.com/Keichi/binary-parser#api) for detailed document of
    each methods)
 3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
 4. Parsed result will be returned as an object.
+5. Or call `Parser.prototype.encode with an object passed as argument.
+6. Encoded result will be returned as a `Buffer` object.
 
 ```javascript
 // Module import
@@ -68,17 +70,41 @@ var buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 // Parse buffer and show result
 console.log(ipHeader.parse(buf));
+
+var anIpHeader = {
+  version: 4,
+  headerLength: 5,
+  tos: 0,
+  packetLength: 709,
+  id: 37785,
+  offset: 0,
+  fragOffset: 0,
+  ttl: 44,
+  protocol: 6,
+  checksum: 61336,
+  src: [ 173, 194, 79, 108 ],
+  dst: [ 133, 1, 134, 209 ] };
+
+// Encode an IP header object and show result as hex string
+console.log(ipHeader.encode(anIpHeader).toString("hex"));
 ```
 
 ## API
 
-### new Parser()
+### new Parser([options])
 Constructs a Parser object. Returned object represents a parser which parses
-nothing.
+nothing. `options` is an optional object to pass options to this declarative
+parser.
+  - `bufferSize` The size of the encoding buffer (when encoding is used) (default is 256 bytes).
 
 ### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
 object. When `parse(buffer)` is called for the first time, parser code is
+compiled on-the-fly and internally cached.
+
+### encode(obj)
+Encode an `Object` object `obj` with this parser and return the resulting
+`Buffer`. When `encode(obj)` is called for the first time, encoder code is
 compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
@@ -135,9 +161,11 @@ the following keys:
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
   reads until it reaches zero.
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads
-  until it reaches the end of the buffer. Will consume zero-bytes.
+  until it reaches the end of the buffer. Will consume zero-bytes. (Note: has
+  no effect on encoding function)
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
-  null characters from end of the string
+  null characters from end of the string. (Note: has no effect on encoding, but
+  when used, then the parse() and encode() functions are not the exact opposite)
 
 ### buffer(name[, options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric
@@ -154,7 +182,8 @@ the following keys:
   sized buffers, string to reference another variable and function to do some
   calculation.
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
-  this parser will read till it reaches end of the `Buffer` object.
+  this parser will read till it reaches end of the `Buffer` object. (Note: has no
+  effect on encoding.)
 
 ### array(name, options)
 Parse bytes as an array. `options` is an object which can have the following
@@ -271,7 +300,8 @@ current object. `options` is an object which can have the following keys:
 - `type` - (Required) A `Parser` object.
 
 ### skip(length)
-Skip parsing for `length` bytes.
+Skip parsing for `length` bytes. (Note: when encoding, the skipped bytes will be filled
+with zeros)
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either
@@ -381,13 +411,13 @@ var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
 parser.parse(buffer);
 ```
 
-### compile()
-Compile this parser on-the-fly and cache its result. Usually, there is no need
-to call this method directly, since it's called when `parse(buffer)` is
+### compile() and compileEncode()
+Compile this parser/encoder on-the-fly and cache its result. Usually, there is no need
+to call this method directly, since it's called when `parse(buffer)` or `encode(obj)` is
 executed for the first time.
 
-### getCode()
-Dynamically generates the code for this parser and returns it as a string.
+### getCode() and getCodeEncode()
+Dynamically generates the code for this parser/encoder and returns it as a string.
 Usually used for debugging.
 
 ### Common options
@@ -401,6 +431,21 @@ These are common options that can be specified in all parsers.
       length: "4",
       formatter: function(arr) {
         return arr.join(".");
+      }
+    });
+    ```
+
+- `encoder` - Function that transforms an object property into a more desired
+  form for encoding. This is the opposite of the above `formatter` function.
+    ```javascript
+    var parser = new Parser().array("ipv4", {
+      type: uint8,
+      length: "4",
+      formatter: function(arr) {
+        return arr.join(".");
+      },
+      encoder: function(str) {
+        return str.split(".");
       }
     });
     ```
