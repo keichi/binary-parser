@@ -36,7 +36,7 @@ $ npm install binary-parser
    each methods)
 3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
 4. Parsed result will be returned as an object.
-5. Or call `Parser.prototype.encode with an object passed as argument.
+5. Or call `Parser.prototype.encode` with an object passed as argument.
 6. Encoded result will be returned as a `Buffer` object.
 
 ```javascript
