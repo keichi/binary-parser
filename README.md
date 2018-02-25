@@ -95,7 +95,7 @@ console.log(ipHeader.encode(anIpHeader).toString("hex"));
 Constructs a Parser object. Returned object represents a parser which parses
 nothing. `options` is an optional object to pass options to this declarative
 parser.
-  - `bufferSize` The size of the encoding buffer (when encoding is used) (default is 256 bytes).
+  - `smartBufferSize` The chunk size of the encoding (smart)buffer (when encoding is used) (default is 256 bytes).
 
 ### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
@@ -155,9 +155,10 @@ the following keys:
   `"utf8"`, `"ascii"`, `"hex"` and else are valid. See
   [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
   for more info.
-- `length ` - (Optional) Length of the string. Can be a number, string or a
+- `length ` - (Optional) (Bytes)Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
+  Note: when encoding the string is padded with spaces (0x20) at end to fit the length requirement.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
   reads until it reaches zero.
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads

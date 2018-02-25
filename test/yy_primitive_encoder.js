@@ -321,16 +321,19 @@ describe("Primitive encoder", function() {
         b: "defghzzzzzzz",
         c: "ij"
       });
-      assert.deepEqual(encoded, Buffer.from("abc\u0000defgh\u0000ij\u0000"));
+      assert.deepEqual(
+        encoded,
+        Buffer.from("abc  \u0000defgh\u0000ij   \u0000")
+      );
     });
     it("should strip trailing null characters", function() {
       var buffer = Buffer.from("746573740000", "hex");
       var parser1 = Parser.start().string("str", {
-        length: 7,
+        length: 6,
         stripNull: false
       });
       var parser2 = Parser.start().string("str", {
-        length: 7,
+        length: 6,
         stripNull: true
       });
 
@@ -344,7 +347,7 @@ describe("Primitive encoder", function() {
       // In this case (stripNull = true) parsing and encoding are not  the exact oposite
       var encoded2 = parser2.encode(decoded2);
       assert.notDeepEqual(encoded2, buffer);
-      assert.deepEqual(encoded2, Buffer.from("test"));
+      assert.deepEqual(encoded2, Buffer.from("test  "));
     });
     it("should encode string with zero-bytes internally", function() {
       var buffer = Buffer.from("abc\u0000defghij\u0000");

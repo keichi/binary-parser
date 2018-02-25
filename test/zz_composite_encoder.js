@@ -112,30 +112,6 @@ describe("Composite encoder", function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it("should encode array with lengthInBytes respecting types bundaries", function() {
-      var elementParser = new Parser().uint8("key").int16le("value");
-
-      var parser = Parser.start()
-        .uint16le("length")
-        .array("message", {
-          lengthInBytes: "length",
-          type: elementParser
-        });
-
-      var encoded = parser.encode({
-        length: 0x06,
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }]
-      });
-      assert.deepEqual(
-        encoded,
-        Buffer.from([0x06, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04])
-      );
-      encoded = parser.encode({
-        length: 0x04,
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }]
-      });
-      assert.deepEqual(encoded, Buffer.from([0x04, 0x00, 0xca, 0xd2, 0x04]));
-    });
     it("should encode array of user defined types with length function", function() {
       var elementParser = new Parser().uint8("key").int16le("value");
 
@@ -1003,25 +979,6 @@ describe("Composite encoder", function() {
       assert.equal(person.name, "John Doe");
       var encoded = parser.encode(person);
       assert.deepEqual(encoded, buffer);
-    });
-  });
-
-  describe("Buffer size", function() {
-    it("should use provided buffer size", function() {
-      // A buffer of 4 bytes should be enough to encode an uint32
-      var parser = Parser.start({ bufferSize: 4 }).uint32("value");
-      var buffer = Buffer.from([0, 1, 2, 3]);
-      var decoded = parser.parse(buffer);
-      assert.deepEqual(decoded, {
-        value: 66051
-      });
-      var encoded = parser.encode(decoded);
-      assert.deepEqual(encoded, buffer);
-
-      // A buffer of 3 bytes would be too small
-      parser = Parser.start({ bufferSize: 3 }).uint32("value");
-      encoded = parser.encode(decoded);
-      assert.deepEqual(encoded, Buffer.from([]));
     });
   });
 
