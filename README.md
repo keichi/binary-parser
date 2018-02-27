@@ -425,27 +425,30 @@ Usually used for debugging.
 These are common options that can be specified in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired
-  form.
+  form. *formatter*(value, obj, buffer, offset) &rarr; *new value* \
+  where `value` is the value to be formatted, `obj` is the current object being generated, `buffer` is the buffer currently beeing parsed and `offset` is the current offset in that buffer.
     ```javascript
     var parser = new Parser().array("ipv4", {
       type: uint8,
       length: "4",
-      formatter: function(arr) {
+      formatter: function(arr, obj, buffer, offset) {
         return arr.join(".");
       }
     });
     ```
 
 - `encoder` - Function that transforms an object property into a more desired
-  form for encoding. This is the opposite of the above `formatter` function.
+  form for encoding. This is the opposite of the above `formatter` function. \
+  *encoder*(value) &rarr; *new value* \
+  where `value` is the value to be encoded (de-formatted) and `obj` is the object currently being encoded.
     ```javascript
     var parser = new Parser().array("ipv4", {
       type: uint8,
       length: "4",
-      formatter: function(arr) {
+      formatter: function(arr, obj, buffer, offset) {
         return arr.join(".");
       },
-      encoder: function(str) {
+      encoder: function(str, obj) {
         return str.split(".");
       }
     });
