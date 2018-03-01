@@ -1,5 +1,5 @@
 {
-  "name": "binary-parser",
+  "name": "binary-parser-encoder",
   "version": "1.3.2",
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
@@ -18,6 +18,8 @@
     "binary",
     "parser",
     "decode",
+    "encoder",
+    "encode",
     "unpack",
     "struct",
     "buffer",
@@ -28,12 +30,18 @@
     "email": "keichi.t@me.com",
     "url": "https://keichi.net/"
   },
+  "contributors": [
+    {
+      "name": "Eric Blanchard",
+      "email": "ericbla@gmail.com"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/keichi/binary-parser.git"
+    "url": "http://github.com/Ericbla/binary-parser.git"
   },
-  "bugs": "http://github.com/keichi/binary-parser/issues",
+  "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "dependencies": {
     "smart-buffer": "^4.0.1"
   },

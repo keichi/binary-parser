@@ -1,6 +1,14 @@
-# Binary-parser
+# Binary-parser-encoder
 
-[![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
+<u>Note</u>: This is a fork of [binary-parser](https://github.com/keichi/binary-parser)
+library. It is currently being proposed a Pull-Request in that project. But is
+currently published in NPM under the name **binary-parser-encoder** untlil the
+*encoding* feature is merged in baseline of original project.
+
+*binary-parser-encoder* can be installed with [npm](https://npmjs.org/):
+
+
+[![Circle CI](https://circleci.com/gh/Ericbla/binary-parser.svg?style=svg)](https://circleci.com/gh/Ericbla/binary-parser)
 
 Binary-parser is a binary parser/encoder builder for [node](http://nodejs.org) that
 enables you to write efficient parsers/encoders in a simple and declarative manner.
