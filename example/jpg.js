@@ -10,7 +10,7 @@ var APP0 = Parser.start()
   .string("id", {
     encoding: "ascii",
     zeroTerminated: true,
-    validate: "JFIF"
+    assert: "JFIF"
   })
   .uint16("version")
   .uint8("unit")
