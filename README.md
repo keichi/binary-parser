@@ -208,7 +208,12 @@ keys:
   a function. Use number for statically sized arrays.
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   If `"eof"`, then this parser reads until the end of `Buffer` object. If
-  function it reads until the function returns true.
+  function it reads until the function returns true. **<u>Note</u>**: When encoding,
+  the `buffer` second parameter of `readUntil` function is the buffer already encoded
+  before this array. So no *read-ahead* is possible.
+- `encodeUntil` - a function (item, object), only used when encoding, that replaces
+  the `readUntil` function when present and allow limit the number of encoded items
+  by returning true based on *item* values or other *object* properies.
 
 ```javascript
 var parser = new Parser()
