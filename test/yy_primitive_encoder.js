@@ -360,6 +360,20 @@ describe("Primitive encoder", function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
+    it("should encode string with default right padding", function() {
+      var parser = Parser.start().string("a", { length: 6 });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("abcd  "));
+      encoded = parser.encode({ a: "abcdefgh" });
+      assert.deepEqual(encoded, Buffer.from("abcdef"));
+    });
+    it("should encode string with left padding", function() {
+      var parser = Parser.start().string("a", { length: 6, padding: "left" });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("  abcd"));
+      encoded = parser.encode({ a: "abcdefgh" });
+      assert.deepEqual(encoded, Buffer.from("abcdef"));
+    });
   });
 
   describe("Buffer encoder", function() {

@@ -174,6 +174,10 @@ the following keys:
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
   null characters from end of the string. (Note: has no effect on encoding, but
   when used, then the parse() and encode() functions are not the exact opposite)
+- `trim` - (Optional, default to `false`) If true, then trim() (remove leading and trailing spaces)
+  the parsed string.
+- `padding` - (Optional, Only used for encoding, default to `right`) If `left` then the string
+  will be right aligned (padding left with leading spaces) depending of the `length` option
 
 ### buffer(name[, options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric
