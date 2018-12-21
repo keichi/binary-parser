@@ -145,19 +145,16 @@ describe("Specific bugs testing", function() {
     });
 
     it("should accept readUntil=eof and no encodeUntil provided", function() {
-      var parser = Parser.start()
-        .array("arr", {
-          type: 'uint8',
-          readUntil: 'eof' // Read until end of buffer
-          });
+      var parser = Parser.start().array("arr", {
+        type: "uint8",
+        readUntil: "eof" // Read until end of buffer
+      });
 
       var buffer = Buffer.from("01020304050607", "hex");
       var decoded = parser.parse(buffer);
 
       assert.deepEqual(decoded, {
-        arr: [
-         1,2,3,4,5,6,7
-        ]
+        arr: [1, 2, 3, 4, 5, 6, 7]
       });
 
       var encoded = parser.encode(decoded);
