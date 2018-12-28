@@ -273,6 +273,30 @@ current object. `options` is an object which can have the following keys:
 ### skip(length)
 Skip parsing for `length` bytes.
 
+### saveOffset(name, options)
+Save the current buffer offset as key `name`. This function is only useful when called after another function which would advance the internal buffer offset.
+
+```javascript
+var parser = new Parser()
+  // this call advances the buffer offset by
+  // a variable (i.e. unknown to us) number of bytes
+  .string('name', {
+    zeroTerminated: true
+  })
+  // this variable points to an absolute position
+  // in the buffer
+  .uint32('seekOffset')
+  // now, save the "current" offset in the stream
+  // as the variable "currentOffset"
+  .saveOffset('currentOffset')
+  // finally, use the saved offset to figure out
+  // how many bytes we need to skip
+  .skip(function() {
+    return this.seekOffset - this.currentOffset;
+  })
+  ... // the parser would continue here
+```
+
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either
 `"little"` or `"big"`. The default endianess of `Parser` is set to big-endian.

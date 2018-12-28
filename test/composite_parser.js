@@ -958,6 +958,34 @@ describe("Composite parser", function() {
 
       assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
     });
+    it("should save offset", function() {
+      var parser = new Parser()
+        .saveOffset('test');
+      var testData = Buffer.from([0x00]);
+      var parsed = parser.parse(testData);
+
+      assert.equal(parsed.test, 0);
+
+      parser = new Parser()
+        .string('name', {
+          zeroTerminated: true
+        })
+        .uint32('seekOffset')
+        .saveOffset('currentOffset')
+        .skip(function() {
+          return this.seekOffset - this.currentOffset;
+        })
+        .string('test', {
+          zeroTerminated: true
+        });
+      testData = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x00, 0x00, 0x00, 0x00, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x00]);
+      parsed = parser.parse(testData);
+
+      assert.equal(parsed.name, 'test');
+      assert.equal(parsed.seekOffset, 9);
+      assert.equal(parsed.currentOffset, 9);
+      assert.equal(parsed.test, 'works');
+    });
     it("should assert parsed values", function() {
       var parser = Parser.start().string("msg", {
         encoding: "ascii",
