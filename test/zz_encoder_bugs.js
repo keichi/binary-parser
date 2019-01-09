@@ -160,5 +160,63 @@ describe("Specific bugs testing", function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, Buffer.from("01020304050607", "hex"));
     });
+
+    it("should accept empty array to encode", function() {
+      var parser = Parser.start().array("arr", {
+        type: "uint8",
+        readUntil: "eof" // Read until end of buffer
+      });
+
+      var buffer = Buffer.from("", "hex");
+      var decoded = parser.parse(buffer);
+
+      assert.deepEqual(decoded, {
+        arr: []
+      });
+
+      var encoded = parser.encode(decoded);
+      assert.deepEqual(encoded, Buffer.from("", "hex"));
+    });
+
+    it("should accept empty array to encode and encodeUntil function", function() {
+      var parser = Parser.start().array("arr", {
+        type: "uint8",
+        readUntil: "eof", // Read until end of buffer
+        encodeUntil: function(item, obj) {
+          return false; // Never stop on content value
+        }
+      });
+
+      var buffer = Buffer.from("", "hex");
+      var decoded = parser.parse(buffer);
+
+      assert.deepEqual(decoded, {
+        arr: []
+      });
+
+      var encoded = parser.encode(decoded);
+      assert.deepEqual(encoded, Buffer.from("", "hex"));
+    });
+
+    it("should accept undefined or null array", function() {
+      var parser = Parser.start().array("arr", {
+        type: "uint8",
+        readUntil: "eof" // Read until end of buffer
+      });
+
+      var buffer = Buffer.from("", "hex");
+      var decoded = parser.parse(buffer);
+
+      // Decode an empty buffer as an empty array
+      assert.deepEqual(decoded, {
+        arr: []
+      });
+
+      // Encode undefined, null or empty array as an empty buffer
+      [{}, { arr: undefined }, { arr: null }, { arr: [] }].forEach(data => {
+        let encoded = parser.encode(data);
+        assert.deepEqual(encoded, Buffer.from("", "hex"));
+      });
+    });
   });
 });
