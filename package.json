@@ -5,7 +5,7 @@
   "main": "lib/binary_parser.js",
   "devDependencies": {
     "istanbul": "^0.4.5",
-    "mocha": "^3.5.3",
+    "mocha": "^6.0.2",
     "prettier": "^1.9.2"
   },
   "scripts": {
@@ -36,6 +36,6 @@
   "bugs": "http://github.com/keichi/binary-parser/issues",
   "dependencies": {},
   "engines": {
-      "node": ">=5.10.0"
+    "node": ">=5.10.0"
   }
 }
