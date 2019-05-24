@@ -177,7 +177,10 @@ the following keys:
 - `trim` - (Optional, default to `false`) If true, then trim() (remove leading and trailing spaces)
   the parsed string.
 - `padding` - (Optional, Only used for encoding, default to `right`) If `left` then the string
-  will be right aligned (padding left with leading spaces) depending of the `length` option
+  will be right aligned (padding left with `padd` char or space) depending of the `length` option
+- `padd` - (Optional, Only used for encoding with `length` specified) A string  from which first character (1 Byte)
+  is used as a padding char if necessary (provided string length is less than `length` option). Note: Only 'ascii'
+  or utf8 < 0x80  are alowed (fallback to 'space' padding else).
 
 ### buffer(name[, options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric

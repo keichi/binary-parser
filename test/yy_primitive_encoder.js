@@ -374,6 +374,39 @@ describe("Primitive encoder", function() {
       encoded = parser.encode({ a: "abcdefgh" });
       assert.deepEqual(encoded, Buffer.from("abcdef"));
     });
+    it("should encode string with right padding and provided padding char", function() {
+      var parser = Parser.start().string("a", { length: 6, padd: "x" });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("abcdxx"));
+      encoded = parser.encode({ a: "abcdefgh" });
+      assert.deepEqual(encoded, Buffer.from("abcdef"));
+    });
+    it("should encode string with left padding and provided padding char", function() {
+      var parser = Parser.start().string("a", {
+        length: 6,
+        padding: "left",
+        padd: "."
+      });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("..abcd"));
+      encoded = parser.encode({ a: "abcdefgh" });
+      assert.deepEqual(encoded, Buffer.from("abcdef"));
+    });
+    it("should encode string with padding and padding char 0", function() {
+      var parser = Parser.start().string("a", { length: 6, padd: "\u0000" });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("abcd\u0000\u0000"));
+    });
+    it("should encode string with padding and first byte of padding char", function() {
+      var parser = Parser.start().string("a", { length: 6, padd: "1234" });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("abcd11"));
+    });
+    it("should encode string with space padding when padd char is not encoded on 1 Byte", function() {
+      var parser = Parser.start().string("a", { length: 6, padd: "こ" });
+      var encoded = parser.encode({ a: "abcd" });
+      assert.deepEqual(encoded, Buffer.from("abcd  "));
+    });
   });
 
   describe("Buffer encoder", function() {
