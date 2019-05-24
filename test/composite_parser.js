@@ -958,6 +958,104 @@ describe("Composite parser", function() {
 
       assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
     });
+    it("should get parsed offset", function() {
+      var parser = Parser.start()
+        .uint8("b1")
+        .uint8("b2");
+      assert.equal(parser.sizeOf(), 1 + 1);
+      assert.equal(parser.getLastOffset(), 0); // Not yet parsed
+
+      var buffer = Buffer.from([1, 2, 3, 4, 5]); // More data than parser can consume
+
+      assert.deepEqual(parser.parse(buffer), { b1: 1, b2: 2 }); // Parsed 2 first bytes
+      assert.equal(parser.getLastOffset(), parser.sizeOf()); // Unparsed data offset
+      assert.deepEqual(parser.parse(buffer.slice(parser.getLastOffset())), {
+        b1: 3,
+        b2: 4
+      }); // Continue parsing
+      assert.equal(parser.getLastOffset(), parser.sizeOf()); // Unparsed data offset
+    });
+    it("should get parsed offset for 'static' sized elements", function() {
+      var parser = Parser.start()
+        .int8("a")
+        .int32le("b")
+        .string("msg", { length: 4 })
+        .skip(2)
+        .array("data", {
+          length: 3,
+          type: "uint8"
+        })
+        .buffer("raw", { length: 4 });
+      assert.equal(parser.sizeOf(), 1 + 4 + 4 + 2 + 3 + 4);
+
+      var buffer = Buffer.from([
+        0x01,
+        0x02,
+        0x00,
+        0x00,
+        0x00,
+        0x41,
+        0x42,
+        0x43,
+        0x44,
+        0xff,
+        0xff,
+        0xa0,
+        0xa1,
+        0xa2,
+        0xb0,
+        0xb1,
+        0xb2,
+        0xb3
+      ]);
+      assert.deepEqual(parser.parse(buffer), {
+        a: 1,
+        b: 2,
+        msg: "ABCD",
+        data: [0xa0, 0xa1, 0xa2],
+        raw: Buffer.from([0xb0, 0xb1, 0xb2, 0xb3])
+      });
+      assert.equal(parser.getLastOffset(), parser.sizeOf());
+    });
+    it("should get parsed offset for eof buffer", function() {
+      var bufferParser = Parser.start()
+        .int8("a")
+        .buffer("buf", {
+          readUntil: "eof"
+        });
+      assert.equal(isNaN(bufferParser.sizeOf()), true);
+      var buffer = Buffer.from("\0John\0Doe\0");
+      assert.deepEqual(bufferParser.parse(buffer), {
+        a: 0x00,
+        buf: Buffer.from("John\0Doe\0")
+      });
+      assert.equal(bufferParser.getLastOffset(), buffer.length);
+    });
+    it("should get parsed offset for eof array", function() {
+      var bufferParser = Parser.start()
+        .int8("a")
+        .array("arr", {
+          type: "uint8",
+          readUntil: "eof"
+        });
+      assert.equal(isNaN(bufferParser.sizeOf()), true);
+
+      var buffer = Buffer.from([
+        0x01,
+        0xa0,
+        0xa1,
+        0xa2,
+        0xb0,
+        0xb1,
+        0xb2,
+        0xb3
+      ]);
+      assert.deepEqual(bufferParser.parse(buffer), {
+        a: 0x01,
+        arr: [0xa0, 0xa1, 0xa2, 0xb0, 0xb1, 0xb2, 0xb3]
+      });
+      assert.equal(bufferParser.getLastOffset(), buffer.length);
+    });
     it("should assert parsed values", function() {
       var parser = Parser.start().string("msg", {
         encoding: "ascii",

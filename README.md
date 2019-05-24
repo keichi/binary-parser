@@ -390,6 +390,29 @@ executed for the first time.
 Dynamically generates the code for this parser and returns it as a string.
 Usually used for debugging.
 
+### Internal utilities
+
+### sizeOf()
+Get the *static* size of the parser definition. if some parser items are of type
+"string", "array", or "buffer", then the size can only be determined when using *number*
+as length option. If not it will return *NaN*
+
+### getLastOffset()
+Get the number of parsed bytes. This function can only be called after parsing some buffer.
+
+```javascript
+var parser = Parser.start()
+    .uint8("b1")
+    .uint8("b2");
+
+var buffer = Buffer.from([1, 2, 3, 4, 5]);
+
+parser.parse(buffer);  // { b1: 1, b2: 2 }
+parser.getLastOffset(); // 2
+parser.parse(buffer.slice(parser.getLastOffset())); //  { b1: 3, b2: 4 }
+```
+
+
 ### Common options
 These are common options that can be specified in all parsers.
 
