@@ -1,8 +1,13 @@
 version: 2
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node
+
 jobs:
   build:
-    docker:
-      - image: circleci/node
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -10,10 +15,20 @@ jobs:
       - run:
           command: npm install
       - run:
-          command: npx tsc && npm test
-      - run:
-          command: npm run check-fmt
+          command: npx tsc
       - save_cache:
           key: deps-{{ checksum "package-lock.json" }}
           paths:
             - node_modules/
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+  test:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          command: npm test
+      - run:
+          command: npm run check-fmt
