@@ -1,6 +1,6 @@
 var assert = require("assert");
 var util = require("util");
-var Parser = require("../lib/binary_parser").Parser;
+var Parser = require("../dist/binary_parser").Parser;
 
 describe("Composite parser", function() {
   describe("Array parser", function() {
