@@ -10,7 +10,7 @@ jobs:
       - run:
           command: npm install
       - run:
-          command: npm test
+          command: npx tsc && npm test
       - run:
           command: npm run check-fmt
       - save_cache:
