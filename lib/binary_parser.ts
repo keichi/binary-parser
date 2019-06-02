@@ -1,4 +1,5 @@
-import * as vm from 'vm';
+import { Buffer } from 'buffer';
+import { runInNewContext } from 'vm';
 import { Context } from './context';
 
 const PRIMITIVE_TYPES = {
@@ -357,7 +358,7 @@ export class Parser {
 
   compile() {
     var src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
-    this.compiled = vm.runInThisContext(src);
+    this.compiled = runInNewContext(src, { Buffer });
   }
 
   sizeOf() {
