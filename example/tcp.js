@@ -1,4 +1,4 @@
-var Parser = require('../lib/binary_parser').Parser;
+var Parser = require('../dist/binary_parser').Parser;
 
 var tcpHeader = new Parser()
   .endianess('big')

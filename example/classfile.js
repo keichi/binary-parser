@@ -1,4 +1,4 @@
-var Parser = require('../lib/binary_parser').Parser;
+var Parser = require('../dist/binary_parser').Parser;
 
 var ConstantClassInfo = Parser.start().uint16be('name_index');
 
