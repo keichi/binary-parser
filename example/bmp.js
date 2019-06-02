@@ -1,4 +1,4 @@
-var Parser = require('../lib/binary_parser.js').Parser;
+var Parser = require('../dist/binary_parser').Parser;
 
 // C structure BITMAPFILEHEADER
 // typedef struct tagBITMAPFILEHEADER {
