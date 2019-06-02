@@ -2,15 +2,17 @@
   "name": "binary-parser",
   "version": "1.3.2",
   "description": "Blazing-fast binary parser builder",
-  "main": "lib/binary_parser.js",
+  "main": "dist/binary_parser.js",
   "devDependencies": {
     "mocha": "^6.1.4",
     "nyc": "^14.1.0",
-    "prettier": "^1.9.2"
+    "prettier": "^1.9.2",
+    "@types/node": "^12.0.4",
+    "typescript": "^3.5.1"
   },
   "scripts": {
-    "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
-    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.js'",
+    "fmt": "npx prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
+    "check-fmt": "npx prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
     "test": "npx mocha --reporter spec",
     "cover": "npx nyc --reporter html mocha"
   },
@@ -34,7 +36,6 @@
     "url": "http://github.com/keichi/binary-parser.git"
   },
   "bugs": "http://github.com/keichi/binary-parser/issues",
-  "dependencies": {},
   "engines": {
     "node": ">=5.10.0"
   }
