@@ -15,6 +15,8 @@ jobs:
       - run:
           command: npm install
       - run:
+          command: npm install mocha-junit-reporter
+      - run:
           command: npx tsc
       - save_cache:
           key: deps-{{ checksum "package-lock.json" }}
@@ -29,7 +31,11 @@ jobs:
       - attach_workspace:
           at: ~/repo
       - run:
-          command: npm test
+          command: npx mocha --reporter mocha-junit-reporter
+          environment:
+            MOCHA_FILE: test-results/mocha/results.xml
+      - store_test_results:
+          path: test-results
       - run:
           command: npm run check-fmt
 
