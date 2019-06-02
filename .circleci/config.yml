@@ -32,3 +32,12 @@ jobs:
           command: npm test
       - run:
           command: npm run check-fmt
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
