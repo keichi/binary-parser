@@ -11,8 +11,8 @@
     "typescript": "^3.5.1"
   },
   "scripts": {
-    "fmt": "npx prettier --write '{lib,test,example}/**/*.{js,ts}'",
-    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.{js,ts}'",
+    "fmt": "npx prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
+    "check-fmt": "npx prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
     "test": "npx mocha --reporter spec",
     "cover": "npx nyc --reporter html mocha"
   },
