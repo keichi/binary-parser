@@ -53,10 +53,10 @@ workflows:
   build-test-deploy:
     jobs:
       - build
-      - test
+      - test:
           requires:
             - build
-      - deploy
+      - deploy:
           requires:
             - build
             - test
