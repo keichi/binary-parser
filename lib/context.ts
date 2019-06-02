@@ -5,12 +5,13 @@ export class Context {
   isAsync = false;
   bitFields = [];
   tmpVariableCount = 0;
-  references = {};
+  references: {[key: string]: { resolved: boolean, requested: boolean }} = {};
   
-  generateVariable(name?) {
+  generateVariable(name?: string) {
     var arr = [];
   
-    Array.prototype.push.apply(arr, this.scopes[this.scopes.length - 1]);
+    const scopes = this.scopes[this.scopes.length - 1];
+    arr.push(...scopes)
     if (name) {
       arr.push(name);
     }
@@ -18,7 +19,7 @@ export class Context {
     return arr.join(".");
   }
 
-  generateOption(val) {
+  generateOption(val: number|string|Function) {
     switch (typeof val) {
       case "number":
         return val.toString();
@@ -29,8 +30,8 @@ export class Context {
     }
   };
   
-  generateError(...args) {
-    var err = this.interpolate.apply(this, args);
+  generateError(template: string, ...args: string[]) {
+    var err = this.interpolate(template, args);
   
     if (this.isAsync) {
       this.pushCode(
@@ -47,25 +48,24 @@ export class Context {
     return "$tmp" + this.tmpVariableCount++;
   };
   
-  pushCode(...code) {
-    var args = code;
-  
-    this.code += this.interpolate.apply(this, args) + "\n";
+  pushCode(template: string, ...args: (string|Function|number)[]) {
+    
+    this.code += this.interpolate(template, ...args) + "\n";
   };
   
-  pushPath(name) {
+  pushPath(name: string) {
     if (name) {
       this.scopes[this.scopes.length - 1].push(name);
     }
   };
   
-  popPath(name) {
+  popPath(name: string) {
     if (name) {
       this.scopes[this.scopes.length - 1].pop();
     }
   };
   
-  pushScope(name) {
+  pushScope(name: string) {
     this.scopes.push([name]);
   };
   
@@ -73,43 +73,41 @@ export class Context {
     this.scopes.pop();
   };
   
-  addReference(alias) {
+  addReference(alias: string) {
     if (this.references[alias]) return;
     this.references[alias] = { resolved: false, requested: false };
   };
   
-  markResolved(alias) {
+  markResolved(alias: string) {
     this.references[alias].resolved = true;
   };
   
-  markRequested(aliasList) {
-    aliasList.forEach(
-      function(alias) {
+  markRequested(aliasList: string[]) {
+    aliasList.forEach((alias) => {
         this.references[alias].requested = true;
-      }.bind(this)
+      }
     );
   };
   
   getUnresolvedReferences() {
     var references = this.references;
-    return Object.keys(this.references).filter(function(alias) {
+    return Object.keys(this.references).filter((alias) => {
       return !references[alias].resolved && !references[alias].requested;
     });
   };
 
-  interpolate(s) {
+  interpolate(template: string, ...args: any[]) {
     var re = /{\d+}/g;
-    var matches = s.match(re);
-    var params = Array.prototype.slice.call(arguments, 1);
-  
+    var matches = template.match(re);
+
     if (matches) {
-      matches.forEach(function(match) {
+      matches.forEach((match) => {
         var index = parseInt(match.substr(1, match.length - 2), 10);
-        s = s.replace(match, params[index].toString());
+        template = template.replace(match, args[index].toString());
       });
     }
   
-    return s;
+    return template;
   };
 }
 

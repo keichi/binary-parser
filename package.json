@@ -7,13 +7,12 @@
     "mocha": "^6.1.4",
     "nyc": "^14.1.0",
     "prettier": "^1.9.2",
-    "istanbul": "^0.4.5",
     "@types/node": "^12.0.4",
     "typescript": "^3.5.1"
   },
   "scripts": {
-    "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
-    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.js'",
+    "fmt": "npx prettier --write '{lib,test,example}/**/*.{js,ts}'",
+    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.{js,ts}'",
     "test": "npx mocha --reporter spec",
     "cover": "npx nyc --reporter html mocha"
   },
