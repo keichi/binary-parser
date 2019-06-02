@@ -13,7 +13,7 @@
   "scripts": {
     "fmt": "npx prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
     "check-fmt": "npx prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
-    "test": "npx mocha --reporter spec",
+    "test": "npx mocha",
     "cover": "npx nyc --reporter html mocha"
   },
   "keywords": [
