@@ -50,15 +50,20 @@ jobs:
 
 workflows:
   version: 2
-  build-test-deploy:
+  build-test-publish:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
       - test:
           requires:
             - build
+          filters:
+            tags:
+              only: /^v.*/
       - publish:
           requires:
-            - build
             - test
           filters:
             tags:
