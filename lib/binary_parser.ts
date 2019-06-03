@@ -480,7 +480,7 @@ export class Parser {
       throw new Error('Choices option of array is not defined.');
     }
 
-    Object.keys(options.choices).forEach(function(key) {
+    Object.keys(options.choices).forEach(key => {
       if (isNaN(parseInt(key, 10))) {
         throw new Error('Key of choices must be a number.');
       }
@@ -501,7 +501,7 @@ export class Parser {
             '" is not supported.'
         );
       }
-    }, this);
+    });
 
     return this.setNextParser('choice', varName as string, options);
   }
@@ -613,7 +613,7 @@ export class Parser {
   resolveReferences(ctx: Context) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
-    references.forEach(function(alias) {
+    references.forEach(alias => {
       const parser = aliasRegistry[alias];
       parser.addAliasedCode(ctx);
     });
@@ -766,10 +766,8 @@ export class Parser {
       !this.next ||
       (this.next && ['Bit', 'Nest'].indexOf(this.next.type) < 0)
     ) {
-      var sum = 0;
-      ctx.bitFields.forEach(function(parser) {
-        sum += parser.options.length;
-      });
+      let sum = 0;
+      ctx.bitFields.forEach(parser => sum += parser.options.length);
 
       const val = ctx.generateTmpVariable();
 
@@ -1000,7 +998,7 @@ export class Parser {
       ctx.pushCode('case {0}:', tag);
       this.generateChoiceCase(ctx, this.varName, type);
       ctx.pushCode('break;');
-    }, this);
+    });
     ctx.pushCode('default:');
     if (this.options.defaultChoice) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);

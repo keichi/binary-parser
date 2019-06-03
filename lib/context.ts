@@ -87,10 +87,10 @@ export class Context {
   }
 
   getUnresolvedReferences() {
-    return Object.keys(this.references).filter(alias => {
-      return !references[alias].resolved && !references[alias].requested;
-    });
     const references = this.references;
+    return Object.keys(this.references).filter(alias =>
+      !references[alias].resolved && !references[alias].requested
+    );
   }
 
   interpolate(template: string, ...args: any[]) {
