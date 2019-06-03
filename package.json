@@ -5,8 +5,8 @@
   "main": "dist/binary_parser.js",
   "devDependencies": {
     "mocha": "^6.1.4",
-    "nyc": "^14.1.0",
-    "prettier": "^1.9.2",
+    "nyc": "^14.1.1",
+    "prettier": "^1.17.1",
     "@types/node": "^12.0.4",
     "typescript": "^3.5.1"
   },

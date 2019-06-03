@@ -2,50 +2,8 @@ import { Buffer } from 'buffer';
 import { runInNewContext } from 'vm';
 import { Context } from './context';
 
-const PRIMITIVE_TYPES: { [key in PrimitiveTypesUppercase]: number } = {
-  UInt8: 1,
-  UInt16LE: 2,
-  UInt16BE: 2,
-  UInt32LE: 4,
-  UInt32BE: 4,
-  Int8: 1,
-  Int16LE: 2,
-  Int16BE: 2,
-  Int32LE: 4,
-  Int32BE: 4,
-  FloatLE: 4,
-  FloatBE: 4,
-  DoubleLE: 8,
-  DoubleBE: 8,
-};
-
 const aliasRegistry: { [key: string]: Parser } = {};
 const FUNCTION_PREFIX = '___parser_';
-
-// Converts Parser's met hod names to internal type names
-const NAME_MAP = {
-  uint8: 'UInt8',
-  uint16le: 'UInt16LE',
-  uint16be: 'UInt16BE',
-  uint32le: 'UInt32LE',
-  uint32be: 'UInt32BE',
-  int8: 'Int8',
-  int16le: 'Int16LE',
-  int16be: 'Int16BE',
-  int32le: 'Int32LE',
-  int32be: 'Int32BE',
-  floatle: 'FloatLE',
-  floatbe: 'FloatBE',
-  doublele: 'DoubleLE',
-  doublebe: 'DoubleBE',
-  string: 'String',
-  buffer: 'Buffer',
-  array: 'Array',
-  skip: 'Skip',
-  choice: 'Choice',
-  nest: 'Nest',
-  bit: 'Bit',
-};
 
 interface ParserOptions {
   length?: number;
@@ -65,37 +23,20 @@ interface ParserOptions {
   tag?: null;
 }
 
-type Types =
-  | 'String'
-  | 'Buffer'
-  | 'String'
-  | 'Skip'
-  | 'Nest'
-  | 'Array'
+type Types = PrimitiveTypes | ComplexTypes;
+
+type ComplexTypes =
+  | 'bit'
+  | 'string'
+  | 'buffer'
+  | 'array'
   | 'choice'
   | 'nest'
-  | 'array'
   | 'skip'
-  | 'buffer'
-  | 'string'
-  | 'bit'
   | '';
+
 type Endianess = 'be' | 'le';
-type PrimitiveTypesUppercase =
-  | 'UInt8'
-  | 'UInt16LE'
-  | 'UInt16BE'
-  | 'UInt32LE'
-  | 'UInt32BE'
-  | 'Int8'
-  | 'Int16LE'
-  | 'Int16BE'
-  | 'Int32LE'
-  | 'Int32BE'
-  | 'FloatLE'
-  | 'FloatBE'
-  | 'DoubleLE'
-  | 'DoubleBE';
+
 type PrimitiveTypes =
   | 'uint8'
   | 'uint16le'
@@ -111,6 +52,7 @@ type PrimitiveTypes =
   | 'floatbe'
   | 'doublele'
   | 'doublebe';
+
 type PrimitiveTypesWithoutEndian =
   | 'uint8'
   | 'uint16'
@@ -118,6 +60,7 @@ type PrimitiveTypesWithoutEndian =
   | 'int8'
   | 'int16'
   | 'int32';
+
 type BitSizes =
   | 1
   | 2
@@ -152,6 +95,48 @@ type BitSizes =
   | 31
   | 32;
 
+const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
+  uint8: 1,
+  uint16le: 2,
+  uint16be: 2,
+  uint32le: 4,
+  uint32be: 4,
+  int8: 1,
+  int16le: 2,
+  int16be: 2,
+  int32le: 4,
+  int32be: 4,
+  floatle: 4,
+  floatbe: 4,
+  doublele: 8,
+  doublebe: 8,
+};
+
+const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
+  uint8: 'UInt8',
+  uint16le: 'UInt16LE',
+  uint16be: 'UInt16BE',
+  uint32le: 'UInt32LE',
+  uint32be: 'UInt32BE',
+  int8: 'Int8',
+  int16le: 'Int16LE',
+  int16be: 'Int16BE',
+  int32le: 'Int32LE',
+  int32be: 'Int32BE',
+  floatle: 'FloatLE',
+  floatbe: 'FloatBE',
+  doublele: 'DoubleLE',
+  doublebe: 'DoubleBE',
+  bit: 'Bit',
+  string: 'String',
+  buffer: 'Buffer',
+  array: 'Array',
+  choice: 'Choice',
+  nest: 'Nest',
+  skip: 'Skip',
+  '': '',
+};
+
 export class Parser {
   varName = '';
   type: Types = '';
@@ -169,61 +154,13 @@ export class Parser {
     return new Parser();
   }
 
-  private primitiveGenerateN(type: PrimitiveTypesUppercase, ctx: Context) {
+  private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
+    const typeName = CAPITILIZED_TYPE_NAMES[type];
+
     ctx.pushCode(
-      `${ctx.generateVariable(this.varName)} = buffer.read${type}(offset);`
+      `${ctx.generateVariable(this.varName)} = buffer.read${typeName}(offset);`
     );
-    ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
-  }
-
-  generateUInt8(ctx: Context) {
-    this.primitiveGenerateN('UInt8', ctx);
-  }
-
-  generateUInt16LE(ctx: Context) {
-    this.primitiveGenerateN('UInt16LE', ctx);
-  }
-  generateUInt16BE(ctx: Context) {
-    this.primitiveGenerateN('UInt16BE', ctx);
-  }
-
-  generateUInt32LE(ctx: Context) {
-    this.primitiveGenerateN('UInt32LE', ctx);
-  }
-  generateUInt32BE(ctx: Context) {
-    this.primitiveGenerateN('UInt32BE', ctx);
-  }
-
-  generateInt8(ctx: Context) {
-    this.primitiveGenerateN('Int8', ctx);
-  }
-
-  generateInt16LE(ctx: Context) {
-    this.primitiveGenerateN('Int16LE', ctx);
-  }
-  generateInt16BE(ctx: Context) {
-    this.primitiveGenerateN('Int16BE', ctx);
-  }
-
-  generateInt32LE(ctx: Context) {
-    this.primitiveGenerateN('Int32LE', ctx);
-  }
-  generateInt32BE(ctx: Context) {
-    this.primitiveGenerateN('Int32BE', ctx);
-  }
-
-  generateFloatLE(ctx: Context) {
-    this.primitiveGenerateN('FloatLE', ctx);
-  }
-  generateFloatBE(ctx: Context) {
-    this.primitiveGenerateN('FloatBE', ctx);
-  }
-
-  generateDoubleLE(ctx: Context) {
-    this.primitiveGenerateN('DoubleLE', ctx);
-  }
-  generateDoubleBE(ctx: Context) {
-    this.primitiveGenerateN('DoubleBE', ctx);
+    ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
 
   private primitiveN(
@@ -233,9 +170,11 @@ export class Parser {
   ) {
     return this.setNextParser(type as Types, varName, options);
   }
+
   private useThisEndian(type: PrimitiveTypesWithoutEndian): PrimitiveTypes {
     return (type + this.endian.toLowerCase()) as PrimitiveTypes;
   }
+
   uint8(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint8', varName, options);
   }
@@ -455,10 +394,10 @@ export class Parser {
     if (
       typeof options.type === 'string' &&
       !aliasRegistry[options.type] &&
-      Object.keys(PRIMITIVE_TYPES).indexOf(NAME_MAP[options.type]) < 0
+      Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0
     ) {
       throw new Error(
-        'Specified primitive type "' + options.type + '" is not supported.'
+        `Specified primitive type "${options.type}" is not supported.`
       );
     }
 
@@ -483,20 +422,16 @@ export class Parser {
         throw new Error('Key of choices must be a number.');
       }
       if (!options.choices[key]) {
-        throw new Error(
-          'Choice Case ' + key + ' of ' + varName + ' is not valid.'
-        );
+        throw new Error(`Choice Case ${key} of ${varName} is not valid.`);
       }
 
       if (
         typeof options.choices[key] === 'string' &&
         !aliasRegistry[options.choices[key]] &&
-        Object.keys(PRIMITIVE_TYPES).indexOf(NAME_MAP[options.choices[key]]) < 0
+        Object.keys(PRIMITIVE_SIZES).indexOf(options.choices[key]) < 0
       ) {
         throw new Error(
-          'Specified primitive type "' +
-            options.choices[key] +
-            '" is not supported.'
+          `Specified primitive type "${options.choices[key]}" is not supported.`
         );
       }
     });
@@ -534,7 +469,7 @@ export class Parser {
         this.endian = 'be';
         break;
       default:
-        throw new Error('Invalid endianess: ' + endianess);
+        throw new Error(`Invalid endianess: ${endianess}`);
     }
 
     return this;
@@ -622,45 +557,45 @@ export class Parser {
     this.compiled = runInNewContext(src, { Buffer });
   }
 
-  sizeOf() {
+  sizeOf(): number {
     let size = NaN;
 
-    if (Object.keys(PRIMITIVE_TYPES).indexOf(this.type) >= 0) {
-      size = PRIMITIVE_TYPES[this.type];
+    if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
+      size = PRIMITIVE_SIZES[this.type as PrimitiveTypes];
 
       // if this is a fixed length string
     } else if (
-      this.type === 'String' &&
+      this.type === 'string' &&
       typeof this.options.length === 'number'
     ) {
       size = this.options.length;
 
       // if this is a fixed length buffer
     } else if (
-      this.type === 'Buffer' &&
+      this.type === 'buffer' &&
       typeof this.options.length === 'number'
     ) {
       size = this.options.length;
 
       // if this is a fixed length array
     } else if (
-      this.type === 'Array' &&
+      this.type === 'array' &&
       typeof this.options.length === 'number'
     ) {
       let elementSize = NaN;
       if (typeof this.options.type === 'string') {
-        elementSize = PRIMITIVE_TYPES[NAME_MAP[this.options.type]];
+        elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
       } else if (this.options.type instanceof Parser) {
         elementSize = this.options.type.sizeOf();
       }
       size = this.options.length * elementSize;
 
       // if this a skip
-    } else if (this.type === 'Skip') {
+    } else if (this.type === 'skip') {
       size = this.options.length;
 
       // if this is a nested parser
-    } else if (this.type === 'Nest') {
+    } else if (this.type === 'nest') {
       size = (this.options.type as Parser).sizeOf();
     } else if (!this.type) {
       size = 0;
@@ -685,7 +620,7 @@ export class Parser {
   private setNextParser(type: Types, varName: string, options: ParserOptions) {
     const parser = new Parser();
 
-    parser.type = NAME_MAP[type];
+    parser.type = type;
     parser.varName = varName;
     parser.options = options || parser.options;
     parser.endian = this.endian;
@@ -703,7 +638,45 @@ export class Parser {
   // Call code generator for this parser
   private generate(ctx: Context) {
     if (this.type) {
-      this['generate' + this.type](ctx);
+      switch (this.type) {
+        case 'uint8':
+        case 'uint16le':
+        case 'uint16be':
+        case 'uint32le':
+        case 'uint32be':
+        case 'int8':
+        case 'int16le':
+        case 'int16be':
+        case 'int32le':
+        case 'int32be':
+        case 'floatle':
+        case 'floatbe':
+        case 'doublele':
+        case 'doublebe':
+          this.primitiveGenerateN(this.type, ctx);
+          break;
+        case 'bit':
+          this.generateBit(ctx);
+          break;
+        case 'string':
+          this.generateString(ctx);
+          break;
+        case 'buffer':
+          this.generateBuffer(ctx);
+          break;
+        case 'skip':
+          this.generateSkip(ctx);
+          break;
+        case 'nest':
+          this.generateNest(ctx);
+          break;
+        case 'array':
+          this.generateArray(ctx);
+          break;
+        case 'choice':
+          this.generateChoice(ctx);
+          break;
+      }
       this.generateAssert(ctx);
     }
 
@@ -760,7 +733,7 @@ export class Parser {
 
     if (
       !this.next ||
-      (this.next && ['Bit', 'Nest'].indexOf(this.next.type) < 0)
+      (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
       ctx.bitFields.forEach(parser => (sum += parser.options.length));
@@ -899,8 +872,9 @@ export class Parser {
 
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        ctx.pushCode(`var ${item} = buffer.read${NAME_MAP[type]}(offset);`);
-        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]};`);
+        const typeName = CAPITILIZED_TYPE_NAMES[type as PrimitiveTypes];
+        ctx.pushCode(`var ${item} = buffer.read${typeName}(offset);`);
+        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
@@ -941,8 +915,9 @@ export class Parser {
     if (typeof type === 'string') {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
-        ctx.pushCode(`${varName} = buffer.read${NAME_MAP[type]}(offset);`);
-        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]}`);
+        const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
+        ctx.pushCode(`${varName} = buffer.read${typeName}(offset);`);
+        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
