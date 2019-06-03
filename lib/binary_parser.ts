@@ -584,7 +584,7 @@ export class Parser {
     ) {
       let elementSize = NaN;
       if (typeof this.options.type === 'string') {
-          elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
+        elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
       } else if (this.options.type instanceof Parser) {
         elementSize = this.options.type.sizeOf();
       }
