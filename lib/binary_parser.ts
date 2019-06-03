@@ -23,7 +23,7 @@ const aliasRegistry: { [key: string]: Parser } = {};
 const FUNCTION_PREFIX = '___parser_';
 
 // Converts Parser's met hod names to internal type names
-var NAME_MAP = {
+const NAME_MAP = {
   uint8: 'UInt8',
   uint16le: 'UInt16LE',
   uint16be: 'UInt16BE',
@@ -553,7 +553,7 @@ export class Parser {
   }
 
   getCode() {
-    var ctx = new Context();
+    const ctx = new Context();
 
     ctx.pushCode('if (!Buffer.isBuffer(buffer)) {');
     ctx.generateError('"argument buffer is not a Buffer object"');
@@ -611,21 +611,21 @@ export class Parser {
   }
 
   resolveReferences(ctx: Context) {
-    var references = ctx.getUnresolvedReferences();
+    const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
     references.forEach(function(alias) {
-      var parser = aliasRegistry[alias];
+      const parser = aliasRegistry[alias];
       parser.addAliasedCode(ctx);
     });
   }
 
   compile() {
-    var src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
+    const src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
     this.compiled = runInNewContext(src, { Buffer });
   }
 
   sizeOf() {
-    var size = NaN;
+    let size = NaN;
 
     if (Object.keys(PRIMITIVE_TYPES).indexOf(this.type) >= 0) {
       size = PRIMITIVE_TYPES[this.type];
@@ -649,7 +649,7 @@ export class Parser {
       this.type === 'Array' &&
       typeof this.options.length === 'number'
     ) {
-      var elementSize = NaN;
+      let elementSize = NaN;
       if (typeof this.options.type === 'string') {
         elementSize = PRIMITIVE_TYPES[NAME_MAP[this.options.type]];
       } else if (this.options.type instanceof Parser) {
@@ -685,7 +685,7 @@ export class Parser {
   }
 
   private setNextParser(type: Types, varName: string, options: ParserOptions) {
-    var parser = new Parser();
+    const parser = new Parser();
 
     parser.type = NAME_MAP[type];
     parser.varName = varName;
@@ -709,7 +709,7 @@ export class Parser {
       this.generateAssert(ctx);
     }
 
-    var varName = ctx.generateVariable(this.varName);
+    const varName = ctx.generateVariable(this.varName);
     if (this.options.formatter) {
       this.generateFormatter(ctx, varName, this.options.formatter);
     }
@@ -722,7 +722,7 @@ export class Parser {
       return;
     }
 
-    var varName = ctx.generateVariable(this.varName);
+    const varName = ctx.generateVariable(this.varName);
 
     switch (typeof this.options.assert) {
       case 'function':
@@ -758,7 +758,7 @@ export class Parser {
 
   generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
-    var parser = JSON.parse(JSON.stringify(this));
+    const parser = JSON.parse(JSON.stringify(this));
     parser.varName = ctx.generateVariable(parser.varName);
     ctx.bitFields.push(parser);
 
@@ -771,7 +771,7 @@ export class Parser {
         sum += parser.options.length;
       });
 
-      var val = ctx.generateTmpVariable();
+      const val = ctx.generateTmpVariable();
 
       if (sum <= 8) {
         ctx.pushCode('var {0} = buffer.readUInt8(offset);', val);
@@ -780,8 +780,8 @@ export class Parser {
         ctx.pushCode('var {0} = buffer.readUInt16BE(offset);', val);
         sum = 16;
       } else if (sum <= 24) {
-        var val1 = ctx.generateTmpVariable();
-        var val2 = ctx.generateTmpVariable();
+        const val1 = ctx.generateTmpVariable();
+        const val2 = ctx.generateTmpVariable();
         ctx.pushCode('var {0} = buffer.readUInt16BE(offset);', val1);
         ctx.pushCode('var {0} = buffer.readUInt8(offset + 2);', val2);
         ctx.pushCode('var {2} = ({0} << 8) | {1};', val1, val2, val);
@@ -796,8 +796,8 @@ export class Parser {
       }
       ctx.pushCode('offset += {0};', sum / 8);
 
-      var bitOffset = 0;
-      var isBigEndian = this.endian === 'be';
+      let bitOffset = 0;
+      const isBigEndian = this.endian === 'be';
       ctx.bitFields.forEach(parser => {
         ctx.pushCode(
           '{0} = {1} >> {2} & {3};',
@@ -814,13 +814,13 @@ export class Parser {
   }
 
   generateSkip(ctx: Context) {
-    var length = ctx.generateOption(this.options.length);
+    const length = ctx.generateOption(this.options.length);
     ctx.pushCode('offset += {0};', length);
   }
 
   generateString(ctx: Context) {
-    var name = ctx.generateVariable(this.varName);
-    var start = ctx.generateTmpVariable();
+    const name = ctx.generateVariable(this.varName);
+    const start = ctx.generateTmpVariable();
 
     if (this.options.length && this.options.zeroTerminated) {
       ctx.pushCode('var {0} = offset;', start);
@@ -892,14 +892,14 @@ export class Parser {
   }
 
   generateArray(ctx: Context) {
-    var length = ctx.generateOption(this.options.length);
-    var lengthInBytes = ctx.generateOption(this.options.lengthInBytes);
-    var type = this.options.type;
-    var counter = ctx.generateTmpVariable();
-    var lhs = ctx.generateVariable(this.varName);
-    var item = ctx.generateTmpVariable();
-    var key = this.options.key;
-    var isHash = typeof key === 'string';
+    const length = ctx.generateOption(this.options.length);
+    const lengthInBytes = ctx.generateOption(this.options.lengthInBytes);
+    const type = this.options.type;
+    const counter = ctx.generateTmpVariable();
+    const lhs = ctx.generateVariable(this.varName);
+    const item = ctx.generateTmpVariable();
+    const key = this.options.key;
+    const isHash = typeof key === 'string';
 
     if (isHash) {
       ctx.pushCode('{0} = {};', lhs);
@@ -928,7 +928,7 @@ export class Parser {
         ctx.pushCode('var {0} = buffer.read{1}(offset);', item, NAME_MAP[type]);
         ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[NAME_MAP[type]]);
       } else {
-        var tempVar = ctx.generateTmpVariable();
+        const tempVar = ctx.generateTmpVariable();
         ctx.pushCode('var {0} = {1}(offset);', tempVar, FUNCTION_PREFIX + type);
         ctx.pushCode(
           'var {0} = {1}.result; offset = {1}.offset;',
@@ -972,7 +972,7 @@ export class Parser {
         );
         ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[NAME_MAP[type]]);
       } else {
-        var tempVar = ctx.generateTmpVariable();
+        const tempVar = ctx.generateTmpVariable();
         ctx.pushCode('var {0} = {1}(offset);', tempVar, FUNCTION_PREFIX + type);
         ctx.pushCode(
           '{0} = {1}.result; offset = {1}.offset;',
@@ -989,13 +989,13 @@ export class Parser {
   }
 
   generateChoice(ctx: Context) {
-    var tag = ctx.generateOption(this.options.tag);
+    const tag = ctx.generateOption(this.options.tag);
     if (this.varName) {
       ctx.pushCode('{0} = {};', ctx.generateVariable(this.varName));
     }
     ctx.pushCode('switch({0}) {', tag);
     Object.keys(this.options.choices).forEach(tag => {
-      var type = this.options.choices[tag];
+      const type = this.options.choices[tag];
 
       ctx.pushCode('case {0}:', tag);
       this.generateChoiceCase(ctx, this.varName, type);
@@ -1011,7 +1011,7 @@ export class Parser {
   }
 
   generateNest(ctx: Context) {
-    var nestVar = ctx.generateVariable(this.varName);
+    const nestVar = ctx.generateVariable(this.varName);
 
     if (this.options.type instanceof Parser) {
       if (this.varName) {
@@ -1021,7 +1021,7 @@ export class Parser {
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
     } else if (aliasRegistry[this.options.type]) {
-      var tempVar = ctx.generateTmpVariable();
+      const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         'var {0} = {1}(offset);',
         tempVar,

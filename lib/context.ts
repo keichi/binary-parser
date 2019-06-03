@@ -7,7 +7,7 @@ export class Context {
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
 
   generateVariable(name?: string) {
-    var arr = [];
+    const arr = [];
 
     const scopes = this.scopes[this.scopes.length - 1];
     arr.push(...scopes);
@@ -30,7 +30,7 @@ export class Context {
   }
 
   generateError(template: string, ...args: string[]) {
-    var err = this.interpolate(template, args);
+    const err = this.interpolate(template, args);
 
     if (this.isAsync) {
       this.pushCode(
@@ -87,19 +87,19 @@ export class Context {
   }
 
   getUnresolvedReferences() {
-    var references = this.references;
     return Object.keys(this.references).filter(alias => {
       return !references[alias].resolved && !references[alias].requested;
     });
+    const references = this.references;
   }
 
   interpolate(template: string, ...args: any[]) {
-    var re = /{\d+}/g;
-    var matches = template.match(re);
+    const re = /{\d+}/g;
+    const matches = template.match(re);
 
     if (matches) {
       matches.forEach(match => {
-        var index = parseInt(match.substr(1, match.length - 2), 10);
+        const index = parseInt(match.substr(1, match.length - 2), 10);
         template = template.replace(match, args[index].toString());
       });
     }
