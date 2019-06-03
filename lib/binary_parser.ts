@@ -170,7 +170,9 @@ export class Parser {
   }
 
   private primitiveGenerateN(type: PrimitiveTypesUppercase, ctx: Context) {
-    ctx.pushCode(`${ctx.generateVariable(this.varName)} = buffer.read${type}(offset);`);
+    ctx.pushCode(
+      `${ctx.generateVariable(this.varName)} = buffer.read${type}(offset);`
+    );
     ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
   }
 
@@ -728,14 +730,16 @@ export class Parser {
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
         break;
       case 'string':
-            ctx.pushCode(`if ("${this.options.assert}" !== ${varName}) {`);
+        ctx.pushCode(`if ("${this.options.assert}" !== ${varName}) {`);
         break;
       default:
         throw new Error(
           'Assert option supports only strings, numbers and assert functions.'
         );
     }
-    ctx.generateError(`"Assert error: ${varName} is " + ${this.options.assert}`);
+    ctx.generateError(
+      `"Assert error: ${varName} is " + ${this.options.assert}`
+    );
     ctx.pushCode('}');
   }
 
@@ -759,7 +763,7 @@ export class Parser {
       (this.next && ['Bit', 'Nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
-      ctx.bitFields.forEach(parser => sum += parser.options.length);
+      ctx.bitFields.forEach(parser => (sum += parser.options.length));
 
       const val = ctx.generateTmpVariable();
 
@@ -789,7 +793,9 @@ export class Parser {
       let bitOffset = 0;
       const isBigEndian = this.endian === 'be';
       ctx.bitFields.forEach(parser => {
-        const offset = isBigEndian ? sum - bitOffset - parser.options.length : bitOffset;
+        const offset = isBigEndian
+          ? sum - bitOffset - parser.options.length
+          : bitOffset;
         const mask = (1 << parser.options.length) - 1;
 
         ctx.pushCode(`${parser.varName} = ${val} >> ${offset} & ${mask};`);
@@ -813,20 +819,30 @@ export class Parser {
     if (this.options.length && this.options.zeroTerminated) {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode(`while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`);
-      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`);
+      ctx.pushCode(
+        `while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`
+      );
+      ctx.pushCode(
+        `${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`
+      );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
-      ctx.pushCode(`${name} = buffer.toString('${encoding}', offset, offset + ${len});`);
+      ctx.pushCode(
+        `${name} = buffer.toString('${encoding}', offset, offset + ${len});`
+      );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.readUInt8(offset++) !== 0);');
-      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset - 1);`);
+      ctx.pushCode(
+        `${name} = buffer.toString('${encoding}', ${start}, offset - 1);`
+      );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.length > offset++);');
-      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset);`);
+      ctx.pushCode(
+        `${name} = buffer.toString('${encoding}', ${start}, offset);`
+      );
     }
     if (this.options.stripNull) {
       ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);
@@ -868,11 +884,17 @@ export class Parser {
     if (typeof this.options.readUntil === 'function') {
       ctx.pushCode('do {');
     } else if (this.options.readUntil === 'eof') {
-      ctx.pushCode(`for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`);
+      ctx.pushCode(
+        `for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`
+      );
     } else if (lengthInBytes !== undefined) {
-      ctx.pushCode(`for (var ${counter} = offset; offset - ${counter} < ${lengthInBytes}; ) {`);
+      ctx.pushCode(
+        `for (var ${counter} = offset; offset - ${counter} < ${lengthInBytes}; ) {`
+      );
     } else {
-      ctx.pushCode(`for (var ${counter} = 0; ${counter} < ${length}; ${counter}++) {`);
+      ctx.pushCode(
+        `for (var ${counter} = 0; ${counter} < ${length}; ${counter}++) {`
+      );
     }
 
     if (typeof type === 'string') {
@@ -882,7 +904,9 @@ export class Parser {
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
-        ctx.pushCode(`var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`);
+        ctx.pushCode(
+          `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`
+        );
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
@@ -902,7 +926,10 @@ export class Parser {
     ctx.pushCode('}');
 
     if (typeof this.options.readUntil === 'function') {
-      ctx.pushCode(`while (!(${this.options.readUntil}).call(this, ${item}, buffer.slice(offset)));`);
+      const pred = this.options.readUntil;
+      ctx.pushCode(
+        `while (!(${pred}).call(this, ${item}, buffer.slice(offset)));`
+      );
     }
   }
 
@@ -915,7 +942,9 @@ export class Parser {
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
-        ctx.pushCode(`${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`);
+        ctx.pushCode(
+          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`
+        );
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
@@ -928,7 +957,7 @@ export class Parser {
   generateChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
     if (this.varName) {
-      ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`, );
+      ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`);
     }
     ctx.pushCode(`switch(${tag}) {`);
     Object.keys(this.options.choices).forEach(tag => {
@@ -959,8 +988,12 @@ export class Parser {
       ctx.popPath(this.varName);
     } else if (aliasRegistry[this.options.type]) {
       const tempVar = ctx.generateTmpVariable();
-      ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`);
-      ctx.pushCode(`${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`);
+      ctx.pushCode(
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`
+      );
+      ctx.pushCode(
+        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
+      );
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
     }
   }

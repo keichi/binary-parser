@@ -24,7 +24,7 @@ export class Context {
       case 'string':
         return this.generateVariable(val);
       case 'function':
-        return '(' + val + ').call(' + this.generateVariable() + ', vars)';
+        return `(${val}).call(${this.generateVariable()}, vars)`;
     }
   }
 
@@ -77,8 +77,8 @@ export class Context {
 
   getUnresolvedReferences() {
     const references = this.references;
-    return Object.keys(this.references).filter(alias =>
-      !references[alias].resolved && !references[alias].requested
+    return Object.keys(this.references).filter(
+      alias => !references[alias].resolved && !references[alias].requested
     );
   }
 }
