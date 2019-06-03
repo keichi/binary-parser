@@ -43,15 +43,15 @@ type PrimitiveTypes =
   | 'uint16be'
   | 'uint32le'
   | 'uint32be'
+  | 'uint64le'
+  | 'uint64be'
   | 'int8'
   | 'int16le'
   | 'int16be'
   | 'int32le'
   | 'int32be'
-  | 'biguint64le'
-  | 'biguint64be'
-  | 'bigint64le'
-  | 'bigint64be'
+  | 'int64le'
+  | 'int64be'
   | 'floatle'
   | 'floatbe'
   | 'doublele'
@@ -64,8 +64,8 @@ type PrimitiveTypesWithoutEndian =
   | 'int8'
   | 'int16'
   | 'int32'
-  | 'bigint64'
-  | 'biguint64';
+  | 'int64'
+  | 'uint64';
 
 type BitSizes =
   | 1
@@ -112,10 +112,10 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   int16be: 2,
   int32le: 4,
   int32be: 4,
-  bigint64be: 8,
-  bigint64le: 8,
-  biguint64be: 8,
-  biguint64le: 8,
+  int64be: 8,
+  int64le: 8,
+  uint64be: 8,
+  uint64le: 8,
   floatle: 4,
   floatbe: 4,
   doublele: 8,
@@ -133,10 +133,10 @@ const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   int16be: 'Int16BE',
   int32le: 'Int32LE',
   int32be: 'Int32BE',
-  bigint64be: 'BigInt64BE',
-  bigint64le: 'BigInt64LE',
-  biguint64be: 'BigUInt64BE',
-  biguint64le: 'BigUInt64LE',
+  int64be: 'BigInt64BE',
+  int64le: 'BigInt64LE',
+  uint64be: 'BigUInt64BE',
+  uint64le: 'BigUInt64LE',
   floatle: 'FloatLE',
   floatbe: 'FloatBE',
   doublele: 'DoubleLE',
@@ -237,7 +237,7 @@ export class Parser {
     return this.primitiveN('int32be', varName, options);
   }
 
-  private bigIntVerCheck() {
+  private bigIntVersionCheck() {
     const [major] = process.version.replace('v', '').split('.');
     if (Number(major) < 12) {
       throw new Error(
@@ -247,30 +247,30 @@ export class Parser {
       );
     }
   }
-  bigint64(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN(this.useThisEndian('bigint64'), varName, options);
+  int64(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN(this.useThisEndian('int64'), varName, options);
   }
-  bigint64be(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN('bigint64be', varName, options);
+  int64be(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN('int64be', varName, options);
   }
-  bigint64le(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN('bigint64le', varName, options);
+  int64le(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN('int64le', varName, options);
   }
 
-  biguint64(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN(this.useThisEndian('biguint64'), varName, options);
+  uint64(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN(this.useThisEndian('uint64'), varName, options);
   }
-  biguint64be(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN('biguint64be', varName, options);
+  uint64be(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN('uint64be', varName, options);
   }
-  biguint64le(varName: string, options?: ParserOptions) {
-    this.bigIntVerCheck();
-    return this.primitiveN('biguint64le', varName, options);
+  uint64le(varName: string, options?: ParserOptions) {
+    this.bigIntVersionCheck();
+    return this.primitiveN('uint64le', varName, options);
   }
 
   floatle(varName: string, options?: ParserOptions) {
@@ -699,10 +699,10 @@ export class Parser {
         case 'int16be':
         case 'int32le':
         case 'int32be':
-        case 'bigint64be':
-        case 'bigint64le':
-        case 'biguint64be':
-        case 'biguint64le':
+        case 'int64be':
+        case 'int64le':
+        case 'uint64be':
+        case 'uint64le':
         case 'floatle':
         case 'floatbe':
         case 'doublele':

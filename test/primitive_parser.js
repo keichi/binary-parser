@@ -19,13 +19,13 @@ describe('Primitive parser', function() {
       var buffer = Buffer.from([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
       assert.deepEqual(parser.parse(buffer), { a: 0, b: 1234, c: 12345678 });
     });
-    describe.only('BigInt64 parsers', () => {
+    describe('BigInt64 parsers', () => {
       const [major] = process.version.replace('v', '').split('.');
       if (Number(major) >= 12) {
         it('should parse biguints64', () => {
           const parser = Parser.start()
-            .biguint64be('a')
-            .biguint64le('b');
+            .uint64be('a')
+            .uint64le('b');
           // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
           const buf = Buffer.from([
             0x00,
@@ -46,17 +46,17 @@ describe('Primitive parser', function() {
             0xff,
           ]);
           assert.deepEqual(parser.parse(buf), {
-            a: 4294967295n,
-            b: 18446744069414584320n,
+            a: BigInt('4294967295'),
+            b: BigInt('18446744069414584320'),
           });
         });
 
         it('should parse bigints64', () => {
           const parser = Parser.start()
-            .bigint64be('a')
-            .bigint64le('b')
-            .bigint64be('c')
-            .bigint64le('d');
+            .int64be('a')
+            .int64le('b')
+            .int64be('c')
+            .int64le('d');
           // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
           const buf = Buffer.from([
             0x00,
@@ -93,10 +93,10 @@ describe('Primitive parser', function() {
             0xff,
           ]);
           assert.deepEqual(parser.parse(buf), {
-            a: 4294967295n,
-            b: -4294967295n,
-            c: 4294967295n,
-            d: -4294967295n,
+            a: BigInt('4294967295'),
+            b: BigInt('-4294967295'),
+            c: BigInt('4294967295'),
+            d: BigInt('-4294967295'),
           });
         });
       } else {
