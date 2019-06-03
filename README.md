@@ -85,12 +85,17 @@ compiled on-the-fly and internally cached.
 Set the constructor function that should be called to create the object
 returned from the `parse` method.
 
-### [u]int{8, 16, 32}{le, be}(name[, options])
+### [u]int{8, 16, 32, 64}{le, be}(name[, options])
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
-Number of bits can be chosen from 8, 16 and 32. Byte-ordering can be either
+Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
 `l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number.
+signed number, with `u` prefixed as an unsigned number. The runtime type 
+returned by the 8, 16, 32 bit methods is `number` while the type 
+returned by the 64 bit is `bigint`.  
+  
+**NOTE:** [u]int64{be,le} methods only work if your runtime is Nodejs v12.0.0 or 
+greater. Lower version will throw a runtime error.
 
 ```javascript
 var parser = new Parser()
@@ -100,6 +105,8 @@ var parser = new Parser()
   .uint8("b")
   // Signed 16-bit integer (big endian)
   .int16be("c");
+  // signed 64-bit integer (big endian)
+  .int64be("d")
 ```
 
 ### bit\[1-32\](name[, options])
