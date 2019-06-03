@@ -21,9 +21,10 @@ time and effort to write). Supported data types are:
 - [Arrays](#arrayname-options) (supports user-defined element type,
   fixed-length and variable-length)
 - [Choices](##choicename-options)
+- [Pointers](##pointername-options)
 - User defined types
 
-Binary-parser is insipired by [BinData](https://github.com/dmendel/bindata)
+Binary-parser is inspired by [BinData](https://github.com/dmendel/bindata)
 and [binary](https://github.com/substack/node-binary).
 
 ## Installation
@@ -93,11 +94,11 @@ Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
 `l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number. The runtime type 
-returned by the 8, 16, 32 bit methods is `number` while the type 
-returned by the 64 bit is `bigint`.  
-  
-**NOTE:** [u]int64{be,le} methods only work if your runtime is Nodejs v12.0.0 or 
+signed number, with `u` prefixed as an unsigned number. The runtime type
+returned by the 8, 16, 32 bit methods is `number` while the type
+returned by the 64 bit is `bigint`.
+
+**NOTE:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
 greater. Lower version will throw a runtime error.
 
 ```javascript
@@ -281,10 +282,10 @@ current object. `options` is an object which can have the following keys:
 - `type` - (Required) A `Parser` object.
 
 ### pointer(name [,options])
-Jump to `offset`, execute parser for `type` and rewind to current offset.
+Jump to `offset`, execute parser for `type` and rewind to previous offset.
 
 - `type` - (Required) A `Parser` object.
-- `offset` - (Required) Note that this is abosolute offset
+- `offset` - (Required) Note that this is absolute offset
     Type of the array element. Can be a string or an user defined Parser
     object. If it's a string, you have to choose from [u]int{8, 16, 32}{le,
     be}.
