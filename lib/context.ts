@@ -1,7 +1,9 @@
+import { Parser } from './binary_parser';
+
 export class Context {
   code = '';
   scopes = [['vars']];
-  bitFields = [];
+  bitFields: Parser[] = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
 
