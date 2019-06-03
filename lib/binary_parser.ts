@@ -423,7 +423,7 @@ export class Parser {
       Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.type]) < 0
     ) {
       throw new Error(
-        'Specified primitive type "' + options.type + '" is not supported.'
+          `Specified primitive type "${options.type}" is not supported.`
       );
     }
 
@@ -448,9 +448,7 @@ export class Parser {
         throw new Error('Key of choices must be a number.');
       }
       if (!options.choices[key]) {
-        throw new Error(
-          'Choice Case ' + key + ' of ' + varName + ' is not valid.'
-        );
+        throw new Error(`Choice Case ${key} of ${varName} is not valid.`);
       }
 
       if (
@@ -459,9 +457,7 @@ export class Parser {
         Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.choices[key]]) < 0
       ) {
         throw new Error(
-          'Specified primitive type "' +
-            options.choices[key] +
-            '" is not supported.'
+          `Specified primitive type "${options.choices[key]}" is not supported.`
         );
       }
     });
@@ -499,7 +495,7 @@ export class Parser {
         this.endian = 'be';
         break;
       default:
-        throw new Error('Invalid endianess: ' + endianess);
+        throw new Error(`Invalid endianess: ${endianess}`);
     }
 
     return this;
