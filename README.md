@@ -10,8 +10,8 @@ data. Binary-parser dynamically generates and compiles the parser code
 on-the-fly, which runs as fast as a hand-written parser (which takes much more
 time and effort to write). Supported data types are:
 
-- [Integers](#uint8-16-32le-bename-options) (supports 8, 16, 32 bit signed-
-  and unsigned integers)
+- [Integers](#uint8-16-32-64le-bename-options) (supports 8, 16, 32 and 64bit
+  signed and unsigned integers)
 - [Floating point numbers](#float-doublele-bename-options) (supports 32 and 64
   bit floating point values)
 - [Bit fields](#bit1-32name-options) (supports bit fields with length from 1
@@ -20,8 +20,8 @@ time and effort to write). Supported data types are:
   variable-length, zero terminated string)
 - [Arrays](#arrayname-options) (supports user-defined element type,
   fixed-length and variable-length)
-- [Choices](##choicename-options)
-- [Pointers](##pointername-options)
+- [Choices](#choicename-options)
+- [Pointers](#pointername-options)
 - User defined types
 
 Binary-parser is inspired by [BinData](https://github.com/dmendel/bindata)
