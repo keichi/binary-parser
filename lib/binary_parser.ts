@@ -48,6 +48,10 @@ type PrimitiveTypes =
   | 'int16be'
   | 'int32le'
   | 'int32be'
+  | 'biguint64le'
+  | 'biguint64be'
+  | 'bigint64le'
+  | 'bigint64be'
   | 'floatle'
   | 'floatbe'
   | 'doublele'
@@ -59,7 +63,9 @@ type PrimitiveTypesWithoutEndian =
   | 'uint32'
   | 'int8'
   | 'int16'
-  | 'int32';
+  | 'int32'
+  | 'bigint64'
+  | 'biguint64';
 
 type BitSizes =
   | 1
@@ -106,6 +112,10 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   int16be: 2,
   int32le: 4,
   int32be: 4,
+  bigint64be: 8,
+  bigint64le: 8,
+  biguint64be: 8,
+  biguint64le: 8,
   floatle: 4,
   floatbe: 4,
   doublele: 8,
@@ -123,6 +133,10 @@ const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   int16be: 'Int16BE',
   int32le: 'Int32LE',
   int32be: 'Int32BE',
+  bigint64be: 'BigInt64BE',
+  bigint64le: 'BigInt64LE',
+  biguint64be: 'BigUInt64BE',
+  biguint64le: 'BigUInt64LE',
   floatle: 'FloatLE',
   floatbe: 'FloatBE',
   doublele: 'DoubleLE',
@@ -221,6 +235,38 @@ export class Parser {
   }
   int32be(varName: string, options?: ParserOptions) {
     return this.primitiveN('int32be', varName, options);
+  }
+
+  private bigIntVerCheck() {
+    const [major] = process.version.replace('v', '').split('.');
+    if(Number(major) < 12) {
+      throw new Error(`The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${process.version}, you must use v12 or greater`);
+    }
+  }
+  bigint64(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN(this.useThisEndian('bigint64'), varName, options);
+  }
+  bigint64be(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN('bigint64be', varName, options);
+  }
+  bigint64le(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN('bigint64le', varName, options);
+  }
+
+  biguint64(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN(this.useThisEndian('biguint64'), varName, options);
+  }
+  biguint64be(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN('biguint64be', varName, options);
+  }
+  biguint64le(varName: string, options?: ParserOptions) {
+    this.bigIntVerCheck();
+    return this.primitiveN('biguint64le', varName, options);
   }
 
   floatle(varName: string, options?: ParserOptions) {
@@ -649,6 +695,10 @@ export class Parser {
         case 'int16be':
         case 'int32le':
         case 'int32be':
+        case 'bigint64be':
+        case 'bigint64le':
+        case 'biguint64be':
+        case 'biguint64le':
         case 'floatle':
         case 'floatbe':
         case 'doublele':
