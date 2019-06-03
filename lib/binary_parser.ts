@@ -21,6 +21,7 @@ interface ParserOptions {
   stripNull?: null;
   key?: null;
   tag?: null;
+  offset?: null;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -33,6 +34,7 @@ type ComplexTypes =
   | 'choice'
   | 'nest'
   | 'skip'
+  | 'pointer'
   | '';
 
 type Endianess = 'be' | 'le';
@@ -148,6 +150,7 @@ const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   choice: 'Choice',
   nest: 'Nest',
   skip: 'Skip',
+  pointer: 'Pointer',
   '': '',
 };
 
@@ -510,6 +513,32 @@ export class Parser {
     return this.setNextParser('nest', varName as string, options);
   }
 
+  pointer(varName: string, options?: ParserOptions) {
+    if (!options.offset) {
+      throw new Error('Offset option of pointer is not defined.');
+    }
+
+    if (!options.type) {
+      throw new Error('Type option of pointer is not defined.');
+    } else if (typeof options.type === 'string') {
+      if (
+        Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0 &&
+        !aliasRegistry[options.type]
+      ) {
+        throw new Error(
+          'Specified type "' + options.type + '" is not supported.'
+        );
+      }
+    } else if (options.type instanceof Parser) {
+    } else {
+      throw new Error(
+        'Type option of pointer must be a string or a Parser object.'
+      );
+    }
+
+    return this.setNextParser('pointer', varName, options);
+  }
+
   endianess(endianess: 'little' | 'big') {
     switch (endianess.toLowerCase()) {
       case 'little':
@@ -729,6 +758,9 @@ export class Parser {
           break;
         case 'choice':
           this.generateChoice(ctx);
+          break;
+        case 'pointer':
+          this.generatePointer(ctx);
           break;
       }
       this.generateAssert(ctx);
@@ -1039,5 +1071,41 @@ export class Parser {
     if (typeof formatter === 'function') {
       ctx.pushCode(`${varName} = (${formatter}).call(this, ${varName});`);
     }
+  }
+
+  private generatePointer(ctx: Context) {
+    const type = this.options.type;
+    const offset = ctx.generateOption(this.options.offset);
+    const tempVar = ctx.generateTmpVariable();
+    const nestVar = ctx.generateVariable(this.varName);
+
+    // Save current offset
+    ctx.pushCode(`var ${tempVar} = offset;`);
+
+    // Move offset
+    ctx.pushCode(`offset = ${offset};`);
+
+    if (this.options.type instanceof Parser) {
+      ctx.pushCode(`${nestVar} = {};`);
+      ctx.pushPath(this.varName);
+      this.options.type.generate(ctx);
+      ctx.popPath(this.varName);
+    } else if (aliasRegistry[this.options.type]) {
+      const tempVar = ctx.generateTmpVariable();
+      ctx.pushCode(
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`
+      );
+      ctx.pushCode(
+        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
+      );
+      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
+    } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
+      const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
+      ctx.pushCode(`${nestVar} = buffer.read${typeName}(offset);`);
+      ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
+    }
+
+    // Restore offset
+    ctx.pushCode(`offset = ${tempVar};`);
   }
 }

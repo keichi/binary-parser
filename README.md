@@ -10,20 +10,24 @@ data. Binary-parser dynamically generates and compiles the parser code
 on-the-fly, which runs as fast as a hand-written parser (which takes much more
 time and effort to write). Supported data types are:
 
-- Integers (supports 8, 16, 32 bit signed- and unsigned integers)
-- Floating point numbers (supports 32 and 64 bit floating point values)
-- Bit fields (supports bit fields with length from 1 to 32 bits)
-- Strings (supports various encodings, fixed-length and variable-length, zero
-  terminated string)
-- Arrays (supports user-defined element type, fixed-length and variable-length)
-- Choices
+- [Integers](#uint8-16-32-64le-bename-options) (supports 8, 16, 32 and 64bit
+  signed and unsigned integers)
+- [Floating point numbers](#float-doublele-bename-options) (supports 32 and 64
+  bit floating point values)
+- [Bit fields](#bit1-32name-options) (supports bit fields with length from 1
+  to 32 bits)
+- [Strings](#stringname-options) (supports various encodings, fixed-length and
+  variable-length, zero terminated string)
+- [Arrays](#arrayname-options) (supports user-defined element type,
+  fixed-length and variable-length)
+- [Choices](#choicename-options)
+- [Pointers](#pointername-options)
 - User defined types
 
-This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
-, its syntax by [binary](https://github.com/substack/node-binary).
+Binary-parser is inspired by [BinData](https://github.com/dmendel/bindata)
+and [binary](https://github.com/substack/node-binary).
 
 ## Installation
-Binary-parser can be installed with [npm](https://npmjs.org/):
 
 ```shell
 $ npm install binary-parser
@@ -78,8 +82,8 @@ nothing.
 
 ### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
-object. When `parse(buffer)` is called for the first time, parser code is
-compiled on-the-fly and internally cached.
+object. When `parse(buffer)` is called for the first time, the associated
+parser code is compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
@@ -90,11 +94,11 @@ Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
 `l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number. The runtime type 
-returned by the 8, 16, 32 bit methods is `number` while the type 
-returned by the 64 bit is `bigint`.  
-  
-**NOTE:** [u]int64{be,le} methods only work if your runtime is Nodejs v12.0.0 or 
+signed number, with `u` prefixed as an unsigned number. The runtime type
+returned by the 8, 16, 32 bit methods is `number` while the type
+returned by the 64 bit is `bigint`.
+
+**NOTE:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
 greater. Lower version will throw a runtime error.
 
 ```javascript
@@ -277,6 +281,14 @@ current object. `options` is an object which can have the following keys:
 
 - `type` - (Required) A `Parser` object.
 
+### pointer(name [,options])
+Jump to `offset`, execute parser for `type` and rewind to previous offset.
+
+- `type` - (Required) A `Parser` object.
+- `offset` - (Required) Note that this indicates absolute offset from the
+    start of the input buffer. Can be a string `[u]int{8, 16, 32, 64}{le, be}`
+    or an user defined Parser object.
+
 ### skip(length)
 Skip parsing for `length` bytes.
 
@@ -398,7 +410,7 @@ Dynamically generates the code for this parser and returns it as a string.
 Usually used for debugging.
 
 ### Common options
-These are common options that can be specified in all parsers.
+These options can be used in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired
   form.
@@ -437,11 +449,10 @@ These are common options that can be specified in all parsers.
     ```
 
 ## Examples
-See `example` for more complex examples.
+See `example/` for real-world examples.
 
 ## Support
 Please report issues to the
-[issue tracker](https://github.com/Keichi/binary-parser/issues) if you have
+[issue tracker](https://github.com/keichi/binary-parser/issues) if you have
 any difficulties using this module, found a bug, or request a new feature.
-
-Pull requests with fixes and improvements are welcomed!
+Pull requests are welcomed.
