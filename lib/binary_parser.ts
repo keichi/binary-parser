@@ -572,7 +572,7 @@ export class Parser {
     return ctx.code;
   }
 
-  addRawCode(ctx: Context) {
+  private addRawCode(ctx: Context) {
     ctx.pushCode('var offset = 0;');
 
     if (this.constructorFn) {
@@ -588,7 +588,7 @@ export class Parser {
     ctx.pushCode('return vars;');
   }
 
-  addAliasedCode(ctx: Context) {
+  private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset) {`);
 
     if (this.constructorFn) {
@@ -608,7 +608,7 @@ export class Parser {
     return ctx;
   }
 
-  resolveReferences(ctx: Context) {
+  private resolveReferences(ctx: Context) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
     references.forEach(alias => {
@@ -701,7 +701,7 @@ export class Parser {
   }
 
   // Call code generator for this parser
-  generate(ctx: Context) {
+  private generate(ctx: Context) {
     if (this.type) {
       this['generate' + this.type](ctx);
       this.generateAssert(ctx);
@@ -715,7 +715,7 @@ export class Parser {
     return this.generateNext(ctx);
   }
 
-  generateAssert(ctx: Context) {
+  private generateAssert(ctx: Context) {
     if (!this.options.assert) {
       return;
     }
@@ -744,7 +744,7 @@ export class Parser {
   }
 
   // Recursively call code generators and append results
-  generateNext(ctx: Context) {
+  private generateNext(ctx: Context) {
     if (this.next) {
       ctx = this.next.generate(ctx);
     }
@@ -752,7 +752,7 @@ export class Parser {
     return ctx;
   }
 
-  generateBit(ctx: Context) {
+  private generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
     const parser = JSON.parse(JSON.stringify(this));
     parser.varName = ctx.generateVariable(parser.varName);
@@ -806,12 +806,12 @@ export class Parser {
     }
   }
 
-  generateSkip(ctx: Context) {
+  private generateSkip(ctx: Context) {
     const length = ctx.generateOption(this.options.length);
     ctx.pushCode(`offset += ${length};`);
   }
 
-  generateString(ctx: Context) {
+  private generateString(ctx: Context) {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding;
@@ -849,7 +849,7 @@ export class Parser {
     }
   }
 
-  generateBuffer(ctx: Context) {
+  private generateBuffer(ctx: Context) {
     const varName = ctx.generateVariable(this.varName);
 
     if (this.options.readUntil === 'eof') {
@@ -866,7 +866,7 @@ export class Parser {
     }
   }
 
-  generateArray(ctx: Context) {
+  private generateArray(ctx: Context) {
     const length = ctx.generateOption(this.options.length);
     const lengthInBytes = ctx.generateOption(this.options.lengthInBytes);
     const type = this.options.type;
@@ -933,7 +933,11 @@ export class Parser {
     }
   }
 
-  generateChoiceCase(ctx: Context, varName: string, type: string | Parser) {
+  private generateChoiceCase(
+    ctx: Context,
+    varName: string,
+    type: string | Parser
+  ) {
     if (typeof type === 'string') {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
@@ -954,7 +958,7 @@ export class Parser {
     }
   }
 
-  generateChoice(ctx: Context) {
+  private generateChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
     if (this.varName) {
       ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`);
@@ -976,7 +980,7 @@ export class Parser {
     ctx.pushCode('}');
   }
 
-  generateNest(ctx: Context) {
+  private generateNest(ctx: Context) {
     const nestVar = ctx.generateVariable(this.varName);
 
     if (this.options.type instanceof Parser) {
@@ -998,13 +1002,13 @@ export class Parser {
     }
   }
 
-  generateFormatter(ctx: Context, varName: string, formatter: Function) {
+  private generateFormatter(
+    ctx: Context,
+    varName: string,
+    formatter: Function
+  ) {
     if (typeof formatter === 'function') {
       ctx.pushCode(`${varName} = (${formatter}).call(this, ${varName});`);
     }
-  }
-
-  isInteger() {
-    return !!this.type.match(/U?Int[8|16|32][BE|LE]?|Bit\d+/);
   }
 }
