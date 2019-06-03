@@ -1,13 +1,12 @@
 export class Context {
   code = '';
   scopes = [['vars']];
-  isAsync = false;
   bitFields = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
 
   generateVariable(name?: string) {
-    var arr = [];
+    const arr = [];
 
     const scopes = this.scopes[this.scopes.length - 1];
     arr.push(...scopes);
@@ -25,30 +24,20 @@ export class Context {
       case 'string':
         return this.generateVariable(val);
       case 'function':
-        return '(' + val + ').call(' + this.generateVariable() + ', vars)';
+        return `(${val}).call(${this.generateVariable()}, vars)`;
     }
   }
 
-  generateError(template: string, ...args: string[]) {
-    var err = this.interpolate(template, args);
-
-    if (this.isAsync) {
-      this.pushCode(
-        'return process.nextTick(function() { callback(new Error(' +
-          err +
-          '), vars); });'
-      );
-    } else {
-      this.pushCode('throw new Error(' + err + ');');
-    }
+  generateError(err: string) {
+    this.pushCode('throw new Error(' + err + ');');
   }
 
   generateTmpVariable() {
     return '$tmp' + this.tmpVariableCount++;
   }
 
-  pushCode(template: string, ...args: (string | Function | number)[]) {
-    this.code += this.interpolate(template, ...args) + '\n';
+  pushCode(code: string) {
+    this.code += code + '\n';
   }
 
   pushPath(name: string) {
@@ -87,23 +76,9 @@ export class Context {
   }
 
   getUnresolvedReferences() {
-    var references = this.references;
-    return Object.keys(this.references).filter(alias => {
-      return !references[alias].resolved && !references[alias].requested;
-    });
-  }
-
-  interpolate(template: string, ...args: any[]) {
-    var re = /{\d+}/g;
-    var matches = template.match(re);
-
-    if (matches) {
-      matches.forEach(match => {
-        var index = parseInt(match.substr(1, match.length - 2), 10);
-        template = template.replace(match, args[index].toString());
-      });
-    }
-
-    return template;
+    const references = this.references;
+    return Object.keys(this.references).filter(
+      alias => !references[alias].resolved && !references[alias].requested
+    );
   }
 }
