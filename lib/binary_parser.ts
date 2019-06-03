@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import { runInNewContext } from 'vm';
 import { Context } from './context';
 
-const PRIMITIVE_TYPES = {
+const PRIMITIVE_TYPES: { [key in PrimitiveTypesUppercase]: number } = {
   UInt8: 1,
   UInt16LE: 2,
   UInt16BE: 2,
@@ -21,11 +21,6 @@ const PRIMITIVE_TYPES = {
 
 const aliasRegistry: { [key: string]: Parser } = {};
 const FUNCTION_PREFIX = '___parser_';
-
-const BIT_RANGE: number[] = [];
-for (let i = 1; i <= 32; i++) {
-  BIT_RANGE.push(i);
-}
 
 // Converts Parser's met hod names to internal type names
 var NAME_MAP = {
@@ -86,6 +81,76 @@ type Types =
   | 'bit'
   | '';
 type Endianess = 'be' | 'le';
+type PrimitiveTypesUppercase =
+  | 'UInt8'
+  | 'UInt16LE'
+  | 'UInt16BE'
+  | 'UInt32LE'
+  | 'UInt32BE'
+  | 'Int8'
+  | 'Int16LE'
+  | 'Int16BE'
+  | 'Int32LE'
+  | 'Int32BE'
+  | 'FloatLE'
+  | 'FloatBE'
+  | 'DoubleLE'
+  | 'DoubleBE';
+type PrimitiveTypes =
+  | 'uint8'
+  | 'uint16le'
+  | 'uint16be'
+  | 'uint32le'
+  | 'uint32be'
+  | 'int8'
+  | 'int16le'
+  | 'int16be'
+  | 'int32le'
+  | 'int32be'
+  | 'floatle'
+  | 'floatbe'
+  | 'doublele'
+  | 'doublebe';
+type PrimitiveTypesWithoutEndian =
+  | 'uint8'
+  | 'uint16'
+  | 'uint32'
+  | 'int8'
+  | 'int16'
+  | 'int32';
+type BitSizes =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
+  | 16
+  | 17
+  | 18
+  | 19
+  | 20
+  | 21
+  | 22
+  | 23
+  | 24
+  | 25
+  | 26
+  | 27
+  | 28
+  | 29
+  | 30
+  | 31
+  | 32;
 
 export class Parser {
   varName = '';
@@ -98,47 +163,245 @@ export class Parser {
   constructorFn: Function | null = null;
   alias: string | null = null;
 
-  constructor() {
-    Object.keys(PRIMITIVE_TYPES).forEach(type => {
-      Parser.prototype[type.toLowerCase()] = function(varName, options) {
-        return this.setNextParser(type.toLowerCase(), varName, options);
-      };
-
-      var typeWithoutEndian = type.replace(/BE|LE/, '').toLowerCase();
-      if (!(typeWithoutEndian in Parser.prototype)) {
-        Parser.prototype[typeWithoutEndian] = function(varName, options) {
-          return this[typeWithoutEndian + this.endian](varName, options);
-        };
-      }
-    });
-
-    BIT_RANGE.forEach(i => {
-      Parser.prototype['bit' + i.toString()] = function(
-        varName: string,
-        options: ParserOptions
-      ) {
-        if (!options) {
-          options = {};
-        }
-        options.length = i;
-        return this.setNextParser('bit', varName, options);
-      };
-    });
-
-    Object.keys(PRIMITIVE_TYPES).forEach((type: Types) => {
-      Parser.prototype['generate' + type] = function(ctx: Context) {
-        ctx.pushCode(
-          '{0} = buffer.read{1}(offset);',
-          ctx.generateVariable(this.varName),
-          type
-        );
-        ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[type]);
-      };
-    });
-  }
+  constructor() {}
 
   static start() {
     return new Parser();
+  }
+
+  private primitiveGenerateN(type: PrimitiveTypesUppercase, ctx: Context) {
+    ctx.pushCode(
+      '{0} = buffer.read{1}(offset);',
+      ctx.generateVariable(this.varName),
+      type
+    );
+    ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[type]);
+  }
+
+  generateUInt8(ctx: Context) {
+    this.primitiveGenerateN('UInt8', ctx);
+  }
+
+  generateUInt16LE(ctx: Context) {
+    this.primitiveGenerateN('UInt16LE', ctx);
+  }
+  generateUInt16BE(ctx: Context) {
+    this.primitiveGenerateN('UInt16BE', ctx);
+  }
+
+  generateUInt32LE(ctx: Context) {
+    this.primitiveGenerateN('UInt32LE', ctx);
+  }
+  generateUInt32BE(ctx: Context) {
+    this.primitiveGenerateN('UInt32BE', ctx);
+  }
+
+  generateInt8(ctx: Context) {
+    this.primitiveGenerateN('Int8', ctx);
+  }
+
+  generateInt16LE(ctx: Context) {
+    this.primitiveGenerateN('Int16LE', ctx);
+  }
+  generateInt16BE(ctx: Context) {
+    this.primitiveGenerateN('Int16BE', ctx);
+  }
+
+  generateInt32LE(ctx: Context) {
+    this.primitiveGenerateN('Int32LE', ctx);
+  }
+  generateInt32BE(ctx: Context) {
+    this.primitiveGenerateN('Int32BE', ctx);
+  }
+
+  generateFloatLE(ctx: Context) {
+    this.primitiveGenerateN('FloatLE', ctx);
+  }
+  generateFloatBE(ctx: Context) {
+    this.primitiveGenerateN('FloatBE', ctx);
+  }
+
+  generateDoubleLE(ctx: Context) {
+    this.primitiveGenerateN('DoubleLE', ctx);
+  }
+  generateDoubleBE(ctx: Context) {
+    this.primitiveGenerateN('DoubleBE', ctx);
+  }
+
+  private primitiveN(
+    type: PrimitiveTypes,
+    varName: string,
+    options?: ParserOptions
+  ) {
+    return this.setNextParser(type as Types, varName, options);
+  }
+  private useThisEndian(type: PrimitiveTypesWithoutEndian): PrimitiveTypes {
+    return (type + this.endian.toLowerCase()) as PrimitiveTypes;
+  }
+  uint8(varName: string, options?: ParserOptions) {
+    return this.primitiveN('uint8', varName, options);
+  }
+
+  uint16(varName: string, options?: ParserOptions) {
+    return this.primitiveN(this.useThisEndian('uint16'), varName, options);
+  }
+  uint16le(varName: string, options?: ParserOptions) {
+    return this.primitiveN('uint16le', varName, options);
+  }
+  uint16be(varName: string, options?: ParserOptions) {
+    return this.primitiveN('uint16be', varName, options);
+  }
+
+  uint32(varName: string, options?: ParserOptions) {
+    return this.primitiveN(this.useThisEndian('uint32'), varName, options);
+  }
+  uint32le(varName: string, options?: ParserOptions) {
+    return this.primitiveN('uint32le', varName, options);
+  }
+  uint32be(varName: string, options?: ParserOptions) {
+    return this.primitiveN('uint32be', varName, options);
+  }
+
+  int8(varName: string, options?: ParserOptions) {
+    return this.primitiveN('int8', varName, options);
+  }
+
+  int16(varName: string, options?: ParserOptions) {
+    return this.primitiveN(this.useThisEndian('int16'), varName, options);
+  }
+  int16le(varName: string, options?: ParserOptions) {
+    return this.primitiveN('int16le', varName, options);
+  }
+  int16be(varName: string, options?: ParserOptions) {
+    return this.primitiveN('int16be', varName, options);
+  }
+
+  int32(varName: string, options?: ParserOptions) {
+    return this.primitiveN(this.useThisEndian('int32'), varName, options);
+  }
+  int32le(varName: string, options?: ParserOptions) {
+    return this.primitiveN('int32le', varName, options);
+  }
+  int32be(varName: string, options?: ParserOptions) {
+    return this.primitiveN('int32be', varName, options);
+  }
+
+  floatle(varName: string, options?: ParserOptions) {
+    return this.primitiveN('floatle', varName, options);
+  }
+  floatbe(varName: string, options?: ParserOptions) {
+    return this.primitiveN('floatbe', varName, options);
+  }
+
+  doublele(varName: string, options?: ParserOptions) {
+    return this.primitiveN('doublele', varName, options);
+  }
+  doublebe(varName: string, options?: ParserOptions) {
+    return this.primitiveN('doublebe', varName, options);
+  }
+
+  private bitN(size: BitSizes, varName: string, options?: ParserOptions) {
+    if (!options) {
+      options = {};
+    }
+    options.length = size;
+    return this.setNextParser('bit', varName, options);
+  }
+  bit1(varName: string, options?: ParserOptions) {
+    return this.bitN(1, varName, options);
+  }
+  bit2(varName: string, options?: ParserOptions) {
+    return this.bitN(2, varName, options);
+  }
+  bit3(varName: string, options?: ParserOptions) {
+    return this.bitN(3, varName, options);
+  }
+  bit4(varName: string, options?: ParserOptions) {
+    return this.bitN(4, varName, options);
+  }
+  bit5(varName: string, options?: ParserOptions) {
+    return this.bitN(5, varName, options);
+  }
+  bit6(varName: string, options?: ParserOptions) {
+    return this.bitN(6, varName, options);
+  }
+  bit7(varName: string, options?: ParserOptions) {
+    return this.bitN(7, varName, options);
+  }
+  bit8(varName: string, options?: ParserOptions) {
+    return this.bitN(8, varName, options);
+  }
+  bit9(varName: string, options?: ParserOptions) {
+    return this.bitN(9, varName, options);
+  }
+  bit10(varName: string, options?: ParserOptions) {
+    return this.bitN(10, varName, options);
+  }
+  bit11(varName: string, options?: ParserOptions) {
+    return this.bitN(11, varName, options);
+  }
+  bit12(varName: string, options?: ParserOptions) {
+    return this.bitN(12, varName, options);
+  }
+  bit13(varName: string, options?: ParserOptions) {
+    return this.bitN(13, varName, options);
+  }
+  bit14(varName: string, options?: ParserOptions) {
+    return this.bitN(14, varName, options);
+  }
+  bit15(varName: string, options?: ParserOptions) {
+    return this.bitN(15, varName, options);
+  }
+  bit16(varName: string, options?: ParserOptions) {
+    return this.bitN(16, varName, options);
+  }
+  bit17(varName: string, options?: ParserOptions) {
+    return this.bitN(17, varName, options);
+  }
+  bit18(varName: string, options?: ParserOptions) {
+    return this.bitN(18, varName, options);
+  }
+  bit19(varName: string, options?: ParserOptions) {
+    return this.bitN(19, varName, options);
+  }
+  bit20(varName: string, options?: ParserOptions) {
+    return this.bitN(20, varName, options);
+  }
+  bit21(varName: string, options?: ParserOptions) {
+    return this.bitN(21, varName, options);
+  }
+  bit22(varName: string, options?: ParserOptions) {
+    return this.bitN(22, varName, options);
+  }
+  bit23(varName: string, options?: ParserOptions) {
+    return this.bitN(23, varName, options);
+  }
+  bit24(varName: string, options?: ParserOptions) {
+    return this.bitN(24, varName, options);
+  }
+  bit25(varName: string, options?: ParserOptions) {
+    return this.bitN(25, varName, options);
+  }
+  bit26(varName: string, options?: ParserOptions) {
+    return this.bitN(26, varName, options);
+  }
+  bit27(varName: string, options?: ParserOptions) {
+    return this.bitN(27, varName, options);
+  }
+  bit28(varName: string, options?: ParserOptions) {
+    return this.bitN(28, varName, options);
+  }
+  bit29(varName: string, options?: ParserOptions) {
+    return this.bitN(29, varName, options);
+  }
+  bit30(varName: string, options?: ParserOptions) {
+    return this.bitN(30, varName, options);
+  }
+  bit31(varName: string, options?: ParserOptions) {
+    return this.bitN(31, varName, options);
+  }
+  bit32(varName: string, options?: ParserOptions) {
+    return this.bitN(32, varName, options);
   }
 
   namely(alias: string) {
@@ -420,10 +683,6 @@ export class Parser {
 
     return this.compiled(buffer, this.constructorFn);
   }
-
-  //----------------------------------------------------------------------------------------
-  // private methods
-  //----------------------------------------------------------------------------------------
 
   private setNextParser(type: Types, varName: string, options: ParserOptions) {
     var parser = new Parser();
