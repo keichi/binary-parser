@@ -38,13 +38,13 @@ const NAME_MAP = {
   floatbe: 'FloatBE',
   doublele: 'DoubleLE',
   doublebe: 'DoubleBE',
-  string: 'String',
-  buffer: 'Buffer',
-  array: 'Array',
-  skip: 'Skip',
-  choice: 'Choice',
-  nest: 'Nest',
-  bit: 'Bit',
+  String: 'String',
+  Buffer: 'Buffer',
+  Array: 'Array',
+  Skip: 'Skip',
+  Choice: 'Choice',
+  Nest: 'Nest',
+  Bit: 'Bit',
 };
 
 interface ParserOptions {
@@ -68,19 +68,29 @@ interface ParserOptions {
 type Types =
   | 'String'
   | 'Buffer'
-  | 'String'
   | 'Skip'
   | 'Nest'
   | 'Array'
-  | 'choice'
-  | 'nest'
-  | 'array'
-  | 'skip'
-  | 'buffer'
-  | 'string'
-  | 'bit'
+  | 'Choice'
+  | 'Bit'
+  | 'UInt8'
+  | 'UInt16LE'
+  | 'UInt16BE'
+  | 'UInt32LE'
+  | 'UInt32BE'
+  | 'Int8'
+  | 'Int16LE'
+  | 'Int16BE'
+  | 'Int32LE'
+  | 'Int32BE'
+  | 'FloatLE'
+  | 'FloatBE'
+  | 'DoubleLE'
+  | 'DoubleBE'
   | '';
+
 type Endianess = 'be' | 'le';
+
 type PrimitiveTypesUppercase =
   | 'UInt8'
   | 'UInt16LE'
@@ -96,6 +106,7 @@ type PrimitiveTypesUppercase =
   | 'FloatBE'
   | 'DoubleLE'
   | 'DoubleBE';
+
 type PrimitiveTypes =
   | 'uint8'
   | 'uint16le'
@@ -111,6 +122,7 @@ type PrimitiveTypes =
   | 'floatbe'
   | 'doublele'
   | 'doublebe';
+
 type PrimitiveTypesWithoutEndian =
   | 'uint8'
   | 'uint16'
@@ -118,6 +130,7 @@ type PrimitiveTypesWithoutEndian =
   | 'int8'
   | 'int16'
   | 'int32';
+
 type BitSizes =
   | 1
   | 2
@@ -176,56 +189,6 @@ export class Parser {
     ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
   }
 
-  private generateUInt8(ctx: Context) {
-    this.primitiveGenerateN('UInt8', ctx);
-  }
-
-  private generateUInt16LE(ctx: Context) {
-    this.primitiveGenerateN('UInt16LE', ctx);
-  }
-  private generateUInt16BE(ctx: Context) {
-    this.primitiveGenerateN('UInt16BE', ctx);
-  }
-
-  private generateUInt32LE(ctx: Context) {
-    this.primitiveGenerateN('UInt32LE', ctx);
-  }
-  private generateUInt32BE(ctx: Context) {
-    this.primitiveGenerateN('UInt32BE', ctx);
-  }
-
-  private generateInt8(ctx: Context) {
-    this.primitiveGenerateN('Int8', ctx);
-  }
-
-  private generateInt16LE(ctx: Context) {
-    this.primitiveGenerateN('Int16LE', ctx);
-  }
-  private generateInt16BE(ctx: Context) {
-    this.primitiveGenerateN('Int16BE', ctx);
-  }
-
-  private generateInt32LE(ctx: Context) {
-    this.primitiveGenerateN('Int32LE', ctx);
-  }
-  private generateInt32BE(ctx: Context) {
-    this.primitiveGenerateN('Int32BE', ctx);
-  }
-
-  private generateFloatLE(ctx: Context) {
-    this.primitiveGenerateN('FloatLE', ctx);
-  }
-  private generateFloatBE(ctx: Context) {
-    this.primitiveGenerateN('FloatBE', ctx);
-  }
-
-  private generateDoubleLE(ctx: Context) {
-    this.primitiveGenerateN('DoubleLE', ctx);
-  }
-  private generateDoubleBE(ctx: Context) {
-    this.primitiveGenerateN('DoubleBE', ctx);
-  }
-
   private primitiveN(
     type: PrimitiveTypes,
     varName: string,
@@ -233,9 +196,11 @@ export class Parser {
   ) {
     return this.setNextParser(type as Types, varName, options);
   }
+
   private useThisEndian(type: PrimitiveTypesWithoutEndian): PrimitiveTypes {
     return (type + this.endian.toLowerCase()) as PrimitiveTypes;
   }
+
   uint8(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint8', varName, options);
   }
@@ -303,7 +268,7 @@ export class Parser {
       options = {};
     }
     options.length = size;
-    return this.setNextParser('bit', varName, options);
+    return this.setNextParser('Bit', varName, options);
   }
   bit1(varName: string, options?: ParserOptions) {
     return this.bitN(1, varName, options);
@@ -413,7 +378,7 @@ export class Parser {
       throw new Error('assert option on skip is not allowed.');
     }
 
-    return this.setNextParser('skip', '', { length: length });
+    return this.setNextParser('Skip', '', { length: length });
   }
 
   string(varName: string, options: ParserOptions) {
@@ -434,7 +399,7 @@ export class Parser {
     }
     options.encoding = options.encoding || 'utf8';
 
-    return this.setNextParser('string', varName, options);
+    return this.setNextParser('String', varName, options);
   }
 
   buffer(varName: string, options: ParserOptions) {
@@ -442,7 +407,7 @@ export class Parser {
       throw new Error('Length nor readUntil is defined in buffer parser');
     }
 
-    return this.setNextParser('buffer', varName, options);
+    return this.setNextParser('Buffer', varName, options);
   }
 
   array(varName: string, options: ParserOptions) {
@@ -462,7 +427,7 @@ export class Parser {
       );
     }
 
-    return this.setNextParser('array', varName, options);
+    return this.setNextParser('Array', varName, options);
   }
 
   choice(varName: string | ParserOptions, options?: ParserOptions) {
@@ -501,7 +466,7 @@ export class Parser {
       }
     });
 
-    return this.setNextParser('choice', varName as string, options);
+    return this.setNextParser('Choice', varName as string, options);
   }
 
   nest(varName: string | ParserOptions, options: ParserOptions) {
@@ -522,7 +487,7 @@ export class Parser {
       );
     }
 
-    return this.setNextParser('nest', varName as string, options);
+    return this.setNextParser('Nest', varName as string, options);
   }
 
   endianess(endianess: 'little' | 'big') {
@@ -703,7 +668,45 @@ export class Parser {
   // Call code generator for this parser
   private generate(ctx: Context) {
     if (this.type) {
-      this['generate' + this.type](ctx);
+        switch (this.type) {
+          case 'UInt8':
+          case 'UInt16LE':
+          case 'UInt16BE':
+          case 'UInt32LE':
+          case 'UInt32BE':
+          case 'Int8':
+          case 'Int16LE':
+          case 'Int16BE':
+          case 'Int32LE':
+          case 'Int32BE':
+          case 'FloatLE':
+          case 'FloatBE':
+          case 'DoubleLE':
+          case 'DoubleBE':
+            this.primitiveGenerateN(this.type, ctx);
+            break;
+          case 'Bit':
+            this.generateBit(ctx);
+            break;
+          case 'String':
+            this.generateString(ctx);
+            break;
+          case 'Buffer':
+            this.generateBuffer(ctx);
+            break;
+          case 'Skip':
+            this.generateSkip(ctx);
+            break;
+          case 'Nest':
+            this.generateNest(ctx);
+            break;
+          case 'Array':
+            this.generateArray(ctx);
+            break;
+          case 'Choice':
+            this.generateChoice(ctx);
+            break;
+        }
       this.generateAssert(ctx);
     }
 
