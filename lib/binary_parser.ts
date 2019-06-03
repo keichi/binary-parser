@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import { runInNewContext } from 'vm';
 import { Context } from './context';
 
-const PRIMITIVE_TYPES: { [key in PrimitiveTypesUppercase]: number } = {
+const PRIMITIVES_SIZES: { [key in PrimitiveTypesUppercase]: number } = {
   UInt8: 1,
   UInt16LE: 2,
   UInt16BE: 2,
@@ -186,7 +186,7 @@ export class Parser {
     ctx.pushCode(
       `${ctx.generateVariable(this.varName)} = buffer.read${type}(offset);`
     );
-    ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
+    ctx.pushCode(`offset += ${PRIMITIVES_SIZES[type]};`);
   }
 
   private primitiveN(
@@ -420,7 +420,7 @@ export class Parser {
     if (
       typeof options.type === 'string' &&
       !aliasRegistry[options.type] &&
-      Object.keys(PRIMITIVE_TYPES).indexOf(NAME_MAP[options.type]) < 0
+      Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.type]) < 0
     ) {
       throw new Error(
         'Specified primitive type "' + options.type + '" is not supported.'
@@ -456,7 +456,7 @@ export class Parser {
       if (
         typeof options.choices[key] === 'string' &&
         !aliasRegistry[options.choices[key]] &&
-        Object.keys(PRIMITIVE_TYPES).indexOf(NAME_MAP[options.choices[key]]) < 0
+        Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.choices[key]]) < 0
       ) {
         throw new Error(
           'Specified primitive type "' +
@@ -590,8 +590,8 @@ export class Parser {
   sizeOf() {
     let size = NaN;
 
-    if (Object.keys(PRIMITIVE_TYPES).indexOf(this.type) >= 0) {
-      size = PRIMITIVE_TYPES[this.type];
+    if (Object.keys(PRIMITIVES_SIZES).indexOf(this.type) >= 0) {
+      size = PRIMITIVES_SIZES[this.type];
 
       // if this is a fixed length string
     } else if (
@@ -614,7 +614,7 @@ export class Parser {
     ) {
       let elementSize = NaN;
       if (typeof this.options.type === 'string') {
-        elementSize = PRIMITIVE_TYPES[NAME_MAP[this.options.type]];
+        elementSize = PRIMITIVES_SIZES[NAME_MAP[this.options.type]];
       } else if (this.options.type instanceof Parser) {
         elementSize = this.options.type.sizeOf();
       }
@@ -903,7 +903,7 @@ export class Parser {
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
         ctx.pushCode(`var ${item} = buffer.read${NAME_MAP[type]}(offset);`);
-        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]};`);
+        ctx.pushCode(`offset += ${PRIMITIVES_SIZES[NAME_MAP[type]]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
@@ -945,7 +945,7 @@ export class Parser {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
         ctx.pushCode(`${varName} = buffer.read${NAME_MAP[type]}(offset);`);
-        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]}`);
+        ctx.pushCode(`offset += ${PRIMITIVES_SIZES[NAME_MAP[type]]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
