@@ -15,7 +15,7 @@ jobs:
       - run:
           command: npm install
       - run:
-          command: npm install mocha-junit-reporter
+          command: npm install --no-save mocha-junit-reporter
       - run:
           command: npx tsc
       - save_cache:
