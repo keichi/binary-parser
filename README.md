@@ -285,10 +285,9 @@ current object. `options` is an object which can have the following keys:
 Jump to `offset`, execute parser for `type` and rewind to previous offset.
 
 - `type` - (Required) A `Parser` object.
-- `offset` - (Required) Note that this is absolute offset
-    Type of the array element. Can be a string or an user defined Parser
-    object. If it's a string, you have to choose from [u]int{8, 16, 32}{le,
-    be}.
+- `offset` - (Required) Note that this indicates absolute offset from the
+    start of the input buffer. Can be a string `[u]int{8, 16, 32, 64}{le, be}`
+    or an user defined Parser object.
 
 ### skip(length)
 Skip parsing for `length` bytes.
