@@ -176,53 +176,53 @@ export class Parser {
     ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
   }
 
-  generateUInt8(ctx: Context) {
+  private generateUInt8(ctx: Context) {
     this.primitiveGenerateN('UInt8', ctx);
   }
 
-  generateUInt16LE(ctx: Context) {
+  private generateUInt16LE(ctx: Context) {
     this.primitiveGenerateN('UInt16LE', ctx);
   }
-  generateUInt16BE(ctx: Context) {
+  private generateUInt16BE(ctx: Context) {
     this.primitiveGenerateN('UInt16BE', ctx);
   }
 
-  generateUInt32LE(ctx: Context) {
+  private generateUInt32LE(ctx: Context) {
     this.primitiveGenerateN('UInt32LE', ctx);
   }
-  generateUInt32BE(ctx: Context) {
+  private generateUInt32BE(ctx: Context) {
     this.primitiveGenerateN('UInt32BE', ctx);
   }
 
-  generateInt8(ctx: Context) {
+  private generateInt8(ctx: Context) {
     this.primitiveGenerateN('Int8', ctx);
   }
 
-  generateInt16LE(ctx: Context) {
+  private generateInt16LE(ctx: Context) {
     this.primitiveGenerateN('Int16LE', ctx);
   }
-  generateInt16BE(ctx: Context) {
+  private generateInt16BE(ctx: Context) {
     this.primitiveGenerateN('Int16BE', ctx);
   }
 
-  generateInt32LE(ctx: Context) {
+  private generateInt32LE(ctx: Context) {
     this.primitiveGenerateN('Int32LE', ctx);
   }
-  generateInt32BE(ctx: Context) {
+  private generateInt32BE(ctx: Context) {
     this.primitiveGenerateN('Int32BE', ctx);
   }
 
-  generateFloatLE(ctx: Context) {
+  private generateFloatLE(ctx: Context) {
     this.primitiveGenerateN('FloatLE', ctx);
   }
-  generateFloatBE(ctx: Context) {
+  private generateFloatBE(ctx: Context) {
     this.primitiveGenerateN('FloatBE', ctx);
   }
 
-  generateDoubleLE(ctx: Context) {
+  private generateDoubleLE(ctx: Context) {
     this.primitiveGenerateN('DoubleLE', ctx);
   }
-  generateDoubleBE(ctx: Context) {
+  private generateDoubleBE(ctx: Context) {
     this.primitiveGenerateN('DoubleBE', ctx);
   }
 
