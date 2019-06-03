@@ -21,18 +21,35 @@ describe('Primitive parser', function() {
     });
     describe.only('BigInt64 parsers', () => {
       const [major] = process.version.replace('v', '').split('.');
-      if(Number(major) >= 12) {
+      if (Number(major) >= 12) {
         it('should parse biguints64', () => {
           const parser = Parser.start()
             .biguint64be('a')
             .biguint64le('b');
           // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
           const buf = Buffer.from([
-            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
           ]);
-          assert.deepEqual(parser.parse(buf), {a: 4294967295n, b: 18446744069414584320n});
-        })  
+          assert.deepEqual(parser.parse(buf), {
+            a: 4294967295n,
+            b: 18446744069414584320n,
+          });
+        });
 
         it('should parse bigints64', () => {
           const parser = Parser.start()
@@ -42,10 +59,38 @@ describe('Primitive parser', function() {
             .bigint64le('d');
           // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
           const buf = Buffer.from([
-            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-            0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-            0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xff,
+            0xff,
+            0xff,
+            0xff,
           ]);
           assert.deepEqual(parser.parse(buf), {
             a: 4294967295n,
@@ -53,13 +98,13 @@ describe('Primitive parser', function() {
             c: 4294967295n,
             d: -4294967295n,
           });
-        })
+        });
       } else {
         it('should throw when run under not v12', () => {
           assert.throws(() => Parser.start().bigint64('a'));
-        })
+        });
       }
-    })
+    });
     it('should use formatter to transform parsed integer', function() {
       var parser = Parser.start()
         .uint8('a', {

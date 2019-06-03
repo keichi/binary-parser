@@ -239,8 +239,12 @@ export class Parser {
 
   private bigIntVerCheck() {
     const [major] = process.version.replace('v', '').split('.');
-    if(Number(major) < 12) {
-      throw new Error(`The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${process.version}, you must use v12 or greater`);
+    if (Number(major) < 12) {
+      throw new Error(
+        `The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${
+          process.version
+        }, you must use v12 or greater`
+      );
     }
   }
   bigint64(varName: string, options?: ParserOptions) {
