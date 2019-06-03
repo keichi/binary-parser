@@ -1,7 +1,6 @@
 export class Context {
   code = '';
   scopes = [['vars']];
-  isAsync = false;
   bitFields = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
@@ -29,26 +28,16 @@ export class Context {
     }
   }
 
-  generateError(template: string, ...args: string[]) {
-    const err = this.interpolate(template, args);
-
-    if (this.isAsync) {
-      this.pushCode(
-        'return process.nextTick(function() { callback(new Error(' +
-          err +
-          '), vars); });'
-      );
-    } else {
-      this.pushCode('throw new Error(' + err + ');');
-    }
+  generateError(err: string) {
+    this.pushCode('throw new Error(' + err + ');');
   }
 
   generateTmpVariable() {
     return '$tmp' + this.tmpVariableCount++;
   }
 
-  pushCode(template: string, ...args: (string | Function | number)[]) {
-    this.code += this.interpolate(template, ...args) + '\n';
+  pushCode(code: string) {
+    this.code += code + '\n';
   }
 
   pushPath(name: string) {
@@ -91,19 +80,5 @@ export class Context {
     return Object.keys(this.references).filter(alias =>
       !references[alias].resolved && !references[alias].requested
     );
-  }
-
-  interpolate(template: string, ...args: any[]) {
-    const re = /{\d+}/g;
-    const matches = template.match(re);
-
-    if (matches) {
-      matches.forEach(match => {
-        const index = parseInt(match.substr(1, match.length - 2), 10);
-        template = template.replace(match, args[index].toString());
-      });
-    }
-
-    return template;
   }
 }

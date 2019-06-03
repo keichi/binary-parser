@@ -170,12 +170,8 @@ export class Parser {
   }
 
   private primitiveGenerateN(type: PrimitiveTypesUppercase, ctx: Context) {
-    ctx.pushCode(
-      '{0} = buffer.read{1}(offset);',
-      ctx.generateVariable(this.varName),
-      type
-    );
-    ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[type]);
+    ctx.pushCode(`${ctx.generateVariable(this.varName)} = buffer.read${type}(offset);`);
+    ctx.pushCode(`offset += ${PRIMITIVE_TYPES[type]};`);
   }
 
   generateUInt8(ctx: Context) {
@@ -566,7 +562,7 @@ export class Parser {
     }
 
     if (this.alias) {
-      ctx.pushCode('return {0}(0).result;', FUNCTION_PREFIX + this.alias);
+      ctx.pushCode(`return ${FUNCTION_PREFIX + this.alias}(0).result;`);
     } else {
       ctx.pushCode('return vars;');
     }
@@ -591,7 +587,7 @@ export class Parser {
   }
 
   addAliasedCode(ctx: Context) {
-    ctx.pushCode('function {0}(offset) {', FUNCTION_PREFIX + this.alias);
+    ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset) {`);
 
     if (this.constructorFn) {
       ctx.pushCode('var vars = new constructorFn();');
@@ -726,24 +722,20 @@ export class Parser {
 
     switch (typeof this.options.assert) {
       case 'function':
-        ctx.pushCode(
-          'if (!({0}).call(vars, {1})) {',
-          this.options.assert,
-          varName
-        );
+        ctx.pushCode(`if (!(${this.options.assert}).call(vars, ${varName})) {`);
         break;
       case 'number':
-        ctx.pushCode('if ({0} !== {1}) {', this.options.assert, varName);
+        ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
         break;
       case 'string':
-        ctx.pushCode('if ("{0}" !== {1}) {', this.options.assert, varName);
+            ctx.pushCode(`if ("${this.options.assert}" !== ${varName}) {`);
         break;
       default:
         throw new Error(
           'Assert option supports only strings, numbers and assert functions.'
         );
     }
-    ctx.generateError('"Assert error: {0} is " + {0}', varName);
+    ctx.generateError(`"Assert error: ${varName} is " + ${this.options.assert}`);
     ctx.pushCode('}');
   }
 
@@ -772,38 +764,35 @@ export class Parser {
       const val = ctx.generateTmpVariable();
 
       if (sum <= 8) {
-        ctx.pushCode('var {0} = buffer.readUInt8(offset);', val);
+        ctx.pushCode(`var ${val} = buffer.readUInt8(offset);`);
         sum = 8;
       } else if (sum <= 16) {
-        ctx.pushCode('var {0} = buffer.readUInt16BE(offset);', val);
+        ctx.pushCode(`var ${val} = buffer.readUInt16BE(offset);`);
         sum = 16;
       } else if (sum <= 24) {
         const val1 = ctx.generateTmpVariable();
         const val2 = ctx.generateTmpVariable();
-        ctx.pushCode('var {0} = buffer.readUInt16BE(offset);', val1);
-        ctx.pushCode('var {0} = buffer.readUInt8(offset + 2);', val2);
-        ctx.pushCode('var {2} = ({0} << 8) | {1};', val1, val2, val);
+        ctx.pushCode(`var ${val1} = buffer.readUInt16BE(offset);`);
+        ctx.pushCode(`var ${val2} = buffer.readUInt8(offset + 2);`);
+        ctx.pushCode(`var ${val} = (${val1} << 8) | ${val2};`);
         sum = 24;
       } else if (sum <= 32) {
-        ctx.pushCode('var {0} = buffer.readUInt32BE(offset);', val);
+        ctx.pushCode(`var ${val} = buffer.readUInt32BE(offset);`);
         sum = 32;
       } else {
         throw new Error(
           'Currently, bit field sequence longer than 4-bytes is not supported.'
         );
       }
-      ctx.pushCode('offset += {0};', sum / 8);
+      ctx.pushCode(`offset += ${sum / 8};`);
 
       let bitOffset = 0;
       const isBigEndian = this.endian === 'be';
       ctx.bitFields.forEach(parser => {
-        ctx.pushCode(
-          '{0} = {1} >> {2} & {3};',
-          parser.varName,
-          val,
-          isBigEndian ? sum - bitOffset - parser.options.length : bitOffset,
-          (1 << parser.options.length) - 1
-        );
+        const offset = isBigEndian ? sum - bitOffset - parser.options.length : bitOffset;
+        const mask = (1 << parser.options.length) - 1;
+
+        ctx.pushCode(`${parser.varName} = ${val} >> ${offset} & ${mask};`);
         bitOffset += parser.options.length;
       });
 
@@ -813,79 +802,51 @@ export class Parser {
 
   generateSkip(ctx: Context) {
     const length = ctx.generateOption(this.options.length);
-    ctx.pushCode('offset += {0};', length);
+    ctx.pushCode(`offset += ${length};`);
   }
 
   generateString(ctx: Context) {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
+    const encoding = this.options.encoding;
 
     if (this.options.length && this.options.zeroTerminated) {
-      ctx.pushCode('var {0} = offset;', start);
-      ctx.pushCode(
-        'while(buffer.readUInt8(offset++) !== 0 && offset - {0}  < {1});',
-        start,
-        this.options.length
-      );
-      ctx.pushCode(
-        "{0} = buffer.toString('{1}', {2}, offset - {2} < {3} ? offset - 1 : offset);",
-        name,
-        this.options.encoding,
-        start,
-        this.options.length
-      );
+      const len = this.options.length;
+      ctx.pushCode(`var ${start} = offset;`);
+      ctx.pushCode(`while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`);
+      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`);
     } else if (this.options.length) {
-      ctx.pushCode(
-        "{0} = buffer.toString('{1}', offset, offset + {2});",
-        name,
-        this.options.encoding,
-        ctx.generateOption(this.options.length)
-      );
-      ctx.pushCode('offset += {0};', ctx.generateOption(this.options.length));
+      const len = ctx.generateOption(this.options.length);
+      ctx.pushCode(`${name} = buffer.toString('${encoding}', offset, offset + ${len});`);
+      ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
-      ctx.pushCode('var {0} = offset;', start);
+      ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.readUInt8(offset++) !== 0);');
-      ctx.pushCode(
-        "{0} = buffer.toString('{1}', {2}, offset - 1);",
-        name,
-        this.options.encoding,
-        start
-      );
+      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset - 1);`);
     } else if (this.options.greedy) {
-      ctx.pushCode('var {0} = offset;', start);
+      ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.length > offset++);');
-      ctx.pushCode(
-        "{0} = buffer.toString('{1}', {2}, offset);",
-        name,
-        this.options.encoding,
-        start
-      );
+      ctx.pushCode(`${name} = buffer.toString('${encoding}', ${start}, offset);`);
     }
     if (this.options.stripNull) {
-      ctx.pushCode("{0} = {0}.replace(/\\x00+$/g, '')", name);
+      ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);
     }
   }
 
   generateBuffer(ctx: Context) {
+    const varName = ctx.generateVariable(this.varName);
+
     if (this.options.readUntil === 'eof') {
-      ctx.pushCode(
-        '{0} = buffer.slice(offset);',
-        ctx.generateVariable(this.varName)
-      );
+      ctx.pushCode(`${varName} = buffer.slice(offset);`);
     } else {
-      ctx.pushCode(
-        '{0} = buffer.slice(offset, offset + {1});',
-        ctx.generateVariable(this.varName),
-        ctx.generateOption(this.options.length)
-      );
-      ctx.pushCode('offset += {0};', ctx.generateOption(this.options.length));
+      const len = ctx.generateOption(this.options.length);
+
+      ctx.pushCode(`${varName} = buffer.slice(offset, offset + ${len});`);
+      ctx.pushCode(`offset += ${len};`);
     }
 
     if (this.options.clone) {
-      ctx.pushCode(
-        '{0} = Buffer.from({0});',
-        ctx.generateVariable(this.varName)
-      );
+      ctx.pushCode(`${varName} = Buffer.from(${varName});`);
     }
   }
 
@@ -900,43 +861,32 @@ export class Parser {
     const isHash = typeof key === 'string';
 
     if (isHash) {
-      ctx.pushCode('{0} = {};', lhs);
+      ctx.pushCode(`${lhs} = {};`);
     } else {
-      ctx.pushCode('{0} = [];', lhs);
+      ctx.pushCode(`${lhs} = [];`);
     }
     if (typeof this.options.readUntil === 'function') {
       ctx.pushCode('do {');
     } else if (this.options.readUntil === 'eof') {
-      ctx.pushCode(
-        'for (var {0} = 0; offset < buffer.length; {0}++) {',
-        counter
-      );
+      ctx.pushCode(`for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`);
     } else if (lengthInBytes !== undefined) {
-      ctx.pushCode(
-        'for (var {0} = offset; offset - {0} < {1}; ) {',
-        counter,
-        lengthInBytes
-      );
+      ctx.pushCode(`for (var ${counter} = offset; offset - ${counter} < ${lengthInBytes}; ) {`);
     } else {
-      ctx.pushCode('for (var {0} = 0; {0} < {1}; {0}++) {', counter, length);
+      ctx.pushCode(`for (var ${counter} = 0; ${counter} < ${length}; ${counter}++) {`);
     }
 
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        ctx.pushCode('var {0} = buffer.read{1}(offset);', item, NAME_MAP[type]);
-        ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[NAME_MAP[type]]);
+        ctx.pushCode(`var ${item} = buffer.read${NAME_MAP[type]}(offset);`);
+        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode('var {0} = {1}(offset);', tempVar, FUNCTION_PREFIX + type);
-        ctx.pushCode(
-          'var {0} = {1}.result; offset = {1}.offset;',
-          item,
-          tempVar
-        );
+        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
+        ctx.pushCode(`var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`);
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
-      ctx.pushCode('var {0} = {};', item);
+      ctx.pushCode(`var ${item} = {};`);
 
       ctx.pushScope(item);
       type.generate(ctx);
@@ -944,39 +894,28 @@ export class Parser {
     }
 
     if (isHash) {
-      ctx.pushCode('{0}[{2}.{1}] = {2};', lhs, key, item);
+      ctx.pushCode(`${lhs}[${item}.${key}] = ${item};`);
     } else {
-      ctx.pushCode('{0}.push({1});', lhs, item);
+      ctx.pushCode(`${lhs}.push(${item});`);
     }
 
     ctx.pushCode('}');
 
     if (typeof this.options.readUntil === 'function') {
-      ctx.pushCode(
-        ' while (!({0}).call(this, {1}, buffer.slice(offset)));',
-        this.options.readUntil,
-        item
-      );
+      ctx.pushCode(`while (!(${this.options.readUntil}).call(this, ${item}, buffer.slice(offset)));`);
     }
   }
 
   generateChoiceCase(ctx: Context, varName: string, type: string | Parser) {
     if (typeof type === 'string') {
+      const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
-        ctx.pushCode(
-          '{0} = buffer.read{1}(offset);',
-          ctx.generateVariable(this.varName),
-          NAME_MAP[type]
-        );
-        ctx.pushCode('offset += {0};', PRIMITIVE_TYPES[NAME_MAP[type]]);
+        ctx.pushCode(`${varName} = buffer.read${NAME_MAP[type]}(offset);`);
+        ctx.pushCode(`offset += ${PRIMITIVE_TYPES[NAME_MAP[type]]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode('var {0} = {1}(offset);', tempVar, FUNCTION_PREFIX + type);
-        ctx.pushCode(
-          '{0} = {1}.result; offset = {1}.offset;',
-          ctx.generateVariable(this.varName),
-          tempVar
-        );
+        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
+        ctx.pushCode(`${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`);
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
@@ -989,13 +928,13 @@ export class Parser {
   generateChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
     if (this.varName) {
-      ctx.pushCode('{0} = {};', ctx.generateVariable(this.varName));
+      ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`, );
     }
-    ctx.pushCode('switch({0}) {', tag);
+    ctx.pushCode(`switch(${tag}) {`);
     Object.keys(this.options.choices).forEach(tag => {
       const type = this.options.choices[tag];
 
-      ctx.pushCode('case {0}:', tag);
+      ctx.pushCode(`case ${tag}:`);
       this.generateChoiceCase(ctx, this.varName, type);
       ctx.pushCode('break;');
     });
@@ -1003,7 +942,7 @@ export class Parser {
     if (this.options.defaultChoice) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);
     } else {
-      ctx.generateError('"Met undefined tag value " + {0} + " at choice"', tag);
+      ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
     }
     ctx.pushCode('}');
   }
@@ -1013,26 +952,22 @@ export class Parser {
 
     if (this.options.type instanceof Parser) {
       if (this.varName) {
-        ctx.pushCode('{0} = {};', nestVar);
+        ctx.pushCode(`${nestVar} = {};`);
       }
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
     } else if (aliasRegistry[this.options.type]) {
       const tempVar = ctx.generateTmpVariable();
-      ctx.pushCode(
-        'var {0} = {1}(offset);',
-        tempVar,
-        FUNCTION_PREFIX + this.options.type
-      );
-      ctx.pushCode('{0} = {1}.result; offset = {1}.offset;', nestVar, tempVar);
+      ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`);
+      ctx.pushCode(`${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`);
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
     }
   }
 
   generateFormatter(ctx: Context, varName: string, formatter: Function) {
     if (typeof formatter === 'function') {
-      ctx.pushCode('{0} = ({1}).call(this, {0});', varName, formatter);
+      ctx.pushCode(`${varName} = (${formatter}).call(this, ${varName});`);
     }
   }
 
