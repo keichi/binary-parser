@@ -423,7 +423,7 @@ export class Parser {
       Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.type]) < 0
     ) {
       throw new Error(
-          `Specified primitive type "${options.type}" is not supported.`
+        `Specified primitive type "${options.type}" is not supported.`
       );
     }
 
@@ -454,7 +454,8 @@ export class Parser {
       if (
         typeof options.choices[key] === 'string' &&
         !aliasRegistry[options.choices[key]] &&
-        Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.choices[key]]) < 0
+        Object.keys(PRIMITIVES_SIZES).indexOf(NAME_MAP[options.choices[key]]) <
+          0
       ) {
         throw new Error(
           `Specified primitive type "${options.choices[key]}" is not supported.`
@@ -664,45 +665,45 @@ export class Parser {
   // Call code generator for this parser
   private generate(ctx: Context) {
     if (this.type) {
-        switch (this.type) {
-          case 'UInt8':
-          case 'UInt16LE':
-          case 'UInt16BE':
-          case 'UInt32LE':
-          case 'UInt32BE':
-          case 'Int8':
-          case 'Int16LE':
-          case 'Int16BE':
-          case 'Int32LE':
-          case 'Int32BE':
-          case 'FloatLE':
-          case 'FloatBE':
-          case 'DoubleLE':
-          case 'DoubleBE':
-            this.primitiveGenerateN(this.type, ctx);
-            break;
-          case 'Bit':
-            this.generateBit(ctx);
-            break;
-          case 'String':
-            this.generateString(ctx);
-            break;
-          case 'Buffer':
-            this.generateBuffer(ctx);
-            break;
-          case 'Skip':
-            this.generateSkip(ctx);
-            break;
-          case 'Nest':
-            this.generateNest(ctx);
-            break;
-          case 'Array':
-            this.generateArray(ctx);
-            break;
-          case 'Choice':
-            this.generateChoice(ctx);
-            break;
-        }
+      switch (this.type) {
+        case 'UInt8':
+        case 'UInt16LE':
+        case 'UInt16BE':
+        case 'UInt32LE':
+        case 'UInt32BE':
+        case 'Int8':
+        case 'Int16LE':
+        case 'Int16BE':
+        case 'Int32LE':
+        case 'Int32BE':
+        case 'FloatLE':
+        case 'FloatBE':
+        case 'DoubleLE':
+        case 'DoubleBE':
+          this.primitiveGenerateN(this.type, ctx);
+          break;
+        case 'Bit':
+          this.generateBit(ctx);
+          break;
+        case 'String':
+          this.generateString(ctx);
+          break;
+        case 'Buffer':
+          this.generateBuffer(ctx);
+          break;
+        case 'Skip':
+          this.generateSkip(ctx);
+          break;
+        case 'Nest':
+          this.generateNest(ctx);
+          break;
+        case 'Array':
+          this.generateArray(ctx);
+          break;
+        case 'Choice':
+          this.generateChoice(ctx);
+          break;
+      }
       this.generateAssert(ctx);
     }
 
