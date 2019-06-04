@@ -289,6 +289,30 @@ Jump to `offset`, execute parser for `type` and rewind to previous offset.
     start of the input buffer. Can be a string `[u]int{8, 16, 32, 64}{le, be}`
     or an user defined Parser object.
 
+### saveOffset(name [,options])
+Save the current buffer offset as key `name`. This function is only useful when called after another function which would advance the internal buffer offset.
+
+```javascript
+var parser = new Parser()
+  // this call advances the buffer offset by
+  // a variable (i.e. unknown to us) number of bytes
+  .string('name', {
+    zeroTerminated: true
+  })
+  // this variable points to an absolute position
+  // in the buffer
+  .uint32('seekOffset')
+  // now, save the "current" offset in the stream
+  // as the variable "currentOffset"
+  .saveOffset('currentOffset')
+  // finally, use the saved offset to figure out
+  // how many bytes we need to skip
+  .skip(function() {
+    return this.seekOffset - this.currentOffset;
+  })
+  ... // the parser would continue here
+```
+
 ### skip(length)
 Skip parsing for `length` bytes.
 
