@@ -11,10 +11,12 @@
     "typescript": "^3.5.1"
   },
   "scripts": {
+    "build": "npx tsc",
     "fmt": "npx prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
     "check-fmt": "npx prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
     "test": "npx mocha",
-    "cover": "npx nyc --reporter html mocha"
+    "cover": "npx nyc --reporter html mocha",
+    "prepare": "npm run build"
   },
   "keywords": [
     "binary",

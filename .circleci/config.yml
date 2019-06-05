@@ -16,8 +16,6 @@ jobs:
           command: npm install
       - run:
           command: npm install --no-save mocha-junit-reporter
-      - run:
-          command: npx tsc
       - save_cache:
           key: deps-{{ checksum "package-lock.json" }}
           paths:
