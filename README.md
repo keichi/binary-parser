@@ -151,14 +151,16 @@ the following keys:
 - `clone` - (Optional, defaults to `false`) By default,
   `buffer(name [,options])` returns a new buffer which references the same
   memory as the parser input, but offset and cropped by a certain range. If
-  this option is true, input buffer will be cloned and a new buffer referncing
-  another memory is returned.
+  this option is true, input buffer will be cloned and a new buffer
+  referencing a new memory region is returned.
 - `length ` - (either `length` or `readUntil` is required) Length of the
   buffer. Can be a number, string or a function. Use number for statically
   sized buffers, string to reference another variable and function to do some
   calculation.
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
-  this parser will read till it reaches end of the `Buffer` object.
+  this parser will read till it reaches end of the `Buffer` object. If it is a
+  function, this parser will read the buffer is read until the function
+  returns true.
 
 ### array(name, options)
 Parse bytes as an array. `options` is an object which can have the following

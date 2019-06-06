@@ -424,5 +424,45 @@ describe('Primitive parser', function() {
       result.raw[0] = 0xff;
       assert.notDeepEqual(result.raw, buf);
     });
+
+    it('should parse until function returns true when readUntil is function', function() {
+      var parser = new Parser()
+        .endianess('big')
+        .uint8('cmd')
+        .buffer('data', {
+          readUntil: function(item) {
+            return item === 2;
+          },
+        });
+
+      var result = parser.parse(Buffer.from('aa', 'hex'));
+      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from([]) });
+
+      var result = parser.parse(Buffer.from('aabbcc', 'hex'));
+      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+
+      var result = parser.parse(Buffer.from('aa02bbcc', 'hex'));
+      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from([]) });
+
+      var result = parser.parse(Buffer.from('aabbcc02', 'hex'));
+      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+
+      var result = parser.parse(Buffer.from('aabbcc02dd', 'hex'));
+      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+    });
+
+    // this is a test for testing a fix of a bug, that removed the last byte
+    // of the buffer parser
+    it('should return a buffer with same size', function() {
+      var bufferParser = new Parser().buffer('buf', {
+        readUntil: 'eof',
+        formatter: function(buffer) {
+          return buffer;
+        },
+      });
+
+      var buffer = Buffer.from('John\0Doe\0');
+      assert.deepEqual(bufferParser.parse(buffer), { buf: buffer });
+    });
   });
 });
