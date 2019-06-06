@@ -916,11 +916,13 @@ export class Parser {
       const start = ctx.generateTmpVariable();
       const cur = ctx.generateTmpVariable();
 
-      ctx.pushCode(`var ${start} = offset;`)
+      ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(`var ${cur} = 0;`);
       ctx.pushCode(`while (offset < buffer.length) {`);
       ctx.pushCode(`${cur} = buffer.readUInt8(offset);`);
-      ctx.pushCode(`if (${pred}.call(this, ${cur}, buffer.slice(offset))) break;`);
+      ctx.pushCode(
+        `if (${pred}.call(this, ${cur}, buffer.slice(offset))) break;`
+      );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
       ctx.pushCode(`${varName} = buffer.slice(${start}, offset);`);
