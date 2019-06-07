@@ -6,22 +6,22 @@ const aliasRegistry: { [key: string]: Parser } = {};
 const FUNCTION_PREFIX = '___parser_';
 
 interface ParserOptions {
-  length?: number;
-  type?: Types | Parser;
-  assert?: (item: any) => void | string | number;
-  formatter?: (item: any) => void;
-  encoding?: 'utf8';
-  lengthInBytes?: null;
+  length?: number | string | ((item: any) => number);
+  assert?: number | string | ((item: any) => any);
+  lengthInBytes?: number | string | ((item: any) => number);
+  type?: string | Parser;
+  formatter?: (item: any) => string | number;
+  encoding?: string;
   readUntil?: 'eof';
   greedy?: null;
-  choices?: { [key: string]: string };
-  defaultChoice?: null;
+  choices?: { [key: number]: string | Parser };
+  defaultChoice?: string | Parser;
   zeroTerminated?: boolean;
   clone?: null;
   stripNull?: null;
   key?: null;
-  tag?: null;
-  offset?: null;
+  tag?: string;
+  offset?: number;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -400,11 +400,7 @@ export class Parser {
     return this;
   }
 
-  skip(length: number, options: ParserOptions) {
-    if (options && options.assert) {
-      throw new Error('assert option on skip is not allowed.');
-    }
-
+  skip(length: number) {
     return this.setNextParser('skip', '', { length: length });
   }
 
@@ -470,21 +466,25 @@ export class Parser {
       throw new Error('Choices option of array is not defined.');
     }
 
-    Object.keys(options.choices).forEach(key => {
-      if (isNaN(parseInt(key, 10))) {
+    Object.keys(options.choices).forEach((keyString: string) => {
+      const key = parseInt(keyString, 10);
+      const value = options.choices[key];
+
+      if (isNaN(key)) {
         throw new Error('Key of choices must be a number.');
       }
-      if (!options.choices[key]) {
-        throw new Error(`Choice Case ${key} of ${varName} is not valid.`);
+
+      if (!value) {
+        throw new Error(`Choice Case ${keyString} of ${varName} is not valid.`);
       }
 
       if (
-        typeof options.choices[key] === 'string' &&
-        !aliasRegistry[options.choices[key]] &&
-        Object.keys(PRIMITIVE_SIZES).indexOf(options.choices[key]) < 0
+        typeof value === 'string' &&
+        !aliasRegistry[value] &&
+        Object.keys(PRIMITIVE_SIZES).indexOf(value) < 0
       ) {
         throw new Error(
-          `Specified primitive type "${options.choices[key]}" is not supported.`
+          `Specified primitive type "${value}" is not supported.`
         );
       }
     });
@@ -671,7 +671,7 @@ export class Parser {
 
       // if this a skip
     } else if (this.type === 'skip') {
-      size = this.options.length;
+      size = this.options.length as number;
 
       // if this is a nested parser
     } else if (this.type === 'nest') {
@@ -822,7 +822,7 @@ export class Parser {
       (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
-      ctx.bitFields.forEach(parser => (sum += parser.options.length));
+      ctx.bitFields.forEach(parser => (sum += parser.options.length as number));
 
       const val = ctx.generateTmpVariable();
 
@@ -851,14 +851,14 @@ export class Parser {
 
       let bitOffset = 0;
       const isBigEndian = this.endian === 'be';
+
       ctx.bitFields.forEach(parser => {
-        const offset = isBigEndian
-          ? sum - bitOffset - parser.options.length
-          : bitOffset;
-        const mask = (1 << parser.options.length) - 1;
+        const length = parser.options.length as number;
+        const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
+        const mask = (1 << length) - 1;
 
         ctx.pushCode(`${parser.varName} = ${val} >> ${offset} & ${mask};`);
-        bitOffset += parser.options.length;
+        bitOffset += length;
       });
 
       ctx.bitFields = [];
@@ -1041,7 +1041,7 @@ export class Parser {
     }
     ctx.pushCode(`switch(${tag}) {`);
     Object.keys(this.options.choices).forEach(tag => {
-      const type = this.options.choices[tag];
+      const type = this.options.choices[parseInt(tag, 10)];
 
       ctx.pushCode(`case ${tag}:`);
       this.generateChoiceCase(ctx, this.varName, type);
