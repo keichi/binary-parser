@@ -18,6 +18,9 @@
     "cover": "npx nyc --reporter html mocha",
     "prepare": "npm run build"
   },
+  "files": [
+    "dist/*.js"
+  ],
   "keywords": [
     "binary",
     "parser",
