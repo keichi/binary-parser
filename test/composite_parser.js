@@ -979,6 +979,48 @@ describe('Composite parser', function() {
     });
   });
 
+  describe('SaveOffset', () => {
+    it('should save the offset', () => {
+      const buff = Buffer.from([0x01, 0x00, 0x02]);
+      const parser = Parser.start()
+        .int8('a')
+        .int16('b')
+        .saveoffset('bytesRead');
+
+      assert.deepEqual(parser.parse(buff), {
+        a: 1,
+        b: 2,
+        bytesRead: 3,
+      });
+    });
+
+    it('should save the offset if not at end', () => {
+      const buff = Buffer.from([0x01, 0x00, 0x02]);
+      const parser = Parser.start()
+        .int8('a')
+        .saveoffset('bytesRead')
+        .int16('b');
+
+      assert.deepEqual(parser.parse(buff), {
+        a: 1,
+        b: 2,
+        bytesRead: 1,
+      });
+    });
+
+    it('should save the offset with a dynamic parser', () => {
+      const buff = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x00]);
+      const parser = Parser.start()
+        .string('name', { zeroTerminated: true })
+        .saveoffset('bytesRead');
+
+      assert.deepEqual(parser.parse(buff), {
+        name: 'test',
+        bytesRead: 5,
+      });
+    });
+  });
+
   describe('Utilities', function() {
     it('should count size for fixed size structs', function() {
       var parser = Parser.start()

@@ -35,6 +35,7 @@ type ComplexTypes =
   | 'nest'
   | 'skip'
   | 'pointer'
+  | 'saveoffset'
   | '';
 
 type Endianess = 'be' | 'le';
@@ -151,6 +152,7 @@ const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   nest: 'Nest',
   skip: 'Skip',
   pointer: 'Pointer',
+  saveoffset: 'SaveOffset',
   '': '',
 };
 
@@ -539,6 +541,10 @@ export class Parser {
     return this.setNextParser('pointer', varName, options);
   }
 
+  saveoffset(varName: string, options?: ParserOptions) {
+    return this.setNextParser('saveoffset', varName, options);
+  }
+
   endianess(endianess: 'little' | 'big') {
     switch (endianess.toLowerCase()) {
       case 'little':
@@ -761,6 +767,9 @@ export class Parser {
           break;
         case 'pointer':
           this.generatePointer(ctx);
+          break;
+        case 'saveoffset':
+          this.generateSaveOffset(ctx);
           break;
       }
       this.generateAssert(ctx);
@@ -1122,5 +1131,10 @@ export class Parser {
 
     // Restore offset
     ctx.pushCode(`offset = ${tempVar};`);
+  }
+
+  private generateSaveOffset(ctx: Context) {
+    const varName = ctx.generateVariable(this.varName);
+    ctx.pushCode(`${varName} = offset`);
   }
 }
