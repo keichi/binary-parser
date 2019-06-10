@@ -985,7 +985,7 @@ describe('Composite parser', function() {
       const parser = Parser.start()
         .int8('a')
         .int16('b')
-        .saveoffset('bytesRead');
+        .saveOffset('bytesRead');
 
       assert.deepEqual(parser.parse(buff), {
         a: 1,
@@ -998,7 +998,7 @@ describe('Composite parser', function() {
       const buff = Buffer.from([0x01, 0x00, 0x02]);
       const parser = Parser.start()
         .int8('a')
-        .saveoffset('bytesRead')
+        .saveOffset('bytesRead')
         .int16('b');
 
       assert.deepEqual(parser.parse(buff), {
@@ -1012,7 +1012,7 @@ describe('Composite parser', function() {
       const buff = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x00]);
       const parser = Parser.start()
         .string('name', { zeroTerminated: true })
-        .saveoffset('bytesRead');
+        .saveOffset('bytesRead');
 
       assert.deepEqual(parser.parse(buff), {
         name: 'test',
