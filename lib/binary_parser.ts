@@ -7,13 +7,13 @@ const FUNCTION_PREFIX = '___parser_';
 
 interface ParserOptions {
   length?: number | string | ((item: any) => number);
-  assert?: number | string | ((item: any) => any);
+  assert?: number | string | ((item: number | string) => boolean);
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
   formatter?: (item: any) => string | number;
   encoding?: string;
   readUntil?: 'eof';
-  greedy?: null;
+  greedy?: boolean;
   choices?: { [key: number]: string | Parser };
   defaultChoice?: string | Parser;
   zeroTerminated?: boolean;
@@ -21,7 +21,7 @@ interface ParserOptions {
   stripNull?: null;
   key?: null;
   tag?: string;
-  offset?: number;
+  offset?: number | string | ((item: any) => number);
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
