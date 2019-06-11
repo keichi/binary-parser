@@ -140,7 +140,7 @@ describe('Composite parser', function() {
       var buffer = Buffer.alloc(1 + 10 * (1 + 5 * 4));
       var i, j;
 
-      iterator = 0;
+      var iterator = 0;
       buffer.writeUInt8(10, iterator);
       iterator += 1;
       for (i = 0; i < 10; i++) {
@@ -467,7 +467,7 @@ describe('Composite parser', function() {
         })
         .int32le('test');
 
-      buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
+      var buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
       assert.deepEqual(parser.parse(buffer), {
         tag: 3,
         data: 0xff,
@@ -976,6 +976,48 @@ describe('Composite parser', function() {
     assert.deepEqual(parser.parse(buf), {
       len: 6,
       child: { a: [1, 2, 3, 4, 5, 6] },
+    });
+  });
+
+  describe('SaveOffset', () => {
+    it('should save the offset', () => {
+      const buff = Buffer.from([0x01, 0x00, 0x02]);
+      const parser = Parser.start()
+        .int8('a')
+        .int16('b')
+        .saveOffset('bytesRead');
+
+      assert.deepEqual(parser.parse(buff), {
+        a: 1,
+        b: 2,
+        bytesRead: 3,
+      });
+    });
+
+    it('should save the offset if not at end', () => {
+      const buff = Buffer.from([0x01, 0x00, 0x02]);
+      const parser = Parser.start()
+        .int8('a')
+        .saveOffset('bytesRead')
+        .int16('b');
+
+      assert.deepEqual(parser.parse(buff), {
+        a: 1,
+        b: 2,
+        bytesRead: 1,
+      });
+    });
+
+    it('should save the offset with a dynamic parser', () => {
+      const buff = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x00]);
+      const parser = Parser.start()
+        .string('name', { zeroTerminated: true })
+        .saveOffset('bytesRead');
+
+      assert.deepEqual(parser.parse(buff), {
+        name: 'test',
+        bytesRead: 5,
+      });
     });
   });
 
