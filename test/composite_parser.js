@@ -140,7 +140,7 @@ describe('Composite parser', function() {
       var buffer = Buffer.alloc(1 + 10 * (1 + 5 * 4));
       var i, j;
 
-      iterator = 0;
+      var iterator = 0;
       buffer.writeUInt8(10, iterator);
       iterator += 1;
       for (i = 0; i < 10; i++) {
@@ -467,7 +467,7 @@ describe('Composite parser', function() {
         })
         .int32le('test');
 
-      buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
+      var buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
       assert.deepEqual(parser.parse(buffer), {
         tag: 3,
         data: 0xff,
