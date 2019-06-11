@@ -15,6 +15,7 @@
     "fmt": "npx prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
     "check-fmt": "npx prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
     "test": "npx mocha",
+    "test-browser": "npx parcel test/browser.html --open",
     "cover": "npx nyc --reporter html mocha",
     "prepare": "npm run build"
   },
