@@ -1027,7 +1027,7 @@ describe('Composite parser', function() {
         .int8('a')
         .int32le('b')
         .string('msg', { length: 10 })
-        .skip(2)
+        .seek(2)
         .array('data', {
           length: 3,
           type: 'int8',

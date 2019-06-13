@@ -166,10 +166,10 @@ describe('Primitive parser', function() {
         big: 12345678,
       });
     });
-    it('should skip when specified', function() {
+    it('should seek offset', function() {
       var parser = Parser.start()
         .uint8('a')
-        .skip(3)
+        .seek(3)
         .uint16le('b')
         .uint32be('c');
 
