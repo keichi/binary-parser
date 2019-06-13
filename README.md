@@ -287,7 +287,9 @@ pointed by another field.
   input buffer. Can be a number, string or a function.
 
 ### saveOffset(name [,options])
-Save the current buffer offset as key `name`. This function is only useful when called after another function which would advance the internal buffer offset.
+Save the current buffer offset as key `name`. This function is only useful
+when called after another function which would advance the internal buffer
+offset.
 
 ```javascript
 var parser = new Parser()
@@ -304,14 +306,15 @@ var parser = new Parser()
   .saveOffset('currentOffset')
   // finally, use the saved offset to figure out
   // how many bytes we need to skip
-  .skip(function() {
+  .seek(function() {
     return this.seekOffset - this.currentOffset;
   })
   ... // the parser would continue here
 ```
 
-### skip(length)
-Skip `length` bytes.
+### seek(relOffset)
+Move the buffer offset for `relOffset` bytes from the current position. Use a
+negative `relOffset` value to rewind the offset. Previously named `skip(length)`.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either

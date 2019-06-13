@@ -38,7 +38,7 @@ var ELF32SectionHeaderTable = new Parser().array('items', {
   },
 });
 
-var ELF32SectionHeaderStringTable = new Parser().skip(1).array('items', {
+var ELF32SectionHeaderStringTable = new Parser().seek(1).array('items', {
   type: new Parser().string('name', { zeroTerminated: true }),
   lengthInBytes: function(vars) {
     var shstr = vars.section_headers.items[vars.shstrndx];

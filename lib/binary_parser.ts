@@ -33,7 +33,7 @@ type ComplexTypes =
   | 'array'
   | 'choice'
   | 'nest'
-  | 'skip'
+  | 'seek'
   | 'pointer'
   | 'saveOffset'
   | '';
@@ -150,7 +150,7 @@ const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   array: 'Array',
   choice: 'Choice',
   nest: 'Nest',
-  skip: 'Skip',
+  seek: 'Seek',
   pointer: 'Pointer',
   saveOffset: 'SaveOffset',
   '': '',
@@ -402,8 +402,16 @@ export class Parser {
     return this;
   }
 
-  skip(length: number) {
-    return this.setNextParser('skip', '', { length: length });
+  skip(length: number, options?: ParserOptions) {
+    return this.seek(length, options);
+  }
+
+  seek(relOffset: number, options?: ParserOptions) {
+    if (options && options.assert) {
+      throw new Error('assert option on seek is not allowed.');
+    }
+
+    return this.setNextParser('seek', '', { length: relOffset });
   }
 
   string(varName: string, options: ParserOptions) {
@@ -676,7 +684,7 @@ export class Parser {
       size = this.options.length * elementSize;
 
       // if this a skip
-    } else if (this.type === 'skip') {
+    } else if (this.type === 'seek') {
       size = this.options.length as number;
 
       // if this is a nested parser
@@ -753,8 +761,8 @@ export class Parser {
         case 'buffer':
           this.generateBuffer(ctx);
           break;
-        case 'skip':
-          this.generateSkip(ctx);
+        case 'seek':
+          this.generateSeek(ctx);
           break;
         case 'nest':
           this.generateNest(ctx);
@@ -874,7 +882,7 @@ export class Parser {
     }
   }
 
-  private generateSkip(ctx: Context) {
+  private generateSeek(ctx: Context) {
     const length = ctx.generateOption(this.options.length);
     ctx.pushCode(`offset += ${length};`);
   }
