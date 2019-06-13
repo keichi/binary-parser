@@ -22,13 +22,13 @@ var tarHeader = new Parser()
   .string('devmajor', { length: 8, stripNull: true, formatter: oct2int })
   .string('devminor', { length: 8, stripNull: true, formatter: oct2int })
   .string('prefix', { length: 155, stripNull: true })
-  .skip(12);
+  .seek(12);
 
 var tarItem = new Parser()
   .nest({
     type: tarHeader,
   })
-  .skip(function() {
+  .seek(function() {
     return Math.ceil(this.size / 512) * 512;
   });
 

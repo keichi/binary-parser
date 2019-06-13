@@ -82,7 +82,7 @@ var SOF0 = Parser.start()
 var Ignore = Parser.start()
   .endianess('big')
   .uint16('length')
-  .skip(function() {
+  .seek(function() {
     return this.length - 2;
   });
 

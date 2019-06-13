@@ -26,7 +26,7 @@ var partitionTable = new Parser()
   .uint32le('endLBA');
 
 var mbrParser = new Parser()
-  .skip(446)
+  .seek(446)
   .array('partitionTables', {
     type: partitionTable,
     length: 4,
