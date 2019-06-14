@@ -1,5 +1,7 @@
 import { Buffer } from 'buffer';
 import { runInNewContext } from 'vm';
+import 'console';
+
 import { Context } from './context';
 
 const aliasRegistry: { [key: string]: Parser } = {};
@@ -640,8 +642,8 @@ export class Parser {
   }
 
   compile() {
-    const src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
-    this.compiled = runInNewContext(src, { Buffer });
+    const src = `(function(buffer, constructorFn) { ${this.getCode()} })`;
+    this.compiled = runInNewContext(src, { Buffer, console });
   }
 
   sizeOf(): number {
@@ -702,7 +704,7 @@ export class Parser {
     }
 
     if (!Buffer.isBuffer(buffer)) {
-      throw new Error("argument buffer is not a Buffer object");
+      throw new Error('argument buffer is not a Buffer object');
     }
 
     return this.compiled(buffer, this.constructorFn);
