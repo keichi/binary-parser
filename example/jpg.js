@@ -108,5 +108,5 @@ var JPEG = Parser.start().array('segments', {
 });
 
 require('fs').readFile('test.jpg', function(err, data) {
-  console.log(require('util').inspect(JPEG.parse(data), { depth: null }));
+  console.dir(JPEG.parse(data), { depth: null });
 });

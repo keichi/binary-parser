@@ -80,5 +80,5 @@ var ELF32Header = new Parser()
 
 require('fs').readFile('hello', function(err, data) {
   var result = ELF32Header.parse(data);
-  console.log(require('util').inspect(result, { depth: null }));
+  console.dir(result, { depth: null });
 });

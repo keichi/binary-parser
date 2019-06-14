@@ -81,5 +81,5 @@ var ClassFile = Parser.start()
   });
 
 require('fs').readFile('Hello.class', function(err, data) {
-  console.log(require('util').inspect(ClassFile.parse(data), { depth: null }));
+  console.dir(ClassFile.parse(data), { depth: null });
 });
