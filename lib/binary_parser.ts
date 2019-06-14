@@ -581,10 +581,6 @@ export class Parser {
   getCode() {
     const ctx = new Context();
 
-    ctx.pushCode('if (!Buffer.isBuffer(buffer)) {');
-    ctx.generateError('"argument buffer is not a Buffer object"');
-    ctx.pushCode('}');
-
     if (!this.alias) {
       this.addRawCode(ctx);
     } else {
@@ -703,6 +699,10 @@ export class Parser {
   parse(buffer: Buffer) {
     if (!this.compiled) {
       this.compile();
+    }
+
+    if (!Buffer.isBuffer(buffer)) {
+      throw new Error("argument buffer is not a Buffer object");
     }
 
     return this.compiled(buffer, this.constructorFn);
