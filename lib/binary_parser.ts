@@ -612,8 +612,6 @@ export class Parser {
     this.generate(ctx);
 
     this.resolveReferences(ctx);
-
-    ctx.pushCode('return vars;');
   }
 
   private addAliasedCode(ctx: Context) {
