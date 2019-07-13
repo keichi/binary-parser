@@ -1368,9 +1368,9 @@ export class Parser {
     ctx.pushCode(`var ${item} = ${name}[${itemCounter}];`);
     ctx.pushCode(`${itemCounter}++;`);
 
-    if (type === 'string') {
+    if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        ctx.pushCode(`smartBuffer.write${CAPITILIZED_TYPE_NAMES[type]}(${item});`);
+        ctx.pushCode(`smartBuffer.write${CAPITILIZED_TYPE_NAMES[type as Types]}(${item});`);
       } else {
         ctx.pushCode(
           `smartBuffer.writeBuffer(${FUNCTION_ENCODE_PREFIX + type}(${item}));`
