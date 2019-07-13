@@ -1,8 +1,13 @@
 version: 2
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node
+
 jobs:
   build:
-    docker:
-      - image: circleci/node
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -10,10 +15,56 @@ jobs:
       - run:
           command: npm install
       - run:
-          command: npm test
-      - run:
-          command: npm run check-fmt
+          command: npm install --no-save mocha-junit-reporter
       - save_cache:
           key: deps-{{ checksum "package-lock.json" }}
           paths:
             - node_modules/
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+  test:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          command: npx mocha --reporter mocha-junit-reporter
+          environment:
+            MOCHA_FILE: test-results/mocha/results.xml
+      - store_test_results:
+          path: test-results
+      - run:
+          command: npm run check-fmt
+  publish:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+      - run:
+          command: npm publish
+
+workflows:
+  version: 2
+  build-test-publish:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
+      - test:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v.*/
+      - publish:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
