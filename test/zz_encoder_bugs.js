@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Parser = require("../lib/binary_parser").Parser;
+var Parser = require("../dist/binary_parser").Parser;
 
 describe("Specific bugs testing", function() {
   describe("Array encoder with readUntil", function() {
