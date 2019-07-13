@@ -1065,7 +1065,7 @@ export class Parser {
     let sum = 0;
     if (
       !this.next ||
-      (this.next && ['Bit', 'Nest'].indexOf(this.next.type) < 0)
+      (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       ctx.bitFields.forEach(parser => { sum += parser.options.length as number; });
 
