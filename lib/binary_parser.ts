@@ -177,8 +177,8 @@ export class Parser {
   smartBufferSize: number;
 
   constructor(opts?: any) {
-    this.smartBufferSize = 
-      opts && typeof opts === 'object' && opts.smartBufferSize 
+    this.smartBufferSize =
+      opts && typeof opts === 'object' && opts.smartBufferSize
         ? opts.smartBufferSize
         : 256;
   }
@@ -885,6 +885,15 @@ export class Parser {
   }
 
   generateEncode(ctx: Context) {
+    var savVarName = ctx.generateTmpVariable();
+    const varName = ctx.generateVariable(this.varName);
+
+    // Transform with the possibly provided encoder before encoding
+    if (this.options.encoder) {
+      ctx.pushCode(`var ${savVarName} = ${varName}`);
+      this.generateEncoder(ctx, varName, this.options.encoder);
+    }
+
     if (this.type) {
       switch (this.type) {
         case 'uint8':
@@ -938,9 +947,10 @@ export class Parser {
       this.generateAssert(ctx);
     }
 
-    const varName = ctx.generateVariable(this.varName);
     if (this.options.encoder) {
-      this.generateEncoder(ctx, varName, this.options.encoder);
+      // Restore varName after encoder transformation so that next parsers will
+      // have access to original field value (but not nested ones)
+      ctx.pushCode(`${varName} = ${savVarName};`);
     }
 
     return this.generateEncodeNext(ctx);
@@ -988,7 +998,7 @@ export class Parser {
     if (this.next) {
       ctx = this.next.generateEncode(ctx);
     }
-   
+
     return ctx;
   }
 
@@ -1332,7 +1342,7 @@ export class Parser {
     // and length option)
     if (length !== undefined) {
       ctx.pushCode(`${maxItems} = ${maxItems} > ${length} ? ${length} : ${maxItems}`);
-    } 
+    }
 
     // Save current encoding smartBuffer and allocate a new one
     const savSmartBuffer = ctx.generateTmpVariable();
@@ -1343,7 +1353,7 @@ export class Parser {
     );
 
     ctx.pushCode(`if(${maxItems} > 0) {`);
-    
+
     ctx.pushCode(`var ${itemCounter} = 0;`);
     if (
       typeof this.options.encodeUntil === 'function' ||
