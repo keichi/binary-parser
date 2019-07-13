@@ -145,6 +145,24 @@ describe("Primitive encoder", function() {
       );
     });
 
+    it('should encode 1-byte-length 8 bit field', function() {
+      var parser = new Parser().bit8("a");
+
+      var buf = binaryLiteral("11111111");
+
+      assert.deepEqual(parser.parse(buf), {a: 255});
+      assert.deepEqual(parser.encode({a: 255}), buf);
+    });
+
+    it('should encode 1-byte-length 2x 4 bit fields', function() {
+      var parser = new Parser().bit4("a").bit4("b");
+
+      var buf = binaryLiteral("1111 1111");
+
+      assert.deepEqual(parser.parse(buf), {a: 15, b: 15});
+      assert.deepEqual(parser.encode({a: 15, b: 15}), buf);
+    });
+
     it("should encode 1-byte-length bit field sequence", function() {
       var parser = new Parser()
         .bit1("a")

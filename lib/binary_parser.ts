@@ -1062,12 +1062,14 @@ export class Parser {
     parser.varName = ctx.generateVariable(parser.varName);
     ctx.bitFields.push(parser);
 
-    let sum = 0;
     if (
       !this.next ||
       (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
-      ctx.bitFields.forEach(parser => { sum += parser.options.length as number; });
+      let sum = 0;
+      ctx.bitFields.forEach(parser => {
+        sum += parser.options.length as number;
+      });
 
       if (sum <= 8) {
         sum = 8;
@@ -1082,35 +1084,36 @@ export class Parser {
           'Currently, bit field sequences longer than 4-bytes is not supported.'
         );
       }
-    }
 
-    const tmpVal = ctx.generateTmpVariable();
-    ctx.pushCode(`var ${tmpVal} = 0;`);
-    let bitOffset = 0;
-    ctx.bitFields.forEach(parser => {
-      ctx.pushCode(
-        `${tmpVal} |= (${parser.varName} << ${
-          sum - (parser.options.length as number) - bitOffset});`
-      );
-      ctx.pushCode(`${tmpVal} = ${tmpVal} >>> 0;`);
-      bitOffset += parser.options.length as number;
-    });
-    if (sum == 8) {
-      ctx.pushCode(`smartBuffer.writeUInt8(${tmpVal});`);
-    } else if (sum == 16) {
-      ctx.pushCode(`smartBuffer.writeUInt16BE(${tmpVal});`);
-    } else if (sum == 24) {
-      const val1 = ctx.generateTmpVariable();
-      const val2 = ctx.generateTmpVariable();
-      ctx.pushCode(`var ${val1} = (${tmpVal} >>> 8);`);
-      ctx.pushCode(`var ${val2} = (${tmpVal} & 0x0ff);`);
-      ctx.pushCode(`smartBuffer.writeUInt16BE(${val1});`);
-      ctx.pushCode(`smartBuffer.writeUInt8(${val2});`);
-    } else if (sum == 32) {
-      ctx.pushCode(`smartBuffer.writeUInt32BE(${tmpVal});`);
-    }
 
-    ctx.bitFields = [];
+      const tmpVal = ctx.generateTmpVariable();
+      ctx.pushCode(`var ${tmpVal} = 0;`);
+      let bitOffset = 0;
+      ctx.bitFields.forEach(parser => {
+        ctx.pushCode(
+          `${tmpVal} |= (${parser.varName} << ${
+            sum - (parser.options.length as number) - bitOffset});`
+        );
+        ctx.pushCode(`${tmpVal} = ${tmpVal} >>> 0;`);
+        bitOffset += parser.options.length as number;
+      });
+      if (sum == 8) {
+        ctx.pushCode(`smartBuffer.writeUInt8(${tmpVal});`);
+      } else if (sum == 16) {
+        ctx.pushCode(`smartBuffer.writeUInt16BE(${tmpVal});`);
+      } else if (sum == 24) {
+        const val1 = ctx.generateTmpVariable();
+        const val2 = ctx.generateTmpVariable();
+        ctx.pushCode(`var ${val1} = (${tmpVal} >>> 8);`);
+        ctx.pushCode(`var ${val2} = (${tmpVal} & 0x0ff);`);
+        ctx.pushCode(`smartBuffer.writeUInt16BE(${val1});`);
+        ctx.pushCode(`smartBuffer.writeUInt8(${val2});`);
+      } else if (sum == 32) {
+        ctx.pushCode(`smartBuffer.writeUInt32BE(${tmpVal});`);
+      }
+
+      ctx.bitFields = [];
+    }
   }
 
   private generateSeek(ctx: Context) {
