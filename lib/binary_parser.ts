@@ -701,11 +701,9 @@ export class Parser {
     this.generateEncode(ctx);
 
     ctx.markResolved(this.alias);
-
     this.resolveReferences(ctx, 'encode');
 
     ctx.pushCode('return smartBuffer.toBuffer();');
-
     ctx.pushCode('}');
 
     return ctx;
@@ -1397,7 +1395,7 @@ export class Parser {
     } else if (typeof this.options.readUntil === 'function') {
       ctx.pushCode(
         ` while (${itemCounter} < ${maxItems} && !(${
-        this.options.encodeUntil}).call(this, ${item}, ${savSmartBuffer}.toBuffer()));`
+        this.options.readUntil}).call(this, ${item}, ${savSmartBuffer}.toBuffer()));`
       );
     }
     ctx.pushCode('}'); // End of 'if(...) {'
