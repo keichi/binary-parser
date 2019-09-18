@@ -22,7 +22,7 @@
   },
   "files": [
     "dist/*.js",
-    "dist/binary_parser.d.ts"
+    "dist/*.d.ts"
   ],
   "keywords": [
     "binary",
