@@ -1,6 +1,6 @@
 {
   "name": "binary-parser-encoder",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Blazing-fast binary parser builder",
   "main": "lib/binary_parser.js",
   "devDependencies": {

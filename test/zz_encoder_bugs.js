@@ -219,4 +219,134 @@ describe("Specific bugs testing", function() {
       });
     });
   });
+
+  describe("Issue #19 Little endianess incorrect", function() {
+    let binaryLiteral = function(s) {
+      var i;
+      var bytes = [];
+
+      s = s.replace(/\s/g, "");
+      for (i = 0; i < s.length; i += 8) {
+        bytes.push(parseInt(s.slice(i, i + 8), 2));
+      }
+
+      return Buffer.from(bytes);
+    };
+    it("should parse 4-byte-length bit field sequence wit little endian", function() {
+      let buf = binaryLiteral("0000000000001111 1010000110100010"); // 000F A1A2
+
+      // Parsed as two uint16 with little-endian (BYTES order)
+      let parser1 = new Parser().uint16le("a").uint16le("b");
+
+      // Parsed as two 16 bits fields with little-endian
+      let parser2 = new Parser()
+        .endianess("little")
+        .bit16("a")
+        .bit16("b");
+
+      let parsed1 = parser1.parse(buf);
+      let parsed2 = parser2.parse(buf);
+
+      assert.deepEqual(parsed1, {
+        a: 0x0f00, // 000F
+        b: 0xa2a1 // A1A2
+      });
+
+      assert.deepEqual(parsed2, {
+        a: 0xa1a2, // last 16 bits (but value coded as BE)
+        b: 0x000f // first 16 bits  (but value coded as BE)
+      });
+
+      /* This is a little confusing. The endianess with bits fields affect the order of fields */
+    });
+    it("should encode bit ranges with little endian correctly", function() {
+      let bigParser = Parser.start()
+        .endianess("big")
+        .bit4("a")
+        .bit1("b")
+        .bit1("c")
+        .bit1("d")
+        .bit1("e")
+        .uint16("f")
+        .array("g", { type: "uint8", readUntil: "eof" });
+      let littleParser = Parser.start()
+        .endianess("little")
+        .bit4("a")
+        .bit1("b")
+        .bit1("c")
+        .bit1("d")
+        .bit1("e")
+        .uint16("f")
+        .array("g", { type: "uint8", readUntil: "eof" });
+      // Parser definition for a symetric encoding/decoding of little-endian bit fields
+      let little2Parser = Parser.start()
+        .endianess("little")
+        .encoderSetOptions({ bitEndianess: true })
+        .bit4("a")
+        .bit1("b")
+        .bit1("c")
+        .bit1("d")
+        .bit1("e")
+        .uint16("f")
+        .array("g", { type: "uint8", readUntil: "eof" });
+
+      let data = binaryLiteral(
+        "0011 0 1 0 1 0000000011111111 00000001 00000010 00000011"
+      ); // 35 00FF 01 02 03
+      // in big endian:            3 0 1 0 1             00FF        1        2        3
+      // in little endian:         3 0 1 0 1             FF00        1        2        3
+      // LE with encoderBitEndianess option:
+      //                           5 1 1 0 0             FF00        1        2        3
+
+      //let bigDecoded = bigParser.parse(data);
+      //let littleDecoded = littleParser.parse(data);
+      let little2Decoded = little2Parser.parse(data);
+
+      //console.log(bigDecoded);
+      //console.log(littleDecoded);
+      //console.log(little2Decoded);
+
+      let big = {
+        a: 3,
+        b: 0,
+        c: 1,
+        d: 0,
+        e: 1,
+        f: 0x00ff,
+        g: [1, 2, 3]
+      };
+      let little = {
+        a: 3,
+        b: 0,
+        c: 1,
+        d: 0,
+        e: 1,
+        f: 0xff00,
+        g: [1, 2, 3]
+      };
+      let little2 = {
+        a: 5,
+        b: 1,
+        c: 1,
+        d: 0,
+        e: 0,
+        f: 0xff00,
+        g: [1, 2, 3]
+      };
+
+      assert.deepEqual(little2Decoded, little2);
+
+      let bigEncoded = bigParser.encode(big);
+      let littleEncoded = littleParser.encode(little);
+      let little2Encoded = little2Parser.encode(little2);
+
+      //console.log(bigEncoded);
+      //console.log(littleEncoded);
+      //console.log(little2Encoded);
+
+      assert.deepEqual(bigEncoded, data);
+      assert.deepEqual(littleEncoded, data);
+      assert.deepEqual(little2Encoded, data);
+    });
+  });
 });
