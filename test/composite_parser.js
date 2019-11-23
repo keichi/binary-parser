@@ -54,7 +54,10 @@ describe('Composite parser', function() {
       ]);
       assert.deepEqual(parser.parse(buffer), {
         length: 0x02,
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+        message: [
+          { key: 0xca, value: 1234 },
+          { key: 0xbe, value: 1235 },
+        ],
       });
     });
     it('should parse array of user defined types with lengthInBytes', function() {
@@ -79,7 +82,10 @@ describe('Composite parser', function() {
       ]);
       assert.deepEqual(parser.parse(buffer), {
         length: 0x06,
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+        message: [
+          { key: 0xca, value: 1234 },
+          { key: 0xbe, value: 1235 },
+        ],
       });
     });
     it('should parse array of user defined types with lengthInBytes literal', function() {
@@ -92,7 +98,10 @@ describe('Composite parser', function() {
 
       var buffer = Buffer.from([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
       assert.deepEqual(parser.parse(buffer), {
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+        message: [
+          { key: 0xca, value: 1234 },
+          { key: 0xbe, value: 1235 },
+        ],
       });
     });
     it('should parse array of user defined types with lengthInBytes function', function() {
@@ -119,7 +128,10 @@ describe('Composite parser', function() {
       ]);
       assert.deepEqual(parser.parse(buffer), {
         length: 0x06,
-        message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+        message: [
+          { key: 0xca, value: 1234 },
+          { key: 0xbe, value: 1235 },
+        ],
       });
     });
     it('should parse array of arrays', function() {

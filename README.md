@@ -381,6 +381,21 @@ var parser = new Parser()
   .int32("c");
 ```
 
+### setEncoderOptions(opts)
+Set specific options for encoding.
+Current supported `opts` object may contain:
+  - bitEndianess: true|false (default false) When true, tell the encoder to respect endianess BITs order, so that
+    encoding is exactly the reverse of the parsing process for bits fields.
+
+```javascript
+var parser = new Parser()
+  .endianess("little")
+  .setEncoderOpts({bitEndianess: true}) // Use BITs endianess for bits fields
+  .bit4("a")
+  .bit4("b")
+  .uint16("c");
+```
+
 ### namely(alias)
 Set an alias to this parser, so there will be an opportunity to refer to it by
 name in methods like `.array`, `.nest` and `.choice`, instead of requirement

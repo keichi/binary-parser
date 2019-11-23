@@ -398,13 +398,13 @@ describe('Primitive parser', function() {
         a: 'abc\u0000defghij\u0000',
       });
     });
-    it("should parse string and trim content", function() {
-      var buffer1 = Buffer.from("   abcd");
-      var buffer2 = Buffer.from("abcd   ");
-      var buffer3 = Buffer.from("  abcd ");
-      var parser = Parser.start().string("a", { length: 7, trim: true });
+    it('should parse string and trim content', function() {
+      var buffer1 = Buffer.from('   abcd');
+      var buffer2 = Buffer.from('abcd   ');
+      var buffer3 = Buffer.from('  abcd ');
+      var parser = Parser.start().string('a', { length: 7, trim: true });
       var result = {
-        a: "abcd"
+        a: 'abcd',
       };
 
       assert.deepEqual(parser.parse(buffer1), result);

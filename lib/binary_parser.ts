@@ -31,6 +31,10 @@ interface ParserOptions {
   offset?: number | string | ((item: any) => number);
 }
 
+interface EncoderOptions {
+  bitEndianess?: boolean;
+}
+
 type Types = PrimitiveTypes | ComplexTypes;
 
 type ComplexTypes =
@@ -175,12 +179,16 @@ export class Parser {
   constructorFn: Function | null = null;
   alias: string | null = null;
   smartBufferSize: number;
+  encoderOpts: EncoderOptions;
 
   constructor(opts?: any) {
     this.smartBufferSize =
       opts && typeof opts === 'object' && opts.smartBufferSize
         ? opts.smartBufferSize
         : 256;
+    this.encoderOpts = {
+      bitEndianess: false,
+    };
   }
 
   static start(opts?: any) {
@@ -200,7 +208,7 @@ export class Parser {
     const typeName = CAPITILIZED_TYPE_NAMES[type];
 
     ctx.pushCode(
-      `smartBuffer.write${typeName}(${ctx.generateVariable(this.varName)});`,
+      `smartBuffer.write${typeName}(${ctx.generateVariable(this.varName)});`
     );
   }
 
@@ -268,9 +276,7 @@ export class Parser {
     const [major] = process.version.replace('v', '').split('.');
     if (Number(major) < 12) {
       throw new Error(
-        `The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${
-          process.version
-        }, you must use v12 or greater`
+        `The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${process.version}, you must use v12 or greater`
       );
     }
   }
@@ -590,6 +596,11 @@ export class Parser {
     return this;
   }
 
+  encoderSetOptions(opts: EncoderOptions) {
+    Object.assign(this.encoderOpts, opts);
+    return this;
+  }
+
   create(constructorFn: Function) {
     if (!(constructorFn instanceof Function)) {
       throw new Error('Constructor must be a Function object.');
@@ -658,8 +669,7 @@ export class Parser {
   private addRawCodeEncode(ctx: Context) {
     ctx.pushCode('var vars = obj;');
     ctx.pushCode(
-      `var smartBuffer = SmartBuffer.fromOptions({size: ${
-        this.smartBufferSize}, encoding: "utf8"});`
+      `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`
     );
 
     this.generateEncode(ctx);
@@ -694,8 +704,7 @@ export class Parser {
 
     ctx.pushCode('var vars = obj;');
     ctx.pushCode(
-      `var smartBuffer = SmartBuffer.fromOptions({size: ${
-        this.smartBufferSize}, encoding: "utf8"});`
+      `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`
     );
 
     this.generateEncode(ctx);
@@ -808,6 +817,7 @@ export class Parser {
     parser.varName = varName;
     parser.options = options || parser.options;
     parser.endian = this.endian;
+    parser.encoderOpts = this.encoderOpts;
 
     if (this.head) {
       this.head.next = parser;
@@ -1083,14 +1093,25 @@ export class Parser {
         );
       }
 
-
+      const isBitLittleEndian =
+        this.endian === 'le' && this.encoderOpts.bitEndianess;
       const tmpVal = ctx.generateTmpVariable();
+      const boundVal = ctx.generateTmpVariable();
       ctx.pushCode(`var ${tmpVal} = 0;`);
+      ctx.pushCode(`var ${boundVal} = 0;`);
       let bitOffset = 0;
       ctx.bitFields.forEach(parser => {
         ctx.pushCode(
-          `${tmpVal} |= (${parser.varName} << ${
-            sum - (parser.options.length as number) - bitOffset});`
+          `${boundVal} = (${parser.varName} & ${(1 <<
+            (parser.options.length as number)) -
+            1});`
+        );
+        ctx.pushCode(
+          `${tmpVal} |= (${boundVal} << ${
+            isBitLittleEndian
+              ? bitOffset
+              : sum - (parser.options.length as number) - bitOffset
+          });`
         );
         ctx.pushCode(`${tmpVal} = ${tmpVal} >>> 0;`);
         bitOffset += parser.options.length as number;
@@ -1206,7 +1227,7 @@ export class Parser {
       }
     } else {
       ctx.pushCode(
-        `smartBuffer.writeString(${name}, "${this.options.encoding}");`,
+        `smartBuffer.writeString(${name}, "${this.options.encoding}");`
       );
     }
     if (this.options.zeroTerminated) {
@@ -1342,15 +1363,16 @@ export class Parser {
     // Compute the desired count of array items to encode (min of array size
     // and length option)
     if (length !== undefined) {
-      ctx.pushCode(`${maxItems} = ${maxItems} > ${length} ? ${length} : ${maxItems}`);
+      ctx.pushCode(
+        `${maxItems} = ${maxItems} > ${length} ? ${length} : ${maxItems}`
+      );
     }
 
     // Save current encoding smartBuffer and allocate a new one
     const savSmartBuffer = ctx.generateTmpVariable();
     ctx.pushCode(
       `var ${savSmartBuffer} = smartBuffer; ` +
-      `smartBuffer = SmartBuffer.fromOptions({size: ${
-        this.smartBufferSize}, encoding: "utf8"});`,
+        `smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`
     );
 
     ctx.pushCode(`if(${maxItems} > 0) {`);
@@ -1370,7 +1392,9 @@ export class Parser {
 
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        ctx.pushCode(`smartBuffer.write${CAPITILIZED_TYPE_NAMES[type as Types]}(${item});`);
+        ctx.pushCode(
+          `smartBuffer.write${CAPITILIZED_TYPE_NAMES[type as Types]}(${item});`
+        );
       } else {
         ctx.pushCode(
           `smartBuffer.writeBuffer(${FUNCTION_ENCODE_PREFIX + type}(${item}));`
@@ -1389,13 +1413,11 @@ export class Parser {
 
     if (typeof this.options.encodeUntil === 'function') {
       ctx.pushCode(
-        ` while (${itemCounter} < ${maxItems} && !(${
-          this.options.encodeUntil}).call(this, ${item}, vars));`
+        ` while (${itemCounter} < ${maxItems} && !(${this.options.encodeUntil}).call(this, ${item}, vars));`
       );
     } else if (typeof this.options.readUntil === 'function') {
       ctx.pushCode(
-        ` while (${itemCounter} < ${maxItems} && !(${
-        this.options.readUntil}).call(this, ${item}, ${savSmartBuffer}.toBuffer()));`
+        ` while (${itemCounter} < ${maxItems} && !(${this.options.readUntil}).call(this, ${item}, ${savSmartBuffer}.toBuffer()));`
       );
     }
     ctx.pushCode('}'); // End of 'if(...) {'
@@ -1446,14 +1468,15 @@ export class Parser {
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
         ctx.pushCode(
-          `smartBuffer.write${CAPITILIZED_TYPE_NAMES[type as Types]}(${
-            ctx.generateVariable(this.varName)});`
+          `smartBuffer.write${
+            CAPITILIZED_TYPE_NAMES[type as Types]
+          }(${ctx.generateVariable(this.varName)});`
         );
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(
-          `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX + type}(${
-            ctx.generateVariable(this.varName)});`
+          `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX +
+            type}(${ctx.generateVariable(this.varName)});`
         );
         ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
         if (type !== this.alias) ctx.addReference(type);
@@ -1542,7 +1565,8 @@ export class Parser {
     } else if (aliasRegistry[this.options.type]) {
       var tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX + this.options.type}(${nestVar});`,
+        `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX +
+          this.options.type}(${nestVar});`
       );
       ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
       if (this.options.type !== this.alias) {
@@ -1557,15 +1581,13 @@ export class Parser {
     formatter: Function
   ) {
     if (typeof formatter === 'function') {
-      ctx.pushCode(`${varName} = (${formatter}).call(this, ${varName}, buffer, offset);`);
+      ctx.pushCode(
+        `${varName} = (${formatter}).call(this, ${varName}, buffer, offset);`
+      );
     }
   }
 
-  private generateEncoder(
-    ctx: Context,
-    varName: string,
-    encoder?: Function
-  ) {
+  private generateEncoder(ctx: Context, varName: string, encoder?: Function) {
     if (typeof encoder === 'function') {
       ctx.pushCode(`${varName} = (${encoder}).call(this, ${varName}, vars);`);
     }
