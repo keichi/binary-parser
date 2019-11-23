@@ -17,31 +17,29 @@ data. Binary-parser dynamically generates and compiles the parser and encoder co
 on-the-fly, which runs as fast as a hand-written parser/encoder (which takes much more
 time and effort to write). Supported data types are:
 
-- Integers (supports 8, 16, 32 bit signed- and unsigned integers)
-- Floating point numbers (supports 32 and 64 bit floating point values)
-- Bit fields (supports bit fields with length from 1 to 32 bits)
-- Strings (supports various encodings, fixed-length and variable-length, zero
-  terminated string)
-- Arrays (supports user-defined element type, fixed-length and variable-length)
-- Choices
-- User defined types
+- [Integers](#uint8-16-32-64le-bename-options) (8, 16, 32 and 64 bit signed
+  and unsigned integers)
+- [Floating point numbers](#float-doublele-bename-options) (32 and 64 bit
+  floating point values)
+- [Bit fields](#bit1-32name-options) (bit fields with length from 1 to 32
+  bits)
+- [Strings](#stringname-options) (fixed-length, variable-length and zero
+  terminated strings with various encodings)
+- [Arrays](#arrayname-options) (fixed-length and variable-length arrays of
+  builtin or user-defined element types)
+- [Choices](#choicename-options) (supports integer keys)
+- [Pointers](#pointername-options)
+- User defined types (arbitrary combination of builtin types)
 
-This library's features are inspired by [BinData](https://github.com/dmendel/bindata)
-, its syntax by [binary](https://github.com/substack/node-binary).
-
-## Installation
-Binary-parser can be installed with [npm](https://npmjs.org/):
-
-```shell
-$ npm install binary-parser
-```
+Binary-parser was inspired by [BinData](https://github.com/dmendel/bindata)
+and [binary](https://github.com/substack/node-binary).
 
 ## Quick Start
-1. Create an empty Parser object with `new Parser()`.
-2. Chain builder methods to build the desired parser and/or encoder. (See
-   [API](https://github.com/Keichi/binary-parser#api) for detailed document of
-   each methods)
-3. Call `Parser.prototype.parse` with an `Buffer` object passed as argument.
+1. Create an empty Parser object with `new Parser()` or `Parser.start()`.
+2. Chain methods to build your desired parser and/or encoder. (See
+   [API](https://github.com/keichi/binary-parser#api) for detailed document of
+   each method)
+3. Call `Parser.prototype.parse` with an `Buffer` object passed as an argument.
 4. Parsed result will be returned as an object.
 5. Or call `Parser.prototype.encode` with an object passed as argument.
 6. Encoded result will be returned as a `Buffer` object.
@@ -106,8 +104,8 @@ parser.
 
 ### parse(buffer)
 Parse a `Buffer` object `buffer` with this parser and return the resulting
-object. When `parse(buffer)` is called for the first time, parser code is
-compiled on-the-fly and internally cached.
+object. When `parse(buffer)` is called for the first time, the associated
+parser code is compiled on-the-fly and internally cached.
 
 ### encode(obj)
 Encode an `Object` object `obj` with this parser and return the resulting
@@ -118,12 +116,17 @@ compiled on-the-fly and internally cached.
 Set the constructor function that should be called to create the object
 returned from the `parse` method.
 
-### [u]int{8, 16, 32}{le, be}(name[, options])
+### [u]int{8, 16, 32, 64}{le, be}(name[, options])
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
-Number of bits can be chosen from 8, 16 and 32. Byte-ordering can be either
+Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
 `l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number.
+signed number, with `u` prefixed as an unsigned number. The runtime type
+returned by the 8, 16, 32 bit methods is `number` while the type
+returned by the 64 bit is `bigint`.
+
+**Note:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
+greater. Lower version will throw a runtime error.
 
 ```javascript
 var parser = new Parser()
@@ -133,6 +136,8 @@ var parser = new Parser()
   .uint8("b")
   // Signed 16-bit integer (big endian)
   .int16be("c");
+  // signed 64-bit integer (big endian)
+  .int64be("d")
 ```
 
 ### bit\[1-32\](name[, options])
@@ -141,9 +146,8 @@ methods from `bit1` to `bit32` each corresponding to 1-bit-length to
 32-bits-length bit field.
 
 ### {float, double}{le, be}(name[, options])
-Parse bytes as an floating-point value and store it in a variable named
-`name`. `name` should consist only of alphanumeric characters and start with
-an alphabet.
+Parse bytes as a floating-point value and stores it to a variable named
+`name`.
 
 ```javascript
 var parser = new Parser()
@@ -159,7 +163,7 @@ characters and start with an alphabet. `options` is an object which can have
 the following keys:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
-  `"utf8"`, `"ascii"`, `"hex"` and else are valid. See
+  Supported encodings include `"utf8"`, `"ascii"` and `"hex"`. See
   [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
   for more info.
 - `length ` - (Optional) (Bytes)Length of the string. Can be a number, string or a
@@ -190,8 +194,8 @@ the following keys:
 - `clone` - (Optional, defaults to `false`) By default,
   `buffer(name [,options])` returns a new buffer which references the same
   memory as the parser input, but offset and cropped by a certain range. If
-  this option is true, input buffer will be cloned and a new buffer referncing
-  another memory is returned.
+  this option is true, input buffer will be cloned and a new buffer
+  referencing a new memory region is returned.
 - `length ` - (either `length` or `readUntil` is required) Length of the
   buffer. Can be a number, string or a function. Use number for statically
   sized buffers, string to reference another variable and function to do some
@@ -199,6 +203,8 @@ the following keys:
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
   this parser will read till it reaches end of the `Buffer` object. (Note: has no
   effect on encoding.)
+  If it is a function, this parser will read the buffer is read until the
+  function returns true.
 
 ### array(name, options)
 Parse bytes as an array. `options` is an object which can have the following
@@ -242,7 +248,7 @@ var parser = new Parser()
     type: "int32",
     length: function() {
       return this.dataLength - 1;
-    } // other fields are available through this
+    } // other fields are available through `this`
   })
 
   // Statically sized array
@@ -263,7 +269,7 @@ var parser = new Parser()
     type: "int32",
     lengthInBytes: function() {
       return this.dataLengthInBytes - 4;
-    } // other fields are available through this
+    } // other fields are available through `this`
   })
 
   // Dynamically sized array (with stop-check on parsed item)
@@ -291,7 +297,7 @@ an object which can have the following keys:
   `choices` Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the
   parser which is executed when `tag` equals the key value.
-- `defaultChoice` - (Optional) In case of the tag value doesn't match any of
+- `defaultChoice` - (Optional) In case if the tag value doesn't match any of
   `choices`, this parser is used.
 
 ```javascript
@@ -302,15 +308,15 @@ var parser3 = ...;
 var parser = new Parser().uint8("tagValue").choice("data", {
   tag: "tagValue",
   choices: {
-    1: parser1, // When tagValue == 1, execute parser1
-    4: parser2, // When tagValue == 4, execute parser2
-    5: parser3 // When tagValue == 5, execute parser3
+    1: parser1, // if tagValue == 1, execute parser1
+    4: parser2, // if tagValue == 4, execute parser2
+    5: parser3 // if tagValue == 5, execute parser3
   }
 });
 ```
 
 Combining `choice` with `array` is an idiom to parse
-[TLV](http://en.wikipedia.org/wiki/Type-length-value)-based formats.
+[TLV](http://en.wikipedia.org/wiki/Type-length-value)-based binary formats.
 
 ### nest([name,] options)
 Execute an inner parser and store its result to key `name`. If `name` is null
@@ -319,9 +325,46 @@ current object. `options` is an object which can have the following keys:
 
 - `type` - (Required) A `Parser` object.
 
-### skip(length)
-Skip parsing for `length` bytes. (Note: when encoding, the skipped bytes will be filled
-with zeros)
+### pointer(name [,options])
+Jump to `offset`, execute parser for `type` and rewind to previous offset.
+Useful for parsing binary formats such as ELF where the offset of a field is
+pointed by another field.
+
+- `type` - (Required) Can be a string `[u]int{8, 16, 32, 64}{le, be}`
+   or an user defined Parser object.
+- `offset` - (Required) Indicates absolute offset from the beginning of the
+  input buffer. Can be a number, string or a function.
+
+### saveOffset(name [,options])
+Save the current buffer offset as key `name`. This function is only useful
+when called after another function which would advance the internal buffer
+offset.
+
+```javascript
+var parser = new Parser()
+  // this call advances the buffer offset by
+  // a variable (i.e. unknown to us) number of bytes
+  .string('name', {
+    zeroTerminated: true
+  })
+  // this variable points to an absolute position
+  // in the buffer
+  .uint32('seekOffset')
+  // now, save the "current" offset in the stream
+  // as the variable "currentOffset"
+  .saveOffset('currentOffset')
+  // finally, use the saved offset to figure out
+  // how many bytes we need to skip
+  .seek(function() {
+    return this.seekOffset - this.currentOffset;
+  })
+  ... // the parser would continue here
+```
+
+### seek(relOffset)
+Move the buffer offset for `relOffset` bytes from the current position. Use a
+negative `relOffset` value to rewind the offset. Previously named `skip(length)`.
+(Note: when encoding, the skipped bytes will be filled with zeros)
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either
@@ -414,9 +457,10 @@ will contain two similar parts of the code included, while with the named
 approach, it will include a function with a name, and will just call this
 function for every case of usage.
 
-NB: This style could lead to circular references and infinite recursion, to
-avoid this, ensure that every possible path has its end. Also, this recursion
-is not tail-optimized, so could lead to memory leaks when it goes too deep.
+**Note**: This style could lead to circular references and infinite recursion,
+to avoid this, ensure that every possible path has its end. Also, this
+recursion is not tail-optimized, so could lead to memory leaks when it goes
+too deep.
 
 An example of referencing other patches:
 
@@ -453,10 +497,10 @@ executed for the first time.
 
 ### getCode() and getCodeEncode()
 Dynamically generates the code for this parser/encoder and returns it as a string.
-Usually used for debugging.
+Useful for debugging the generated code.
 
 ### Common options
-These are common options that can be specified in all parsers.
+These options can be used in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired
   form. *formatter*(value, obj, buffer, offset) &rarr; *new value* \
@@ -513,11 +557,10 @@ These are common options that can be specified in all parsers.
     ```
 
 ## Examples
-See `example` for more complex examples.
+See `example/` for real-world examples.
 
 ## Support
 Please report issues to the
-[issue tracker](https://github.com/Keichi/binary-parser/issues) if you have
+[issue tracker](https://github.com/keichi/binary-parser/issues) if you have
 any difficulties using this module, found a bug, or request a new feature.
-
-Pull requests with fixes and improvements are welcomed!
+Pull requests are welcomed.

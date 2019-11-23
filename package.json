@@ -1,19 +1,27 @@
 {
   "name": "binary-parser-encoder",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "description": "Blazing-fast binary parser builder",
-  "main": "lib/binary_parser.js",
+  "main": "dist/binary_parser.js",
   "devDependencies": {
-    "mocha": "^6.1.4",
-    "nyc": "^14.1.0",
-    "prettier": "^1.17.1"
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
+    "prettier": "^1.19.1",
+    "@types/node": "^12.12.12",
+    "typescript": "^3.7.2"
   },
   "scripts": {
-    "fmt": "npx prettier --write '{lib,test,example}/**/*.js'",
-    "check-fmt": "npx prettier --list-different '{lib,test,example}/**/*.js'",
-    "test": "npx mocha --reporter spec",
-    "cover": "npx nyc --reporter html mocha"
+    "build": "tsc",
+    "fmt": "prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
+    "check-fmt": "prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
+    "test": "mocha",
+    "test-browser": "parcel test/browser.html --open",
+    "cover": "nyc --reporter html mocha",
+    "prepare": "npm run build"
   },
+  "files": [
+    "dist/*.js"
+  ],
   "keywords": [
     "binary",
     "parser",
@@ -43,9 +51,9 @@
   },
   "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "dependencies": {
-    "smart-buffer": "^4.0.2"
+    "smart-buffer": "^4.1.0"
   },
   "engines": {
-    "node": ">=5.10.0"
+    "node": ">=6.4.0"
   }
 }
