@@ -1,8 +1,9 @@
 {
   "name": "binary-parser-encoder",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
+  "types": "dist/binary_parser.d.ts",
   "devDependencies": {
     "mocha": "^6.2.2",
     "nyc": "^14.1.1",
@@ -20,7 +21,8 @@
     "prepare": "npm run build"
   },
   "files": [
-    "dist/*.js"
+    "dist/*.js",
+    "dist/binary_parser.d.ts"
   ],
   "keywords": [
     "binary",
