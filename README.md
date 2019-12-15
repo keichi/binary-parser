@@ -166,25 +166,26 @@ the following keys:
   Supported encodings include `"utf8"`, `"ascii"` and `"hex"`. See
   [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
   for more info.
-- `length ` - (Optional) (Bytes)Length of the string. Can be a number, string or a
+- `length` - (Optional) (Bytes)Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
-  Note: when encoding the string is padded with spaces (0x20) at end to fit the length requirement.
+  Note: When encoding the string is padded with a `padd` charecter to fit the length requirement.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
-  reads until it reaches zero.
+  reads until it reaches zero (or the specified `length`). When encoding, a *null* character is inserted at end of
+  the string (if the optional `length` allows it).
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads
   until it reaches the end of the buffer. Will consume zero-bytes. (Note: has
   no effect on encoding function)
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
-  null characters from end of the string. (Note: has no effect on encoding, but
-  when used, then the parse() and encode() functions are not the exact opposite)
+  null characters from end of the string. (Note: When encoding, this will also set the **default** `padd` character
+  to null instead of space)
 - `trim` - (Optional, default to `false`) If true, then trim() (remove leading and trailing spaces)
   the parsed string.
 - `padding` - (Optional, Only used for encoding, default to `right`) If `left` then the string
   will be right aligned (padding left with `padd` char or space) depending of the `length` option
 - `padd` - (Optional, Only used for encoding with `length` specified) A string  from which first character (1 Byte)
   is used as a padding char if necessary (provided string length is less than `length` option). Note: Only 'ascii'
-  or utf8 < 0x80  are alowed (fallback to 'space' padding else).
+  or utf8 < 0x80  are alowed. Note: The default padd character is *space* (or *null* when `stripNull` is used).
 
 ### buffer(name[, options])
 Parse bytes as a buffer. `name` should consist only of alpha numeric

@@ -364,14 +364,14 @@ describe('Primitive parser', function() {
       assert.deepEqual(parser.parse(buffer), { msg: 'hello, world' });
     });
     it('should parser zero terminated fixed-length string', function() {
-      var buffer = Buffer.from('abc\u0000defghij\u0000');
+      var buffer = Buffer.from('abcd\u0000defghij\u0000');
       var parser = Parser.start()
         .string('a', { length: 5, zeroTerminated: true })
         .string('b', { length: 5, zeroTerminated: true })
         .string('c', { length: 5, zeroTerminated: true });
 
       assert.deepEqual(parser.parse(buffer), {
-        a: 'abc',
+        a: 'abcd',
         b: 'defgh',
         c: 'ij',
       });

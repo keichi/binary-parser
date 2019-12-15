@@ -1156,8 +1156,11 @@ export class Parser {
       ctx.pushCode(
         `while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`
       );
+      //ctx.pushCode(
+      //  `${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`
+      //);
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`
+        `${name} = buffer.toString('${encoding}', ${start}, buffer.readUInt8(offset -1) == 0 ? offset - 1 : offset);`
       );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
@@ -1202,36 +1205,41 @@ export class Parser {
       // Compute padding length
       const padLen = ctx.generateTmpVariable();
       ctx.pushCode(`${padLen} = ${optLength} - ${tmpBuf}.length;`);
-      const padCharVar = ctx.generateTmpVariable();
-      let padChar = ' ';
-      if (this.options.padd && typeof this.options.padd === 'string') {
-        const code = this.options.padd.charCodeAt(0);
-        if (code < 0x80) {
-          padChar = String.fromCharCode(code);
+      if (this.options.zeroTerminated) {
+        ctx.pushCode(`smartBuffer.writeBuffer(${tmpBuf});`);
+        ctx.pushCode(`if (${padLen} > 0) { smartBuffer.writeUInt8(0x00); }`);
+      } else {
+        const padCharVar = ctx.generateTmpVariable();
+        let padChar = this.options.stripNull ? '\u0000' : ' ';
+        if (this.options.padd && typeof this.options.padd === 'string') {
+          const code = this.options.padd.charCodeAt(0);
+          if (code < 0x80) {
+            padChar = String.fromCharCode(code);
+          }
         }
-      }
-      ctx.pushCode(`${padCharVar} = "${padChar}";`);
-      if (this.options.padding === 'left') {
-        // Add heading padding spaces
-        ctx.pushCode(
-          `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`
-        );
-      }
-      // Copy the temporary string buffer to current smartBuffer
-      ctx.pushCode(`smartBuffer.writeBuffer(${tmpBuf});`);
-      if (this.options.padding !== 'left') {
-        // Add trailing padding spaces
-        ctx.pushCode(
-          `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`
-        );
+        ctx.pushCode(`${padCharVar} = "${padChar}";`);
+        if (this.options.padding === 'left') {
+          // Add heading padding spaces
+          ctx.pushCode(
+            `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`
+          );
+        }
+        // Copy the temporary string buffer to current smartBuffer
+        ctx.pushCode(`smartBuffer.writeBuffer(${tmpBuf});`);
+        if (this.options.padding !== 'left') {
+          // Add trailing padding spaces
+          ctx.pushCode(
+            `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`
+          );
+        }
       }
     } else {
       ctx.pushCode(
         `smartBuffer.writeString(${name}, "${this.options.encoding}");`
       );
-    }
-    if (this.options.zeroTerminated) {
-      ctx.pushCode('smartBuffer.writeUInt8(0x00);');
+      if (this.options.zeroTerminated) {
+        ctx.pushCode('smartBuffer.writeUInt8(0x00);');
+      }
     }
   }
 

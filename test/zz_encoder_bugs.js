@@ -349,4 +349,53 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(little2Encoded, data);
     });
   });
+
+  describe('Issue #20 Encoding fixed length null terminated or strip null strings', function() {
+    it('should encode zero terminated fixed-length string', function() {
+      // In that case parsing and encoding are not  the exact oposite
+      let buffer = Buffer.from(
+        '\u0000A\u0000AB\u0000ABC\u0000ABCD\u0000ABCDE\u0000'
+      );
+      let parser = Parser.start()
+        .string('a', { length: 4, zeroTerminated: true })
+        .string('b', { length: 4, zeroTerminated: true })
+        .string('c', { length: 4, zeroTerminated: true })
+        .string('d', { length: 4, zeroTerminated: true })
+        .string('e', { length: 4, zeroTerminated: true })
+        .string('f', { length: 4, zeroTerminated: true })
+        .string('g', { length: 4, zeroTerminated: true })
+        .string('h', { length: 4, zeroTerminated: true });
+
+      let decoded = parser.parse(buffer);
+      assert.deepEqual(decoded, {
+        a: '',
+        b: 'A',
+        c: 'AB',
+        d: 'ABC',
+        e: 'ABCD',
+        f: '',
+        g: 'ABCD',
+        h: 'E',
+      });
+
+      let encoded = parser.encode(decoded);
+      assert.deepEqual(encoded, buffer);
+    });
+
+    it('should encode fixed-length string with stripNull', function() {
+      let parser = Parser.start()
+        .string('a', { length: 8, zeroTerminated: false, stripNull: true })
+        .string('b', { length: 8, zeroTerminated: false, stripNull: true })
+        .string('z', { length: 2, zeroTerminated: false, stripNull: true });
+      let buffer = Buffer.from('ABCD\u0000\u0000\u0000\u000012345678ZZ');
+      let decoded = parser.parse(buffer);
+      assert.deepEqual(decoded, {
+        a: 'ABCD',
+        b: '12345678',
+        z: 'ZZ',
+      });
+      let encoded = parser.encode(decoded);
+      assert.deepEqual(encoded, buffer);
+    });
+  });
 });

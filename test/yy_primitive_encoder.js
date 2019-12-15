@@ -412,7 +412,6 @@ describe('Primitive encoder', function() {
       assert.deepEqual(encoded, buffer);
     });
     it('should encode zero terminated fixed-length string', function() {
-      // In that case parsing and encoding are not  the exact oposite
       var buffer = Buffer.from('abc\u0000defghij\u0000');
       var parser = Parser.start()
         .string('a', { length: 5, zeroTerminated: true })
@@ -425,16 +424,15 @@ describe('Primitive encoder', function() {
         b: 'defgh',
         c: 'ij',
       });
+      let encoded = parser.encode(decoded);
+      assert.deepEqual(encoded, buffer);
 
-      var encoded = parser.encode({
-        a: 'abc',
-        b: 'defghzzzzzzz',
-        c: 'ij',
+      encoded = parser.encode({
+        a: 'a234',
+        b: 'b2345',
+        c: 'c2345678',
       });
-      assert.deepEqual(
-        encoded,
-        Buffer.from('abc  \u0000defgh\u0000ij   \u0000')
-      );
+      assert.deepEqual(encoded, Buffer.from('a234\u0000b2345c2345'));
     });
     it('should strip trailing null characters', function() {
       var buffer = Buffer.from('746573740000', 'hex');
@@ -454,10 +452,8 @@ describe('Primitive encoder', function() {
 
       var decoded2 = parser2.parse(buffer);
       assert.equal(decoded2.str, 'test');
-      // In this case (stripNull = true) parsing and encoding are not  the exact oposite
       var encoded2 = parser2.encode(decoded2);
-      assert.notDeepEqual(encoded2, buffer);
-      assert.deepEqual(encoded2, Buffer.from('test  '));
+      assert.deepEqual(encoded2, buffer);
     });
     it('should encode string with zero-bytes internally', function() {
       var buffer = Buffer.from('abc\u0000defghij\u0000');
