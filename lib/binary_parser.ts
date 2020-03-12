@@ -15,18 +15,18 @@ interface ParserOptions {
   formatter?: (item: any) => string | number;
   encoder?: (item: any) => any;
   encoding?: string;
-  readUntil?: 'eof';
-  encodeUntil?: 'eof';
+  readUntil?: 'eof' | ((item: any, buffer: any) => number);
+  encodeUntil?: 'eof' | ((item: any, buffer: any) => number);
   greedy?: boolean;
   choices?: { [key: number]: string | Parser };
   defaultChoice?: string | Parser;
   zeroTerminated?: boolean;
-  clone?: null;
-  stripNull?: null;
+  clone?: boolean;
+  stripNull?: boolean;
   trim?: boolean;
   padding?: string;
   padd?: string;
-  key?: null;
+  key?: string;
   tag?: string;
   offset?: number | string | ((item: any) => number);
 }
@@ -434,7 +434,7 @@ export class Parser {
     return this.seek(length, options);
   }
 
-  seek(relOffset: number, options?: ParserOptions) {
+  seek(relOffset: number|((item: any) => number), options?: ParserOptions) {
     if (options && options.assert) {
       throw new Error('assert option on seek is not allowed.');
     }
