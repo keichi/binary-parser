@@ -2,7 +2,12 @@ var assert = require('assert');
 var util = require('util');
 var Parser = require('../dist/binary_parser').Parser;
 
-describe('Composite parser', function() {
+const suite = (Buffer) => describe(`Composite parser (${Buffer.name})`, function() {
+  function hexToBuf(hex) {
+    return Buffer.from(
+      hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+    );
+  }
   describe('Array parser', function() {
     it('should parse array of primitive types', function() {
       var parser = Parser.start()
@@ -137,17 +142,19 @@ describe('Composite parser', function() {
           type: rowParser,
         });
 
-      var buffer = Buffer.alloc(1 + 10 * (1 + 5 * 4));
+      var size = 1 + 10 * (1 + 5 * 4);
+      var buffer = Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
+      var dataView = new DataView(buffer.buffer);
       var i, j;
 
       var iterator = 0;
-      buffer.writeUInt8(10, iterator);
+      buffer[iterator] = 10;
       iterator += 1;
       for (i = 0; i < 10; i++) {
-        buffer.writeUInt8(5, iterator);
+        buffer[iterator] = 5;
         iterator += 1;
         for (j = 0; j < 5; j++) {
-          buffer.writeInt32LE(i * j, iterator);
+          dataView.setInt32(iterator, i*j, true);
           iterator += 4;
         }
       }
@@ -217,7 +224,7 @@ describe('Composite parser', function() {
     it('should parse until function returns true when readUntil is function (using read-ahead)', function() {
       var parser = Parser.start().array('data', {
         readUntil: function(item, buf) {
-          return buf.length > 0 && buf.readUInt8(0) === 0;
+          return buf.length > 0 && buf[0] === 0;
         },
         type: 'uint8',
       });
@@ -847,9 +854,9 @@ describe('Composite parser', function() {
           type: infoParser,
         });
 
-      var buffer = Buffer.concat([
-        Buffer.from('John\0Doe\0'),
-        Buffer.from([0x20]),
+      var buffer = Buffer.from([
+        ...Buffer.from(new TextEncoder().encode('John\0Doe\0')),
+        ...Buffer.from([0x20]),
       ]);
       assert.deepEqual(personParser.parse(buffer), {
         name: {
@@ -877,7 +884,7 @@ describe('Composite parser', function() {
         },
       });
 
-      var buffer = Buffer.from('John\0Doe\0');
+      var buffer = Buffer.from(new TextEncoder().encode('John\0Doe\0'));
       assert.deepEqual(personParser.parse(buffer), {
         name: 'John Doe',
       });
@@ -890,7 +897,7 @@ describe('Composite parser', function() {
           type: new Parser().string('s2', { zeroTerminated: true }),
         });
 
-      var buf = Buffer.from('foo\0bar\0');
+      var buf = Buffer.from(new TextEncoder().encode('foo\0bar\0'));
 
       assert.deepEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
     });
@@ -900,7 +907,7 @@ describe('Composite parser', function() {
         type: new Parser().string('s2', { zeroTerminated: true }),
       });
 
-      var buf = Buffer.from('foo\0bar\0');
+      var buf = Buffer.from(new TextEncoder().encode('foo\0bar\0'));
 
       assert.deepEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
     });
@@ -920,7 +927,7 @@ describe('Composite parser', function() {
           zeroTerminated: true,
         });
 
-      var buffer = Buffer.from('John Doe\0');
+      var buffer = Buffer.from(new TextEncoder().encode('John Doe\0'));
       var person = parser.parse(buffer);
       assert.ok(person instanceof Person);
       assert.equal(person.name, 'John Doe');
@@ -951,7 +958,7 @@ describe('Composite parser', function() {
           type: Parser.start().string('s', { zeroTerminated: true }),
           offset: 4,
         });
-      var buf = Buffer.from('\1\2\3\4hello\0\6', 'ascii');
+      var buf = Buffer.from(new TextEncoder().encode('\1\2\3\4hello\0\6'));
 
       assert.deepEqual(parser.parse(buf), {
         x: 0x04030201,
@@ -971,7 +978,7 @@ describe('Composite parser', function() {
           },
         }),
       });
-    var buf = Buffer.from('\0\6\0\0\1\2\3\4\5\6');
+    var buf = Buffer.from(new TextEncoder().encode('\0\6\0\0\1\2\3\4\5\6'));
 
     assert.deepEqual(parser.parse(buf), {
       len: 6,
@@ -1042,12 +1049,12 @@ describe('Composite parser', function() {
         zeroTerminated: true,
         assert: 'hello, world',
       });
-      var buffer = Buffer.from('68656c6c6f2c20776f726c6400', 'hex');
+      var buffer = hexToBuf('68656c6c6f2c20776f726c6400');
       assert.doesNotThrow(function() {
         parser.parse(buffer);
       });
 
-      buffer = Buffer.from('68656c6c6f2c206a7300', 'hex');
+      buffer = hexToBuf('68656c6c6f2c206a7300');
       assert.throws(function() {
         parser.parse(buffer);
       });
@@ -1061,11 +1068,11 @@ describe('Composite parser', function() {
           },
         });
 
-      buffer = Buffer.from('d2042e16001b', 'hex');
+      buffer = hexToBuf('d2042e16001b');
       assert.doesNotThrow(function() {
         parser.parse(buffer);
       });
-      buffer = Buffer.from('2e16001bd204', 'hex');
+      buffer = hexToBuf('2e16001bd204');
       assert.throws(function() {
         parser.parse(buffer);
       });
@@ -1088,3 +1095,6 @@ describe('Composite parser', function() {
     });
   });
 });
+
+suite(Buffer);
+suite(Uint8Array);

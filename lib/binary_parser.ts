@@ -123,35 +123,46 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   doublebe: 8,
 };
 
-const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
-  uint8: 'UInt8',
-  uint16le: 'UInt16LE',
-  uint16be: 'UInt16BE',
-  uint32le: 'UInt32LE',
-  uint32be: 'UInt32BE',
+const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
+  uint8: 'Uint8',
+  uint16le: 'Uint16',
+  uint16be: 'Uint16',
+  uint32le: 'Uint32',
+  uint32be: 'Uint32',
   int8: 'Int8',
-  int16le: 'Int16LE',
-  int16be: 'Int16BE',
-  int32le: 'Int32LE',
-  int32be: 'Int32BE',
-  int64be: 'BigInt64BE',
-  int64le: 'BigInt64LE',
-  uint64be: 'BigUInt64BE',
-  uint64le: 'BigUInt64LE',
-  floatle: 'FloatLE',
-  floatbe: 'FloatBE',
-  doublele: 'DoubleLE',
-  doublebe: 'DoubleBE',
-  bit: 'Bit',
-  string: 'String',
-  buffer: 'Buffer',
-  array: 'Array',
-  choice: 'Choice',
-  nest: 'Nest',
-  seek: 'Seek',
-  pointer: 'Pointer',
-  saveOffset: 'SaveOffset',
-  '': '',
+  int16le: 'Int16',
+  int16be: 'Int16',
+  int32le: 'Int32',
+  int32be: 'Int32',
+  int64be: 'BigInt64',
+  int64le: 'BigInt64',
+  uint64be: 'BigUint64',
+  uint64le: 'BigUint64',
+  floatle: 'Float32',
+  floatbe: 'Float32',
+  doublele: 'Float64',
+  doublebe: 'Float64'
+};
+
+const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
+  uint8: false,
+  uint16le: true,
+  uint16be: false,
+  uint32le: true,
+  uint32be: false,
+  int8: false,
+  int16le: true,
+  int16be: false,
+  int32le: true,
+  int32be: false,
+  int64be: false,
+  int64le: true,
+  uint64be: false,
+  uint64le: true,
+  floatle: true,
+  floatbe: false,
+  doublele: true,
+  doublebe: false
 };
 
 export class Parser {
@@ -172,10 +183,10 @@ export class Parser {
   }
 
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
-    const typeName = CAPITILIZED_TYPE_NAMES[type];
-
+    const typeName = PRIMITIVE_NAMES[type];
+    const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
-      `${ctx.generateVariable(this.varName)} = buffer.read${typeName}(offset);`
+      `${ctx.generateVariable(this.varName)} = dataView.get${typeName}(offset, ${littleEndian});`
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
@@ -241,14 +252,8 @@ export class Parser {
   }
 
   private bigIntVersionCheck() {
-    const [major] = process.version.replace('v', '').split('.');
-    if (Number(major) < 12) {
-      throw new Error(
-        `The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${
-          process.version
-        }, you must use v12 or greater`
-      );
-    }
+    if (!DataView.prototype.getBigInt64)
+      throw new Error('BigInt64 is unsupported in this runtime');
   }
   int64(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
@@ -579,9 +584,7 @@ export class Parser {
   getCode() {
     const ctx = new Context();
 
-    ctx.pushCode('if (!Buffer.isBuffer(buffer)) {');
-    ctx.generateError('"argument buffer is not a Buffer object"');
-    ctx.pushCode('}');
+    ctx.pushCode('var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);');
 
     if (!this.alias) {
       this.addRawCode(ctx);
@@ -644,9 +647,7 @@ export class Parser {
   }
 
   compile() {
-    const src =
-      'return (function(buffer, constructorFn) { ' + this.getCode() + ' })';
-    this.compiled = new Function('Buffer', src)(Buffer);
+    this.compiled = new Function('buffer', 'constructorFn', this.getCode());
   }
 
   sizeOf(): number {
@@ -701,7 +702,7 @@ export class Parser {
   }
 
   // Follow the parser chain till the root and start parsing from there
-  parse(buffer: Buffer) {
+  parse(buffer: Buffer | Uint8Array) {
     if (!this.compiled) {
       this.compile();
     }
@@ -843,20 +844,20 @@ export class Parser {
       const val = ctx.generateTmpVariable();
 
       if (sum <= 8) {
-        ctx.pushCode(`var ${val} = buffer.readUInt8(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint8(offset);`);
         sum = 8;
       } else if (sum <= 16) {
-        ctx.pushCode(`var ${val} = buffer.readUInt16BE(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint16(offset);`);
         sum = 16;
       } else if (sum <= 24) {
         const val1 = ctx.generateTmpVariable();
         const val2 = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${val1} = buffer.readUInt16BE(offset);`);
-        ctx.pushCode(`var ${val2} = buffer.readUInt8(offset + 2);`);
+        ctx.pushCode(`var ${val1} = dataView.getUint16(offset);`);
+        ctx.pushCode(`var ${val2} = dataView.getUint8(offset + 2);`);
         ctx.pushCode(`var ${val} = (${val1} << 8) | ${val2};`);
         sum = 24;
       } else if (sum <= 32) {
-        ctx.pushCode(`var ${val} = buffer.readUInt32BE(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint32(offset);`);
         sum = 32;
       } else {
         throw new Error(
@@ -890,33 +891,44 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding;
+    const isHex = encoding.toLowerCase() === 'hex';
+    const toHex = 'b => b.toString(16).padStart(2, "0")';
 
     if (this.options.length && this.options.zeroTerminated) {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`
+        `while(dataView.getUint8(offset++) !== 0 && offset - ${start}  < ${len});`
       );
+      const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`
+        isHex ?
+        `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`:
+        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`
       );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', offset, offset + ${len});`
+        isHex ?
+        `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');` :
+        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode('while(buffer.readUInt8(offset++) !== 0);');
+      ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset - 1);`
+        isHex ?
+        `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');` :
+        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.length > offset++);');
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset);`
+        isHex ?
+        `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');` :
+        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
       );
     }
     if (this.options.stripNull) {
@@ -935,24 +947,24 @@ export class Parser {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(`var ${cur} = 0;`);
       ctx.pushCode(`while (offset < buffer.length) {`);
-      ctx.pushCode(`${cur} = buffer.readUInt8(offset);`);
+      ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
       ctx.pushCode(
-        `if (${pred}.call(this, ${cur}, buffer.slice(offset))) break;`
+        `if (${pred}.call(this, ${cur}, buffer.subarray(offset))) break;`
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
-      ctx.pushCode(`${varName} = buffer.slice(${start}, offset);`);
+      ctx.pushCode(`${varName} = buffer.subarray(${start}, offset);`);
     } else if (this.options.readUntil === 'eof') {
-      ctx.pushCode(`${varName} = buffer.slice(offset);`);
+      ctx.pushCode(`${varName} = buffer.subarray(offset);`);
     } else {
       const len = ctx.generateOption(this.options.length);
 
-      ctx.pushCode(`${varName} = buffer.slice(offset, offset + ${len});`);
+      ctx.pushCode(`${varName} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
     }
 
     if (this.options.clone) {
-      ctx.pushCode(`${varName} = Buffer.from(${varName});`);
+      ctx.pushCode(`${varName} = buffer.constructor.from(${varName});`);
     }
   }
 
@@ -989,8 +1001,9 @@ export class Parser {
 
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        const typeName = CAPITILIZED_TYPE_NAMES[type as PrimitiveTypes];
-        ctx.pushCode(`var ${item} = buffer.read${typeName}(offset);`);
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        ctx.pushCode(`var ${item} = dataView.get${typeName}(offset, ${littleEndian});`);
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1019,7 +1032,7 @@ export class Parser {
     if (typeof this.options.readUntil === 'function') {
       const pred = this.options.readUntil;
       ctx.pushCode(
-        `while (!(${pred}).call(this, ${item}, buffer.slice(offset)));`
+        `while (!(${pred}).call(this, ${item}, buffer.subarray(offset)));`
       );
     }
   }
@@ -1032,8 +1045,9 @@ export class Parser {
     if (typeof type === 'string') {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
-        const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
-        ctx.pushCode(`${varName} = buffer.read${typeName}(offset);`);
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        ctx.pushCode(`${varName} = dataView.get${typeName}(offset, ${littleEndian});`);
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1131,8 +1145,9 @@ export class Parser {
       );
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
-      const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
-      ctx.pushCode(`${nestVar} = buffer.read${typeName}(offset);`);
+      const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+      const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+      ctx.pushCode(`${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`);
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
     }
 

@@ -2,7 +2,12 @@ var assert = require('assert');
 var util = require('util');
 var Parser = require('../dist/binary_parser').Parser;
 
-describe('Primitive parser', function() {
+const suite = (Buffer) => describe(`Primitive parser (${Buffer.name})`, function() {
+  function hexToBuf(hex) {
+    return Buffer.from(
+      hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+    );
+  }
   describe('Primitive parsers', function() {
     it('should nothing', function() {
       var parser = Parser.start();
@@ -318,7 +323,7 @@ describe('Primitive parser', function() {
   describe('String parser', function() {
     it('should parse ASCII encoded string', function() {
       var text = 'hello, world';
-      var buffer = Buffer.from(text, 'ascii');
+      var buffer = Buffer.from(new TextEncoder().encode(text));
       var parser = Parser.start().string('msg', {
         length: buffer.length,
         encoding: 'ascii',
@@ -328,7 +333,7 @@ describe('Primitive parser', function() {
     });
     it('should parse UTF8 encoded string', function() {
       var text = 'こんにちは、せかい。';
-      var buffer = Buffer.from(text, 'utf8');
+      var buffer = Buffer.from(new TextEncoder().encode(text));
       var parser = Parser.start().string('msg', {
         length: buffer.length,
         encoding: 'utf8',
@@ -338,7 +343,7 @@ describe('Primitive parser', function() {
     });
     it('should parse HEX encoded string', function() {
       var text = 'cafebabe';
-      var buffer = Buffer.from(text, 'hex');
+      var buffer = hexToBuf(text);
       var parser = Parser.start().string('msg', {
         length: buffer.length,
         encoding: 'hex',
@@ -347,7 +352,7 @@ describe('Primitive parser', function() {
       assert.equal(parser.parse(buffer).msg, text);
     });
     it('should parse variable length string', function() {
-      var buffer = Buffer.from('0c68656c6c6f2c20776f726c64', 'hex');
+      var buffer = hexToBuf('0c68656c6c6f2c20776f726c64');
       var parser = Parser.start()
         .uint8('length')
         .string('msg', { length: 'length', encoding: 'utf8' });
@@ -355,7 +360,7 @@ describe('Primitive parser', function() {
       assert.equal(parser.parse(buffer).msg, 'hello, world');
     });
     it('should parse zero terminated string', function() {
-      var buffer = Buffer.from('68656c6c6f2c20776f726c6400', 'hex');
+      var buffer = hexToBuf('68656c6c6f2c20776f726c6400');
       var parser = Parser.start().string('msg', {
         zeroTerminated: true,
         encoding: 'ascii',
@@ -364,7 +369,7 @@ describe('Primitive parser', function() {
       assert.deepEqual(parser.parse(buffer), { msg: 'hello, world' });
     });
     it('should parser zero terminated fixed-length string', function() {
-      var buffer = Buffer.from('abc\u0000defghij\u0000');
+      var buffer = Buffer.from(new TextEncoder().encode('abc\u0000defghij\u0000'));
       var parser = Parser.start()
         .string('a', { length: 5, zeroTerminated: true })
         .string('b', { length: 5, zeroTerminated: true })
@@ -377,7 +382,7 @@ describe('Primitive parser', function() {
       });
     });
     it('should strip trailing null characters', function() {
-      var buffer = Buffer.from('746573740000', 'hex');
+      var buffer = hexToBuf('746573740000');
       var parser1 = Parser.start().string('str', {
         length: 7,
         stripNull: false,
@@ -391,7 +396,7 @@ describe('Primitive parser', function() {
       assert.equal(parser2.parse(buffer).str, 'test');
     });
     it('should parse string greedily with zero-bytes internally', function() {
-      var buffer = Buffer.from('abc\u0000defghij\u0000');
+      var buffer = Buffer.from(new TextEncoder().encode('abc\u0000defghij\u0000'));
       var parser = Parser.start().string('a', { greedy: true });
 
       assert.deepEqual(parser.parse(buffer), {
@@ -406,8 +411,8 @@ describe('Primitive parser', function() {
         length: 'len',
       });
 
-      var buf = Buffer.from('deadbeefdeadbeef', 'hex');
-      var result = parser.parse(Buffer.concat([Buffer.from([8]), buf]));
+      var buf = hexToBuf('deadbeefdeadbeef');
+      var result = parser.parse(Buffer.from([...Buffer.from([8]), ...buf]));
 
       assert.deepEqual(result.raw, buf);
     });
@@ -418,7 +423,7 @@ describe('Primitive parser', function() {
         clone: true,
       });
 
-      var buf = Buffer.from('deadbeefdeadbeef', 'hex');
+      var buf = hexToBuf('deadbeefdeadbeef');
       var result = parser.parse(buf);
       assert.deepEqual(result.raw, buf);
       result.raw[0] = 0xff;
@@ -435,20 +440,20 @@ describe('Primitive parser', function() {
           },
         });
 
-      var result = parser.parse(Buffer.from('aa', 'hex'));
+      var result = parser.parse(hexToBuf('aa'));
       assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from([]) });
 
-      var result = parser.parse(Buffer.from('aabbcc', 'hex'));
-      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+      var result = parser.parse(hexToBuf('aabbcc'));
+      assert.deepEqual(result, { cmd: 0xaa, data: hexToBuf('bbcc') });
 
-      var result = parser.parse(Buffer.from('aa02bbcc', 'hex'));
+      var result = parser.parse(hexToBuf('aa02bbcc'));
       assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from([]) });
 
-      var result = parser.parse(Buffer.from('aabbcc02', 'hex'));
-      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+      var result = parser.parse(hexToBuf('aabbcc02'));
+      assert.deepEqual(result, { cmd: 0xaa, data: hexToBuf('bbcc') });
 
-      var result = parser.parse(Buffer.from('aabbcc02dd', 'hex'));
-      assert.deepEqual(result, { cmd: 0xaa, data: Buffer.from('bbcc', 'hex') });
+      var result = parser.parse(hexToBuf('aabbcc02dd'));
+      assert.deepEqual(result, { cmd: 0xaa, data: hexToBuf('bbcc') });
     });
 
     // this is a test for testing a fix of a bug, that removed the last byte
@@ -466,3 +471,6 @@ describe('Primitive parser', function() {
     });
   });
 });
+
+suite(Buffer);
+suite(Uint8Array);
