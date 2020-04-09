@@ -141,7 +141,7 @@ const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
   floatle: 'Float32',
   floatbe: 'Float32',
   doublele: 'Float64',
-  doublebe: 'Float64'
+  doublebe: 'Float64',
 };
 
 const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
@@ -162,7 +162,7 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   floatle: true,
   floatbe: false,
   doublele: true,
-  doublebe: false
+  doublebe: false,
 };
 
 export class Parser {
@@ -186,7 +186,9 @@ export class Parser {
     const typeName = PRIMITIVE_NAMES[type];
     const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
-      `${ctx.generateVariable(this.varName)} = dataView.get${typeName}(offset, ${littleEndian});`
+      `${ctx.generateVariable(
+        this.varName
+      )} = dataView.get${typeName}(offset, ${littleEndian});`
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
@@ -584,7 +586,9 @@ export class Parser {
   getCode() {
     const ctx = new Context();
 
-    ctx.pushCode('var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);');
+    ctx.pushCode(
+      'var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);'
+    );
 
     if (!this.alias) {
       this.addRawCode(ctx);
@@ -902,33 +906,33 @@ export class Parser {
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
-        isHex ?
-        `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`:
-        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`
       );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        isHex ?
-        `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');` :
-        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
       ctx.pushCode(
-        isHex ?
-        `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');` :
-        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.length > offset++);');
       ctx.pushCode(
-        isHex ?
-        `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');` :
-        `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
       );
     }
     if (this.options.stripNull) {
@@ -1003,7 +1007,9 @@ export class Parser {
       if (!aliasRegistry[type]) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-        ctx.pushCode(`var ${item} = dataView.get${typeName}(offset, ${littleEndian});`);
+        ctx.pushCode(
+          `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`
+        );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1047,7 +1053,9 @@ export class Parser {
       if (!aliasRegistry[type]) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-        ctx.pushCode(`${varName} = dataView.get${typeName}(offset, ${littleEndian});`);
+        ctx.pushCode(
+          `${varName} = dataView.get${typeName}(offset, ${littleEndian});`
+        );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1147,7 +1155,9 @@ export class Parser {
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
       const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
       const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-      ctx.pushCode(`${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`);
+      ctx.pushCode(
+        `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`
+      );
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
     }
 
