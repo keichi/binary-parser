@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-import { runInNewContext } from 'vm';
 import { Context } from './context';
 
 const aliasRegistry: { [key: string]: Parser } = {};
@@ -646,8 +644,9 @@ export class Parser {
   }
 
   compile() {
-    const src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
-    this.compiled = runInNewContext(src, { Buffer });
+    const src =
+      'return (function(buffer, constructorFn) { ' + this.getCode() + ' })';
+    this.compiled = new Function('Buffer', src)(Buffer);
   }
 
   sizeOf(): number {
