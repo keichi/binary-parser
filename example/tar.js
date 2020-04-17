@@ -1,7 +1,7 @@
 var Parser = require('../dist/binary_parser').Parser;
 var fs = require('fs');
 
-var oct2int = function(s) {
+var oct2int = function (s) {
   return parseInt(s, 8);
 };
 
@@ -28,7 +28,7 @@ var tarItem = new Parser()
   .nest({
     type: tarHeader,
   })
-  .seek(function() {
+  .seek(function () {
     return Math.ceil(this.size / 512) * 512;
   });
 
@@ -37,6 +37,6 @@ var tarArchive = new Parser().array('files', {
   readUntil: 'eof',
 });
 
-fs.readFile('test.tar', function(err, data) {
+fs.readFile('test.tar', function (err, data) {
   console.dir(tarArchive.parse(data), { depth: null, colors: true });
 });

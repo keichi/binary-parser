@@ -13,7 +13,7 @@ var ELF32ProgramHeader = new Parser()
 
 var ELF32ProgramHeaderTable = new Parser().array('items', {
   type: ELF32ProgramHeader,
-  length: function(vars) {
+  length: function (vars) {
     return vars.phnum;
   },
 });
@@ -33,14 +33,14 @@ var ELF32SectionHeader = new Parser()
 
 var ELF32SectionHeaderTable = new Parser().array('items', {
   type: ELF32SectionHeader,
-  length: function(vars) {
+  length: function (vars) {
     return vars.shnum;
   },
 });
 
 var ELF32SectionHeaderStringTable = new Parser().seek(1).array('items', {
   type: new Parser().string('name', { zeroTerminated: true }),
-  lengthInBytes: function(vars) {
+  lengthInBytes: function (vars) {
     var shstr = vars.section_headers.items[vars.shstrndx];
     return shstr.size - 1;
   },
@@ -72,13 +72,13 @@ var ELF32Header = new Parser()
   })
   .pointer('strings', {
     type: ELF32SectionHeaderStringTable,
-    offset: function() {
+    offset: function () {
       var shstr = vars.section_headers.items[vars.shstrndx];
       return shstr.offset;
     },
   });
 
-require('fs').readFile('hello', function(err, data) {
+require('fs').readFile('hello', function (err, data) {
   var result = ELF32Header.parse(data);
   console.log(require('util').inspect(result, { depth: null }));
 });

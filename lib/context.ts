@@ -72,7 +72,7 @@ export class Context {
   }
 
   markRequested(aliasList: string[]) {
-    aliasList.forEach(alias => {
+    aliasList.forEach((alias) => {
       this.references[alias].requested = true;
     });
   }
@@ -80,7 +80,7 @@ export class Context {
   getUnresolvedReferences() {
     const references = this.references;
     return Object.keys(this.references).filter(
-      alias => !references[alias].resolved && !references[alias].requested
+      (alias) => !references[alias].resolved && !references[alias].requested
     );
   }
 }

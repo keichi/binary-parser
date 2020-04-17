@@ -55,6 +55,6 @@ var bmpFile = new Parser()
     type: bmpInfoHeader,
   });
 
-require('fs').readFile('test.bmp', function(err, data) {
+require('fs').readFile('test.bmp', function (err, data) {
   console.log(bmpFile.parse(data));
 });

@@ -2,19 +2,19 @@ var assert = require('assert');
 var util = require('util');
 var Parser = require('../dist/binary_parser').Parser;
 
-const suite = Buffer =>
-  describe(`Composite parser (${Buffer.name})`, function() {
+const suite = (Buffer) =>
+  describe(`Composite parser (${Buffer.name})`, function () {
     function hexToBuf(hex) {
-      return Buffer.from(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+      return Buffer.from(
+        hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+      );
     }
-    describe('Array parser', function() {
-      it('should parse array of primitive types', function() {
-        var parser = Parser.start()
-          .uint8('length')
-          .array('message', {
-            length: 'length',
-            type: 'uint8',
-          });
+    describe('Array parser', function () {
+      it('should parse array of primitive types', function () {
+        var parser = Parser.start().uint8('length').array('message', {
+          length: 'length',
+          type: 'uint8',
+        });
 
         var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
         assert.deepEqual(parser.parse(buffer), {
@@ -22,13 +22,11 @@ const suite = Buffer =>
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
       });
-      it('should parse array of primitive types with lengthInBytes', function() {
-        var parser = Parser.start()
-          .uint8('length')
-          .array('message', {
-            lengthInBytes: 'length',
-            type: 'uint8',
-          });
+      it('should parse array of primitive types with lengthInBytes', function () {
+        var parser = Parser.start().uint8('length').array('message', {
+          lengthInBytes: 'length',
+          type: 'uint8',
+        });
 
         var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
         assert.deepEqual(parser.parse(buffer), {
@@ -36,15 +34,13 @@ const suite = Buffer =>
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
       });
-      it('should parse array of user defined types', function() {
+      it('should parse array of user defined types', function () {
         var elementParser = new Parser().uint8('key').int16le('value');
 
-        var parser = Parser.start()
-          .uint16le('length')
-          .array('message', {
-            length: 'length',
-            type: elementParser,
-          });
+        var parser = Parser.start().uint16le('length').array('message', {
+          length: 'length',
+          type: elementParser,
+        });
 
         var buffer = Buffer.from([
           0x02,
@@ -58,18 +54,19 @@ const suite = Buffer =>
         ]);
         assert.deepEqual(parser.parse(buffer), {
           length: 0x02,
-          message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+          message: [
+            { key: 0xca, value: 1234 },
+            { key: 0xbe, value: 1235 },
+          ],
         });
       });
-      it('should parse array of user defined types with lengthInBytes', function() {
+      it('should parse array of user defined types with lengthInBytes', function () {
         var elementParser = new Parser().uint8('key').int16le('value');
 
-        var parser = Parser.start()
-          .uint16le('length')
-          .array('message', {
-            lengthInBytes: 'length',
-            type: elementParser,
-          });
+        var parser = Parser.start().uint16le('length').array('message', {
+          lengthInBytes: 'length',
+          type: elementParser,
+        });
 
         var buffer = Buffer.from([
           0x06,
@@ -83,10 +80,13 @@ const suite = Buffer =>
         ]);
         assert.deepEqual(parser.parse(buffer), {
           length: 0x06,
-          message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+          message: [
+            { key: 0xca, value: 1234 },
+            { key: 0xbe, value: 1235 },
+          ],
         });
       });
-      it('should parse array of user defined types with lengthInBytes literal', function() {
+      it('should parse array of user defined types with lengthInBytes literal', function () {
         var elementParser = new Parser().uint8('key').int16le('value');
 
         var parser = Parser.start().array('message', {
@@ -96,16 +96,19 @@ const suite = Buffer =>
 
         var buffer = Buffer.from([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
         assert.deepEqual(parser.parse(buffer), {
-          message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+          message: [
+            { key: 0xca, value: 1234 },
+            { key: 0xbe, value: 1235 },
+          ],
         });
       });
-      it('should parse array of user defined types with lengthInBytes function', function() {
+      it('should parse array of user defined types with lengthInBytes function', function () {
         var elementParser = new Parser().uint8('key').int16le('value');
 
         var parser = Parser.start()
           .uint16le('length')
           .array('message', {
-            lengthInBytes: function() {
+            lengthInBytes: function () {
               return this.length;
             },
             type: elementParser,
@@ -123,23 +126,22 @@ const suite = Buffer =>
         ]);
         assert.deepEqual(parser.parse(buffer), {
           length: 0x06,
-          message: [{ key: 0xca, value: 1234 }, { key: 0xbe, value: 1235 }],
+          message: [
+            { key: 0xca, value: 1234 },
+            { key: 0xbe, value: 1235 },
+          ],
         });
       });
-      it('should parse array of arrays', function() {
-        var rowParser = Parser.start()
-          .uint8('length')
-          .array('cols', {
-            length: 'length',
-            type: 'int32le',
-          });
+      it('should parse array of arrays', function () {
+        var rowParser = Parser.start().uint8('length').array('cols', {
+          length: 'length',
+          type: 'int32le',
+        });
 
-        var parser = Parser.start()
-          .uint8('length')
-          .array('rows', {
-            length: 'length',
-            type: rowParser,
-          });
+        var parser = Parser.start().uint8('length').array('rows', {
+          length: 'length',
+          type: rowParser,
+        });
 
         var size = 1 + 10 * (1 + 5 * 4);
         var buffer = Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
@@ -174,7 +176,7 @@ const suite = Buffer =>
           ],
         });
       });
-      it('should parse until eof when readUntil is specified', function() {
+      it('should parse until eof when readUntil is specified', function () {
         var parser = Parser.start().array('data', {
           readUntil: 'eof',
           type: 'uint8',
@@ -196,9 +198,9 @@ const suite = Buffer =>
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
         });
       });
-      it('should parse until function returns true when readUntil is function', function() {
+      it('should parse until function returns true when readUntil is function', function () {
         var parser = Parser.start().array('data', {
-          readUntil: function(item, buf) {
+          readUntil: function (item, buf) {
             return item === 0;
           },
           type: 'uint8',
@@ -220,9 +222,9 @@ const suite = Buffer =>
           data: [0xff, 0xff, 0xff, 0x01, 0x00],
         });
       });
-      it('should parse until function returns true when readUntil is function (using read-ahead)', function() {
+      it('should parse until function returns true when readUntil is function (using read-ahead)', function () {
         var parser = Parser.start().array('data', {
-          readUntil: function(item, buf) {
+          readUntil: function (item, buf) {
             return buf.length > 0 && buf[0] === 0;
           },
           type: 'uint8',
@@ -244,7 +246,7 @@ const suite = Buffer =>
           data: [0xff, 0xff, 0xff, 0x01],
         });
       });
-      it('should parse associative arrays', function() {
+      it('should parse associative arrays', function () {
         var parser = Parser.start()
           .int8('numlumps')
           .array('lumps', {
@@ -307,11 +309,11 @@ const suite = Buffer =>
           },
         });
       });
-      it('should use formatter to transform parsed array', function() {
+      it('should use formatter to transform parsed array', function () {
         var parser = Parser.start().array('data', {
           type: 'uint8',
           length: 4,
-          formatter: function(arr) {
+          formatter: function (arr) {
             return arr.join('.');
           },
         });
@@ -321,7 +323,7 @@ const suite = Buffer =>
           data: '10.10.1.110',
         });
       });
-      it('should be able to go into recursion', function() {
+      it('should be able to go into recursion', function () {
         var parser = Parser.start()
           .namely('self')
           .uint8('length')
@@ -346,7 +348,7 @@ const suite = Buffer =>
           ],
         });
       });
-      it('should be able to go into even deeper recursion', function() {
+      it('should be able to go into even deeper recursion', function () {
         var parser = Parser.start()
           .namely('self')
           .uint8('length')
@@ -403,9 +405,9 @@ const suite = Buffer =>
         });
       });
 
-      it('should allow parent parser attributes as choice key', function() {
+      it('should allow parent parser attributes as choice key', function () {
         var ChildParser = Parser.start().choice('data', {
-          tag: function(vars) {
+          tag: function (vars) {
             return vars.version;
           },
           choices: {
@@ -432,8 +434,8 @@ const suite = Buffer =>
       });
     });
 
-    describe('Choice parser', function() {
-      it('should parse choices of primitive types', function() {
+    describe('Choice parser', function () {
+      it('should parse choices of primitive types', function () {
         var parser = Parser.start()
           .uint8('tag1')
           .choice('data1', {
@@ -469,7 +471,7 @@ const suite = Buffer =>
           data2: 1234,
         });
       });
-      it('should parse default choice', function() {
+      it('should parse default choice', function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice('data', {
@@ -489,7 +491,7 @@ const suite = Buffer =>
           test: 314159,
         });
       });
-      it('should parse choices of user defied types', function() {
+      it('should parse choices of user defied types', function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice('data', {
@@ -533,7 +535,7 @@ const suite = Buffer =>
           },
         });
       });
-      it('should be able to go into recursion', function() {
+      it('should be able to go into recursion', function () {
         var stop = Parser.start();
 
         var parser = Parser.start()
@@ -559,7 +561,7 @@ const suite = Buffer =>
           },
         });
       });
-      it('should be able to go into recursion with simple nesting', function() {
+      it('should be able to go into recursion with simple nesting', function () {
         var stop = Parser.start();
 
         var parser = Parser.start()
@@ -588,7 +590,7 @@ const suite = Buffer =>
           },
         });
       });
-      it('should be able to refer to other parsers by name', function() {
+      it('should be able to refer to other parsers by name', function () {
         var parser = Parser.start().namely('self');
 
         var stop = Parser.start().namely('stop');
@@ -619,7 +621,7 @@ const suite = Buffer =>
           },
         });
       });
-      it('should be able to refer to other parsers both directly and by name', function() {
+      it('should be able to refer to other parsers both directly and by name', function () {
         var parser = Parser.start().namely('self');
 
         var stop = Parser.start();
@@ -649,7 +651,7 @@ const suite = Buffer =>
           },
         });
       });
-      it('should be able to go into recursion with complex nesting', function() {
+      it('should be able to go into recursion with complex nesting', function () {
         var stop = Parser.start();
 
         var parser = Parser.start()
@@ -717,7 +719,7 @@ const suite = Buffer =>
           },
         });
       });
-      it("should be able to 'flatten' choices when using null varName", function() {
+      it("should be able to 'flatten' choices when using null varName", function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice(null, {
@@ -757,7 +759,7 @@ const suite = Buffer =>
           number: 12345678,
         });
       });
-      it("should be able to 'flatten' choices when omitting varName paramater", function() {
+      it("should be able to 'flatten' choices when omitting varName paramater", function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice({
@@ -797,11 +799,11 @@ const suite = Buffer =>
           number: 12345678,
         });
       });
-      it('should be able to use function as the choice selector', function() {
+      it('should be able to use function as the choice selector', function () {
         var parser = Parser.start()
           .string('selector', { length: 4 })
           .choice(null, {
-            tag: function() {
+            tag: function () {
               return parseInt(this.selector, 2); // string base 2 to integer decimal
             },
             choices: {
@@ -844,8 +846,8 @@ const suite = Buffer =>
       });
     });
 
-    describe('Nest parser', function() {
-      it('should parse nested parsers', function() {
+    describe('Nest parser', function () {
+      it('should parse nested parsers', function () {
         var nameParser = new Parser()
           .string('firstName', {
             zeroTerminated: true,
@@ -877,7 +879,7 @@ const suite = Buffer =>
         });
       });
 
-      it('should format parsed nested parser', function() {
+      it('should format parsed nested parser', function () {
         var nameParser = new Parser()
           .string('firstName', {
             zeroTerminated: true,
@@ -887,7 +889,7 @@ const suite = Buffer =>
           });
         var personParser = new Parser().nest('name', {
           type: nameParser,
-          formatter: function(name) {
+          formatter: function (name) {
             return name.firstName + ' ' + name.lastName;
           },
         });
@@ -898,7 +900,7 @@ const suite = Buffer =>
         });
       });
 
-      it("should 'flatten' output when using null varName", function() {
+      it("should 'flatten' output when using null varName", function () {
         var parser = new Parser()
           .string('s1', { zeroTerminated: true })
           .nest(null, {
@@ -910,7 +912,7 @@ const suite = Buffer =>
         assert.deepEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
       });
 
-      it("should 'flatten' output when omitting varName", function() {
+      it("should 'flatten' output when omitting varName", function () {
         var parser = new Parser().string('s1', { zeroTerminated: true }).nest({
           type: new Parser().string('s2', { zeroTerminated: true }),
         });
@@ -921,19 +923,17 @@ const suite = Buffer =>
       });
     });
 
-    describe('Constructors', function() {
-      it('should create a custom object type', function() {
+    describe('Constructors', function () {
+      it('should create a custom object type', function () {
         function Person() {
           this.name = '';
         }
-        Person.prototype.toString = function() {
+        Person.prototype.toString = function () {
           return '[object Person]';
         };
-        var parser = Parser.start()
-          .create(Person)
-          .string('name', {
-            zeroTerminated: true,
-          });
+        var parser = Parser.start().create(Person).string('name', {
+          zeroTerminated: true,
+        });
 
         var buffer = Buffer.from(new TextEncoder().encode('John Doe\0'));
         var person = parser.parse(buffer);
@@ -942,15 +942,15 @@ const suite = Buffer =>
       });
     });
 
-    describe('Pointer parser', function() {
-      it('should move pointer to specified offset', function() {
+    describe('Pointer parser', function () {
+      it('should move pointer to specified offset', function () {
         var parser = Parser.start().pointer('x', { type: 'uint8', offset: 2 });
         var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
 
         assert.deepEqual(parser.parse(buf), { x: 3 });
       });
 
-      it('should restore pointer to original position', function() {
+      it('should restore pointer to original position', function () {
         var parser = Parser.start()
           .pointer('x', { type: 'uint8', offset: 2 })
           .uint16be('y');
@@ -959,7 +959,7 @@ const suite = Buffer =>
         assert.deepEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
       });
 
-      it('should work with child parser', function() {
+      it('should work with child parser', function () {
         var parser = Parser.start()
           .uint32le('x')
           .pointer('y', {
@@ -974,14 +974,14 @@ const suite = Buffer =>
         });
       });
 
-      it('should pass variable context to child parser', function() {});
+      it('should pass variable context to child parser', function () {});
       var parser = Parser.start()
         .uint16be('len')
         .pointer('child', {
           offset: 4,
           type: Parser.start().array('a', {
             type: 'uint8',
-            length: function(vars) {
+            length: function (vars) {
               return vars.len;
             },
           }),
@@ -1036,8 +1036,8 @@ const suite = Buffer =>
       });
     });
 
-    describe('Utilities', function() {
-      it('should count size for fixed size structs', function() {
+    describe('Utilities', function () {
+      it('should count size for fixed size structs', function () {
         var parser = Parser.start()
           .int8('a')
           .int32le('b')
@@ -1051,19 +1051,19 @@ const suite = Buffer =>
 
         assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
       });
-      it('should assert parsed values', function() {
+      it('should assert parsed values', function () {
         var parser = Parser.start().string('msg', {
           encoding: 'ascii',
           zeroTerminated: true,
           assert: 'hello, world',
         });
         var buffer = hexToBuf('68656c6c6f2c20776f726c6400');
-        assert.doesNotThrow(function() {
+        assert.doesNotThrow(function () {
           parser.parse(buffer);
         });
 
         buffer = hexToBuf('68656c6c6f2c206a7300');
-        assert.throws(function() {
+        assert.throws(function () {
           parser.parse(buffer);
         });
 
@@ -1071,29 +1071,27 @@ const suite = Buffer =>
           .int16le('a')
           .int16le('b')
           .int16le('c', {
-            assert: function(x) {
+            assert: function (x) {
               return this.a + this.b === x;
             },
           });
 
         buffer = hexToBuf('d2042e16001b');
-        assert.doesNotThrow(function() {
+        assert.doesNotThrow(function () {
           parser.parse(buffer);
         });
         buffer = hexToBuf('2e16001bd204');
-        assert.throws(function() {
+        assert.throws(function () {
           parser.parse(buffer);
         });
       });
     });
 
-    describe('Parse other fields after bit', function() {
-      it('Parse uint8', function() {
+    describe('Parse other fields after bit', function () {
+      it('Parse uint8', function () {
         var buffer = Buffer.from([0, 1, 0, 4]);
         for (var i = 17; i <= 24; i++) {
-          var parser = Parser.start()
-            ['bit' + i]('a')
-            .uint8('b');
+          var parser = Parser.start()['bit' + i]('a').uint8('b');
 
           assert.deepEqual(parser.parse(buffer), {
             a: 1 << (i - 16),

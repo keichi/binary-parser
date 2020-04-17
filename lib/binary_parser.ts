@@ -644,7 +644,7 @@ export class Parser {
   private resolveReferences(ctx: Context) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
-    references.forEach(alias => {
+    references.forEach((alias) => {
       const parser = aliasRegistry[alias];
       parser.addAliasedCode(ctx);
     });
@@ -843,7 +843,9 @@ export class Parser {
       (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
-      ctx.bitFields.forEach(parser => (sum += parser.options.length as number));
+      ctx.bitFields.forEach(
+        (parser) => (sum += parser.options.length as number)
+      );
 
       const val = ctx.generateTmpVariable();
 
@@ -873,7 +875,7 @@ export class Parser {
       let bitOffset = 0;
       const isBigEndian = this.endian === 'be';
 
-      ctx.bitFields.forEach(parser => {
+      ctx.bitFields.forEach((parser) => {
         const length = parser.options.length as number;
         const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
         const mask = (1 << length) - 1;
@@ -1078,7 +1080,7 @@ export class Parser {
       ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`);
     }
     ctx.pushCode(`switch(${tag}) {`);
-    Object.keys(this.options.choices).forEach(tag => {
+    Object.keys(this.options.choices).forEach((tag) => {
       const type = this.options.choices[parseInt(tag, 10)];
 
       ctx.pushCode(`case ${tag}:`);
