@@ -75,11 +75,11 @@ var ClassFile = Parser.start()
   .uint16('constant_pool_count')
   .array('cp_info', {
     type: CpInfo,
-    length: function() {
+    length: function () {
       return this.constant_pool_count - 1;
     },
   });
 
-require('fs').readFile('Hello.class', function(err, data) {
+require('fs').readFile('Hello.class', function (err, data) {
   console.log(require('util').inspect(ClassFile.parse(data), { depth: null }));
 });

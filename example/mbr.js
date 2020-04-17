@@ -2,7 +2,7 @@ var Parser = require('../dist/binary_parser').Parser;
 var fs = require('fs');
 
 var chs = new Parser({
-  formatter: function(val) {
+  formatter: function (val) {
     val.cylinder |= val.cylinderHigh << 8;
     delete val.cylinderHigh;
     return val;
@@ -35,6 +35,6 @@ var mbrParser = new Parser()
     assert: 0x55aa,
   });
 
-fs.readFile('raspbian.img', function(err, data) {
+fs.readFile('raspbian.img', function (err, data) {
   console.dir(mbrParser.parse(data), { depth: null, colors: true });
 });
