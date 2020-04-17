@@ -32,7 +32,8 @@ and [binary](https://github.com/substack/node-binary).
 2. Chain methods to build your desired parser. (See
    [API](https://github.com/keichi/binary-parser#api) for detailed document of
    each method)
-3. Call `Parser.prototype.parse` with an `Buffer` object passed as an argument.
+3. Call `Parser.prototype.parse` with a `Buffer`/`Uint8Array` object passed as
+   an argument.
 4. Parsed result will be returned as an object.
 
 ```javascript
@@ -75,9 +76,9 @@ Constructs a Parser object. Returned object represents a parser which parses
 nothing.
 
 ### parse(buffer)
-Parse a `Buffer` object `buffer` with this parser and return the resulting
-object. When `parse(buffer)` is called for the first time, the associated
-parser code is compiled on-the-fly and internally cached.
+Parse a `Buffer`/`Uint8Array` object `buffer` with this parser and return the
+resulting object. When `parse(buffer)` is called for the first time, the
+associated parser code is compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
@@ -130,9 +131,8 @@ characters and start with an alphabet. `options` is an object which can have
 the following keys:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
-  Supported encodings include `"utf8"`, `"ascii"` and `"hex"`. See
-  [`Buffer.toString`](http://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end)
-  for more info.
+  Supported encodings include `"hex"` and all encodings supported by
+  [`TextDecoder`](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/encoding).
 - `length ` - (Optional) Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
@@ -144,9 +144,10 @@ the following keys:
   null characters from end of the string
 
 ### buffer(name[, options])
-Parse bytes as a buffer. `name` should consist only of alpha numeric
-characters and start with an alphabet. `options` is an object which can have
-the following keys:
+Parse bytes as a buffer. Its type will be the same as the input to
+`parse(buffer)`. `name` should consist only of alpha numeric characters and
+start with an alphabet. `options` is an object which can have the following
+keys:
 
 - `clone` - (Optional, defaults to `false`) By default,
   `buffer(name [,options])` returns a new buffer which references the same
@@ -158,9 +159,9 @@ the following keys:
   sized buffers, string to reference another variable and function to do some
   calculation.
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
-  this parser will read till it reaches end of the `Buffer` object. If it is a
-  function, this parser will read the buffer is read until the function
-  returns true.
+  this parser will read till it reaches the end of the `Buffer`/`Uint8Array`
+  object. If it is a function, this parser will read the buffer until the
+  function returns true.
 
 ### array(name, options)
 Parse bytes as an array. `options` is an object which can have the following
@@ -176,8 +177,8 @@ keys:
   required) Length of the array expressed in bytes. Can be a number, string or
   a function. Use number for statically sized arrays.
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
-  If `"eof"`, then this parser reads until the end of `Buffer` object. If
-  function it reads until the function returns true.
+  If `"eof"`, then this parser reads until the end of the `Buffer`/`Uint8Array`
+  object. If function it reads until the function returns true.
 
 ```javascript
 var parser = new Parser()
