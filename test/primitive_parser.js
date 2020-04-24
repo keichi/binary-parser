@@ -1,5 +1,5 @@
 var assert = require('assert');
-var util = require('util');
+var TextEncoder = typeof TextEncoder === 'undefined' ? require('util').TextEncoder : TextEncoder;
 var Parser = require('../dist/binary_parser').Parser;
 
 const suite = (Buffer) =>
@@ -299,12 +299,12 @@ const suite = (Buffer) =>
     });
 
     describe('String parser', function () {
-      it('should parse ASCII encoded string', function () {
+      it('should parse UTF8 encoded string (ASCII only)', function () {
         var text = 'hello, world';
         var buffer = Buffer.from(new TextEncoder().encode(text));
         var parser = Parser.start().string('msg', {
           length: buffer.length,
-          encoding: 'ascii',
+          encoding: 'utf8',
         });
 
         assert.equal(parser.parse(buffer).msg, text);
@@ -341,7 +341,7 @@ const suite = (Buffer) =>
         var buffer = hexToBuf('68656c6c6f2c20776f726c6400');
         var parser = Parser.start().string('msg', {
           zeroTerminated: true,
-          encoding: 'ascii',
+          encoding: 'utf8',
         });
 
         assert.deepEqual(parser.parse(buffer), { msg: 'hello, world' });

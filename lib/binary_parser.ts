@@ -651,7 +651,14 @@ export class Parser {
   }
 
   compile() {
-    this.compiled = new Function('buffer', 'constructorFn', this.getCode());
+    this.compiled = new Function(
+      'TextDecoder',
+      `return function (buffer, constructorFn) { ${this.getCode()} };`
+    )(
+      typeof TextDecoder === 'undefined'
+        ? require('util').TextDecoder
+        : TextDecoder
+    );
   }
 
   sizeOf(): number {
