@@ -1,5 +1,8 @@
 var assert = require('assert');
-var TextEncoder = typeof TextEncoder === 'undefined' ? require('util').TextEncoder : TextEncoder;
+var TextEncoder =
+  typeof TextEncoder === 'undefined'
+    ? require('util').TextEncoder
+    : TextEncoder;
 var Parser = require('../dist/binary_parser').Parser;
 
 const suite = (Buffer) =>
