@@ -1,5 +1,6 @@
 jobs:
   build:
+    on: push
     runs-on: ubuntu-latest
     strategy:
       matrix:
