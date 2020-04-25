@@ -1,5 +1,8 @@
 var assert = require('assert');
-var util = require('util');
+var TextEncoder =
+  typeof TextEncoder === 'undefined'
+    ? require('util').TextEncoder
+    : TextEncoder;
 var Parser = require('../dist/binary_parser').Parser;
 
 const suite = (Buffer) =>
@@ -253,7 +256,7 @@ const suite = (Buffer) =>
             type: Parser.start()
               .int32le('filepos')
               .int32le('size')
-              .string('name', { length: 8, encoding: 'ascii' }),
+              .string('name', { length: 8, encoding: 'utf8' }),
             length: 'numlumps',
             key: 'name',
           });
@@ -1053,7 +1056,7 @@ const suite = (Buffer) =>
       });
       it('should assert parsed values', function () {
         var parser = Parser.start().string('msg', {
-          encoding: 'ascii',
+          encoding: 'utf8',
           zeroTerminated: true,
           assert: 'hello, world',
         });
