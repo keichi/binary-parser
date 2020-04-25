@@ -1,13 +1,13 @@
 {
   "name": "binary-parser",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "devDependencies": {
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
-    "prettier": "^2.0.4",
-    "@types/node": "^13.11.1",
+    "prettier": "^2.0.5",
+    "@types/node": "^13.13.2",
     "typescript": "^3.8.3"
   },
   "scripts": {
