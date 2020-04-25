@@ -1,6 +1,6 @@
 # Binary-parser
 
-[![Circle CI](https://circleci.com/gh/keichi/binary-parser.svg?style=svg)](https://circleci.com/gh/keichi/binary-parser)
+![Node.js CI](https://github.com/keichi/binary-parser/workflows/Node.js%20CI/badge.svg)
 
 Binary-parser is a binary parser builder for [node](http://nodejs.org) that
 enables you to write efficient parsers in a simple and declarative manner.
