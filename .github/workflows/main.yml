@@ -1,6 +1,13 @@
+on:
+ push:
+    branches:
+    - master
+ pull_request:
+    branches:
+    - master
+
 jobs:
   build:
-    on: push
     runs-on: ubuntu-latest
     strategy:
       matrix:
