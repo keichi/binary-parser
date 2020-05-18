@@ -1,9 +1,10 @@
 # Binary-parser
 
 ![Node.js CI](https://github.com/keichi/binary-parser/workflows/Node.js%20CI/badge.svg)
+![npm](https://img.shields.io/npm/v/binary-parser)
 
-Binary-parser is a binary parser builder for [node](http://nodejs.org) that
-enables you to write efficient parsers in a simple and declarative manner.
+Binary-parser is a parser builder for JavaScript that enables you to write
+efficient binary parsers in a simple and declarative manner.
 
 It supports all common data types required to analyze a structured binary
 data. Binary-parser dynamically generates and compiles the parser code
@@ -28,13 +29,14 @@ Binary-parser was inspired by [BinData](https://github.com/dmendel/bindata)
 and [binary](https://github.com/substack/node-binary).
 
 ## Quick Start
+
 1. Create an empty Parser object with `new Parser()` or `Parser.start()`.
 2. Chain methods to build your desired parser. (See
    [API](https://github.com/keichi/binary-parser#api) for detailed document of
    each method)
 3. Call `Parser.prototype.parse` with a `Buffer`/`Uint8Array` object passed as
    an argument.
-4. Parsed result will be returned as an object.
+4. The parsed result will be returned as an object.
 
 ```javascript
 // Module import
@@ -72,8 +74,7 @@ console.log(ipHeader.parse(buf));
 ## API
 
 ### new Parser()
-Constructs a Parser object. Returned object represents a parser which parses
-nothing.
+Create an empty parser object that parses nothing.
 
 ### parse(buffer)
 Parse a `Buffer`/`Uint8Array` object `buffer` with this parser and return the
@@ -315,7 +316,8 @@ var parser = new Parser()
 
 ### seek(relOffset)
 Move the buffer offset for `relOffset` bytes from the current position. Use a
-negative `relOffset` value to rewind the offset. Previously named `skip(length)`.
+negative `relOffset` value to rewind the offset. This method was previously
+named `skip(length)`.
 
 ### endianess(endianess)
 Define what endianess to use in this parser. `endianess` can be either
