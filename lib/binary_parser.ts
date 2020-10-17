@@ -1014,11 +1014,11 @@ export class Parser {
       );
     } else if (lengthInBytes !== undefined) {
       ctx.pushCode(
-        `for (var ${counter} = offset; offset - ${counter} < ${lengthInBytes}; ) {`
+        `for (var ${counter} = offset + ${lengthInBytes}; offset < ${counter}; ) {`
       );
     } else {
       ctx.pushCode(
-        `for (var ${counter} = 0; ${counter} < ${length}; ${counter}++) {`
+        `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`
       );
     }
 
