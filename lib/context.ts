@@ -6,6 +6,13 @@ export class Context {
   bitFields: Parser[] = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
+  importPath: string;
+  imports: any[] = [];
+  reverseImports = new Map<any, number>();
+
+  constructor(importPath?: string) {
+    this.importPath = importPath;
+  }
 
   generateVariable(name?: string) {
     const arr = [];
@@ -60,6 +67,16 @@ export class Context {
 
   popScope() {
     this.scopes.pop();
+  }
+
+  addImport(im: any) {
+    if (!this.importPath) return `(${im})`;
+    let id = this.reverseImports.get(im);
+    if (!id) {
+      id = this.imports.push(im) - 1;
+      this.reverseImports.set(im, id);
+    }
+    return `${this.importPath}[${id}]`;
   }
 
   addReference(alias: string) {

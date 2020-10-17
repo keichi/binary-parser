@@ -583,8 +583,8 @@ export class Parser {
     return this;
   }
 
-  getCode() {
-    const ctx = new Context();
+  private getContext(importPath?: string) {
+    const ctx = new Context(importPath);
 
     ctx.pushCode(
       'var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);'
@@ -602,7 +602,11 @@ export class Parser {
       ctx.pushCode('return vars;');
     }
 
-    return ctx.code;
+    return ctx;
+  }
+
+  getCode() {
+    return this.getContext().code;
   }
 
   private addRawCode(ctx: Context) {
@@ -651,10 +655,14 @@ export class Parser {
   }
 
   compile() {
+    const importPath = 'imports';
+    const ctx = this.getContext(importPath);
     this.compiled = new Function(
+      importPath,
       'TextDecoder',
-      `return function (buffer, constructorFn) { ${this.getCode()} };`
+      `return function (buffer, constructorFn) { ${ctx.code} };`
     )(
+      ctx.imports,
       typeof TextDecoder === 'undefined'
         ? require('util').TextDecoder
         : TextDecoder
@@ -811,7 +819,8 @@ export class Parser {
 
     switch (typeof this.options.assert) {
       case 'function':
-        ctx.pushCode(`if (!(${this.options.assert}).call(vars, ${varName})) {`);
+        const func = ctx.addImport(this.options.assert);
+        ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
         break;
       case 'number':
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
@@ -961,8 +970,9 @@ export class Parser {
       ctx.pushCode(`var ${cur} = 0;`);
       ctx.pushCode(`while (offset < buffer.length) {`);
       ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
+      const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${pred}.call(this, ${cur}, buffer.subarray(offset))) break;`
+        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
@@ -1046,8 +1056,9 @@ export class Parser {
 
     if (typeof this.options.readUntil === 'function') {
       const pred = this.options.readUntil;
+      const func = ctx.addImport(pred);
       ctx.pushCode(
-        `while (!(${pred}).call(this, ${item}, buffer.subarray(offset)));`
+        `while (!${func}.call(this, ${item}, buffer.subarray(offset)));`
       );
     }
   }
@@ -1131,7 +1142,8 @@ export class Parser {
     formatter: Function
   ) {
     if (typeof formatter === 'function') {
-      ctx.pushCode(`${varName} = (${formatter}).call(this, ${varName});`);
+      const func = ctx.addImport(formatter);
+      ctx.pushCode(`${varName} = ${func}.call(this, ${varName});`);
     }
   }
 
