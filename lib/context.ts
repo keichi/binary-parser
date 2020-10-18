@@ -33,7 +33,7 @@ export class Context {
       case 'string':
         return this.generateVariable(val);
       case 'function':
-        return `(${val}).call(${this.generateVariable()}, vars)`;
+        return `${this.addImport(val)}.call(${this.generateVariable()}, vars)`;
     }
   }
 
