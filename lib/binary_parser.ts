@@ -594,12 +594,7 @@ export class Parser {
       this.addRawCode(ctx);
     } else {
       this.addAliasedCode(ctx);
-    }
-
-    if (this.alias) {
       ctx.pushCode(`return ${FUNCTION_PREFIX + this.alias}(0).result;`);
-    } else {
-      ctx.pushCode('return vars;');
     }
 
     return ctx;
