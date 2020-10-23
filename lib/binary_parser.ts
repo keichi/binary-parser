@@ -434,7 +434,7 @@ export class Parser {
     return this.seek(length, options);
   }
 
-  seek(relOffset: number|((item: any) => number), options?: ParserOptions) {
+  seek(relOffset: number | ((item: any) => number), options?: ParserOptions) {
     if (options && options.assert) {
       throw new Error('assert option on seek is not allowed.');
     }

@@ -1,4 +1,5 @@
 var assert = require('assert');
+const { SmartBuffer } = require('smart-buffer/build/smartbuffer');
 var Parser = require('../dist/binary_parser').Parser;
 
 describe('Specific bugs testing', function() {
@@ -396,6 +397,28 @@ describe('Specific bugs testing', function() {
       });
       let encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
+    });
+  });
+
+  describe('Issue #23 Unable to encode uint64', function() {
+    it('should not fail when encoding uint64', function() {
+      let ipHeader = new Parser()
+        .uint16('fragment_id')
+        .uint16('fragment_total')
+        .uint64('datetime');
+
+      let anIpHeader = {
+        fragment_id: 1,
+        fragment_total: 1,
+        datetime: 4744430483355899789n,
+      };
+
+      try {
+        let result = ipHeader.encode(anIpHeader).toString('hex');
+        assert.ok(true, 'No exception');
+      } catch (ex) {
+        assert.fail(ex);
+      }
     });
   });
 });
