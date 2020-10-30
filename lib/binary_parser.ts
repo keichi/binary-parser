@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-import { runInNewContext } from 'vm';
 import { Context } from './context';
 import { SmartBuffer } from 'smart-buffer';
 
@@ -136,6 +134,48 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   doublebe: 8,
 };
 
+const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
+  uint8: 'Uint8',
+  uint16le: 'Uint16',
+  uint16be: 'Uint16',
+  uint32le: 'Uint32',
+  uint32be: 'Uint32',
+  int8: 'Int8',
+  int16le: 'Int16',
+  int16be: 'Int16',
+  int32le: 'Int32',
+  int32be: 'Int32',
+  int64be: 'BigInt64',
+  int64le: 'BigInt64',
+  uint64be: 'BigUint64',
+  uint64le: 'BigUint64',
+  floatle: 'Float32',
+  floatbe: 'Float32',
+  doublele: 'Float64',
+  doublebe: 'Float64',
+};
+
+const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
+  uint8: false,
+  uint16le: true,
+  uint16be: false,
+  uint32le: true,
+  uint32be: false,
+  int8: false,
+  int16le: true,
+  int16be: false,
+  int32le: true,
+  int32be: false,
+  int64be: false,
+  int64le: true,
+  uint64be: false,
+  uint64le: true,
+  floatle: true,
+  floatbe: false,
+  doublele: true,
+  doublebe: false,
+};
+
 const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
   uint8: 'UInt8',
   uint16le: 'UInt16LE',
@@ -196,10 +236,12 @@ export class Parser {
   }
 
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
-    const typeName = CAPITILIZED_TYPE_NAMES[type];
-
+    const typeName = PRIMITIVE_NAMES[type];
+    const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
-      `${ctx.generateVariable(this.varName)} = buffer.read${typeName}(offset);`
+      `${ctx.generateVariable(
+        this.varName
+      )} = dataView.get${typeName}(offset, ${littleEndian});`
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
@@ -273,12 +315,8 @@ export class Parser {
   }
 
   private bigIntVersionCheck() {
-    const [major] = process.version.replace('v', '').split('.');
-    if (Number(major) < 12) {
-      throw new Error(
-        `The methods readBigInt64BE, readBigInt64BE, readBigInt64BE, readBigInt64BE are not avilable in your version of nodejs: ${process.version}, you must use v12 or greater`
-      );
-    }
+    if (!DataView.prototype.getBigInt64)
+      throw new Error('BigInt64 is unsupported in this runtime');
   }
   int64(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
@@ -611,30 +649,29 @@ export class Parser {
     return this;
   }
 
-  getCode() {
-    const ctx = new Context();
+  private getContext(importPath?: string) {
+    const ctx = new Context(importPath);
 
-    ctx.pushCode('if (!Buffer.isBuffer(buffer)) {');
-    ctx.generateError('"argument buffer is not a Buffer object"');
-    ctx.pushCode('}');
+    ctx.pushCode(
+      'var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);'
+    );
 
     if (!this.alias) {
       this.addRawCode(ctx);
     } else {
       this.addAliasedCode(ctx);
-    }
-
-    if (this.alias) {
       ctx.pushCode(`return ${FUNCTION_PREFIX + this.alias}(0).result;`);
-    } else {
-      ctx.pushCode('return vars;');
     }
 
-    return ctx.code;
+    return ctx;
   }
 
-  getCodeEncode() {
-    const ctx = new Context();
+  getCode() {
+    return this.getContext().code;
+  }
+
+  private getContextEncode(importPath?: string) {
+    const ctx = new Context(importPath);
 
     ctx.pushCode('if (!obj || typeof obj !== "object") {');
     ctx.generateError('"argument obj is not an object"');
@@ -647,7 +684,11 @@ export class Parser {
       ctx.pushCode(`return ${FUNCTION_ENCODE_PREFIX + this.alias}(obj);`);
     }
 
-    return ctx.code;
+    return ctx;
+  }
+
+  getCodeEncode() {
+    return this.getContextEncode().code;
   }
 
   private addRawCode(ctx: Context) {
@@ -721,7 +762,7 @@ export class Parser {
   private resolveReferences(ctx: Context, encode?: string) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
-    references.forEach(alias => {
+    references.forEach((alias) => {
       const parser = aliasRegistry[alias];
       if (encode) {
         parser.addAliasedCodeEncode(ctx);
@@ -732,13 +773,37 @@ export class Parser {
   }
 
   compile() {
-    const src = '(function(buffer, constructorFn) { ' + this.getCode() + ' })';
-    this.compiled = runInNewContext(src, { Buffer });
+    const importPath = 'imports';
+    const ctx = this.getContext(importPath);
+    this.compiled = new Function(
+      importPath,
+      'TextDecoder',
+      `return function (buffer, constructorFn) { ${ctx.code} };`
+    )(
+      ctx.imports,
+      typeof TextDecoder === 'undefined'
+        ? require('util').TextDecoder
+        : TextDecoder
+    );
   }
 
   compileEncode() {
-    const src = '(function(obj) { ' + this.getCodeEncode() + ' })';
-    this.compiledEncode = runInNewContext(src, { Buffer, SmartBuffer });
+    const importPath = 'imports';
+    const ctx = this.getContextEncode(importPath);
+    this.compiledEncode = new Function(
+      importPath,
+      'TextDecoder',
+      'SmartBuffer',
+      `return function (obj) { ${ctx.code} };`
+    )(
+      ctx.imports,
+      typeof TextDecoder === 'undefined'
+        ? require('util').TextDecoder
+        : TextDecoder,
+      typeof SmartBuffer === 'undefined'
+        ? require('smart-buffer').SmartBuffer
+        : SmartBuffer
+    );
   }
 
   sizeOf(): number {
@@ -793,7 +858,7 @@ export class Parser {
   }
 
   // Follow the parser chain till the root and start parsing from there
-  parse(buffer: Buffer) {
+  parse(buffer: Buffer | Uint8Array) {
     if (!this.compiled) {
       this.compile();
     }
@@ -973,7 +1038,8 @@ export class Parser {
 
     switch (typeof this.options.assert) {
       case 'function':
-        ctx.pushCode(`if (!(${this.options.assert}).call(vars, ${varName})) {`);
+        const func = ctx.addImport(this.options.assert);
+        ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
         break;
       case 'number':
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
@@ -1021,25 +1087,27 @@ export class Parser {
       (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
-      ctx.bitFields.forEach(parser => (sum += parser.options.length as number));
+      ctx.bitFields.forEach(
+        (parser) => (sum += parser.options.length as number)
+      );
 
       const val = ctx.generateTmpVariable();
 
       if (sum <= 8) {
-        ctx.pushCode(`var ${val} = buffer.readUInt8(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint8(offset);`);
         sum = 8;
       } else if (sum <= 16) {
-        ctx.pushCode(`var ${val} = buffer.readUInt16BE(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint16(offset);`);
         sum = 16;
       } else if (sum <= 24) {
         const val1 = ctx.generateTmpVariable();
         const val2 = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${val1} = buffer.readUInt16BE(offset);`);
-        ctx.pushCode(`var ${val2} = buffer.readUInt8(offset + 2);`);
+        ctx.pushCode(`var ${val1} = dataView.getUint16(offset);`);
+        ctx.pushCode(`var ${val2} = dataView.getUint8(offset + 2);`);
         ctx.pushCode(`var ${val} = (${val1} << 8) | ${val2};`);
         sum = 24;
       } else if (sum <= 32) {
-        ctx.pushCode(`var ${val} = buffer.readUInt32BE(offset);`);
+        ctx.pushCode(`var ${val} = dataView.getUint32(offset);`);
         sum = 32;
       } else {
         throw new Error(
@@ -1051,7 +1119,7 @@ export class Parser {
       let bitOffset = 0;
       const isBigEndian = this.endian === 'be';
 
-      ctx.bitFields.forEach(parser => {
+      ctx.bitFields.forEach((parser) => {
         const length = parser.options.length as number;
         const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
         const mask = (1 << length) - 1;
@@ -1075,7 +1143,7 @@ export class Parser {
       (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
-      ctx.bitFields.forEach(parser => {
+      ctx.bitFields.forEach((parser) => {
         sum += parser.options.length as number;
       });
 
@@ -1100,11 +1168,11 @@ export class Parser {
       ctx.pushCode(`var ${tmpVal} = 0;`);
       ctx.pushCode(`var ${boundVal} = 0;`);
       let bitOffset = 0;
-      ctx.bitFields.forEach(parser => {
+      ctx.bitFields.forEach((parser) => {
         ctx.pushCode(
-          `${boundVal} = (${parser.varName} & ${(1 <<
-            (parser.options.length as number)) -
-            1});`
+          `${boundVal} = (${parser.varName} & ${
+            (1 << (parser.options.length as number)) - 1
+          });`
         );
         ctx.pushCode(
           `${tmpVal} |= (${boundVal} << ${
@@ -1149,36 +1217,45 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding;
+    const isHex = encoding.toLowerCase() === 'hex';
+    const toHex = 'b => b.toString(16).padStart(2, "0")';
 
     if (this.options.length && this.options.zeroTerminated) {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(buffer.readUInt8(offset++) !== 0 && offset - ${start}  < ${len});`
+        `while(dataView.getUint8(offset++) !== 0 && offset - ${start}  < ${len});`
       );
-      //ctx.pushCode(
-      //  `${name} = buffer.toString('${encoding}', ${start}, offset - ${start} < ${len} ? offset - 1 : offset);`
-      //);
+      //const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
+      const end = 'dataView.getUint8(offset -1) == 0 ? offset - 1 : offset';
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, buffer.readUInt8(offset -1) == 0 ? offset - 1 : offset);`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`
       );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', offset, offset + ${len});`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode('while(buffer.readUInt8(offset++) !== 0);');
+      ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset - 1);`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode('while(buffer.length > offset++);');
       ctx.pushCode(
-        `${name} = buffer.toString('${encoding}', ${start}, offset);`
+        isHex
+          ? `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
       );
     }
     if (this.options.stripNull) {
@@ -1254,24 +1331,25 @@ export class Parser {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(`var ${cur} = 0;`);
       ctx.pushCode(`while (offset < buffer.length) {`);
-      ctx.pushCode(`${cur} = buffer.readUInt8(offset);`);
+      ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
+      const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${pred}.call(this, ${cur}, buffer.slice(offset))) break;`
+        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
-      ctx.pushCode(`${varName} = buffer.slice(${start}, offset);`);
+      ctx.pushCode(`${varName} = buffer.subarray(${start}, offset);`);
     } else if (this.options.readUntil === 'eof') {
-      ctx.pushCode(`${varName} = buffer.slice(offset);`);
+      ctx.pushCode(`${varName} = buffer.subarray(offset);`);
     } else {
       const len = ctx.generateOption(this.options.length);
 
-      ctx.pushCode(`${varName} = buffer.slice(offset, offset + ${len});`);
+      ctx.pushCode(`${varName} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
     }
 
     if (this.options.clone) {
-      ctx.pushCode(`${varName} = Buffer.from(${varName});`);
+      ctx.pushCode(`${varName} = buffer.constructor.from(${varName});`);
     }
   }
 
@@ -1304,18 +1382,21 @@ export class Parser {
       );
     } else if (lengthInBytes !== undefined) {
       ctx.pushCode(
-        `for (var ${counter} = offset; offset - ${counter} < ${lengthInBytes}; ) {`
+        `for (var ${counter} = offset + ${lengthInBytes}; offset < ${counter}; ) {`
       );
     } else {
       ctx.pushCode(
-        `for (var ${counter} = 0; ${counter} < ${length}; ${counter}++) {`
+        `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`
       );
     }
 
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
-        const typeName = CAPITILIZED_TYPE_NAMES[type as PrimitiveTypes];
-        ctx.pushCode(`var ${item} = buffer.read${typeName}(offset);`);
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        ctx.pushCode(
+          `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`
+        );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1343,8 +1424,9 @@ export class Parser {
 
     if (typeof this.options.readUntil === 'function') {
       const pred = this.options.readUntil;
+      const func = ctx.addImport(pred);
       ctx.pushCode(
-        `while (!(${pred}).call(this, ${item}, buffer.slice(offset)));`
+        `while (!${func}.call(this, ${item}, buffer.subarray(offset)));`
       );
     }
   }
@@ -1401,7 +1483,9 @@ export class Parser {
     if (typeof type === 'string') {
       if (!aliasRegistry[type]) {
         ctx.pushCode(
-          `smartBuffer.write${CAPITILIZED_TYPE_NAMES[type as Types]}(${item});`
+          `smartBuffer.write${
+            CAPITILIZED_TYPE_NAMES[type as PrimitiveTypes]
+          }(${item});`
         );
       } else {
         ctx.pushCode(
@@ -1450,8 +1534,11 @@ export class Parser {
     if (typeof type === 'string') {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
-        const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
-        ctx.pushCode(`${varName} = buffer.read${typeName}(offset);`);
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        ctx.pushCode(
+          `${varName} = dataView.get${typeName}(offset, ${littleEndian});`
+        );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1483,8 +1570,9 @@ export class Parser {
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(
-          `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX +
-            type}(${ctx.generateVariable(this.varName)});`
+          `var ${tempVar} = ${
+            FUNCTION_ENCODE_PREFIX + type
+          }(${ctx.generateVariable(this.varName)});`
         );
         ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
         if (type !== this.alias) ctx.addReference(type);
@@ -1502,7 +1590,7 @@ export class Parser {
       ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`);
     }
     ctx.pushCode(`switch(${tag}) {`);
-    Object.keys(this.options.choices).forEach(tag => {
+    Object.keys(this.options.choices).forEach((tag) => {
       const type = this.options.choices[parseInt(tag, 10)];
 
       ctx.pushCode(`case ${tag}:`);
@@ -1521,7 +1609,7 @@ export class Parser {
   private generate_encodeChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
     ctx.pushCode(`switch(${tag}) {`);
-    Object.keys(this.options.choices).forEach(tag => {
+    Object.keys(this.options.choices).forEach((tag) => {
       const type = this.options.choices[parseInt(tag, 10)];
 
       ctx.pushCode(`case ${tag}:`);
@@ -1573,8 +1661,9 @@ export class Parser {
     } else if (aliasRegistry[this.options.type]) {
       var tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX +
-          this.options.type}(${nestVar});`
+        `var ${tempVar} = ${
+          FUNCTION_ENCODE_PREFIX + this.options.type
+        }(${nestVar});`
       );
       ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
       if (this.options.type !== this.alias) {
@@ -1589,9 +1678,8 @@ export class Parser {
     formatter: Function
   ) {
     if (typeof formatter === 'function') {
-      ctx.pushCode(
-        `${varName} = (${formatter}).call(this, ${varName}, buffer, offset);`
-      );
+      const func = ctx.addImport(formatter);
+      ctx.pushCode(`${varName} = ${func}.call(this, ${varName});`);
     }
   }
 
@@ -1628,8 +1716,11 @@ export class Parser {
       );
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
-      const typeName = CAPITILIZED_TYPE_NAMES[type as Types];
-      ctx.pushCode(`${nestVar} = buffer.read${typeName}(offset);`);
+      const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
+      const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+      ctx.pushCode(
+        `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`
+      );
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
     }
 

@@ -2,15 +2,13 @@ var assert = require('assert');
 var util = require('util');
 var Parser = require('../dist/binary_parser').Parser;
 
-describe('Composite encoder', function() {
-  describe('Array encoder', function() {
-    it('should encode array of primitive types', function() {
-      var parser = Parser.start()
-        .uint8('length')
-        .array('message', {
-          length: 'length',
-          type: 'uint8',
-        });
+describe('Composite encoder', function () {
+  describe('Array encoder', function () {
+    it('should encode array of primitive types', function () {
+      var parser = Parser.start().uint8('length').array('message', {
+        length: 'length',
+        type: 'uint8',
+      });
 
       var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
       var decoded = parser.parse(buffer);
@@ -21,13 +19,11 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode array of primitive types with lengthInBytes', function() {
-      var parser = Parser.start()
-        .uint8('length')
-        .array('message', {
-          lengthInBytes: 'length',
-          type: 'uint8',
-        });
+    it('should encode array of primitive types with lengthInBytes', function () {
+      var parser = Parser.start().uint8('length').array('message', {
+        lengthInBytes: 'length',
+        type: 'uint8',
+      });
 
       var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
       var decoded = parser.parse(buffer);
@@ -38,13 +34,11 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode array of primitive types with lengthInBytes as a maximum but not minimum', function() {
-      var parser = Parser.start()
-        .uint8('length')
-        .array('message', {
-          lengthInBytes: 'length',
-          type: 'uint8',
-        });
+    it('should encode array of primitive types with lengthInBytes as a maximum but not minimum', function () {
+      var parser = Parser.start().uint8('length').array('message', {
+        lengthInBytes: 'length',
+        type: 'uint8',
+      });
       var encoded = parser.encode({
         length: 5,
         message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // Extra items in array than encoding limit
@@ -56,15 +50,13 @@ describe('Composite encoder', function() {
       });
       assert.deepEqual(encoded, Buffer.from([5, 1, 2, 3]));
     });
-    it('should encode array of user defined types', function() {
+    it('should encode array of user defined types', function () {
       var elementParser = new Parser().uint8('key').int16le('value');
 
-      var parser = Parser.start()
-        .uint16le('length')
-        .array('message', {
-          length: 'length',
-          type: elementParser,
-        });
+      var parser = Parser.start().uint16le('length').array('message', {
+        length: 'length',
+        type: elementParser,
+      });
 
       var buffer = Buffer.from([
         0x02,
@@ -87,15 +79,13 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode array of user defined types with lengthInBytes', function() {
+    it('should encode array of user defined types with lengthInBytes', function () {
       var elementParser = new Parser().uint8('key').int16le('value');
 
-      var parser = Parser.start()
-        .uint16le('length')
-        .array('message', {
-          lengthInBytes: 'length',
-          type: elementParser,
-        });
+      var parser = Parser.start().uint16le('length').array('message', {
+        lengthInBytes: 'length',
+        type: elementParser,
+      });
 
       var buffer = Buffer.from([
         0x06,
@@ -118,13 +108,13 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode array of user defined types with length function', function() {
+    it('should encode array of user defined types with length function', function () {
       var elementParser = new Parser().uint8('key').int16le('value');
 
       var parser = Parser.start()
         .uint16le('length')
         .array('message', {
-          length: function() {
+          length: function () {
             return this.length;
           },
           type: elementParser,
@@ -151,20 +141,16 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode array of arrays', function() {
-      var rowParser = Parser.start()
-        .uint8('length')
-        .array('cols', {
-          length: 'length',
-          type: 'int32le',
-        });
+    it('should encode array of arrays', function () {
+      var rowParser = Parser.start().uint8('length').array('cols', {
+        length: 'length',
+        type: 'int32le',
+      });
 
-      var parser = Parser.start()
-        .uint8('length')
-        .array('rows', {
-          length: 'length',
-          type: rowParser,
-        });
+      var parser = Parser.start().uint8('length').array('rows', {
+        length: 'length',
+        type: rowParser,
+      });
 
       var buffer = Buffer.alloc(1 + 10 * (1 + 5 * 4));
       var i, j;
@@ -200,9 +186,9 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode until function returns true when readUntil is function', function() {
+    it('should encode until function returns true when readUntil is function', function () {
       var parser = Parser.start().array('data', {
-        readUntil: function(item, buf) {
+        readUntil: function (item, buf) {
           return item === 0;
         },
         type: 'uint8',
@@ -230,7 +216,7 @@ describe('Composite encoder', function() {
       });
       assert.deepEqual(encoded, Buffer.from([0xff, 0xff, 0xff, 0x01, 0x00]));
     });
-    it('should not support associative arrays', function() {
+    it('should not support associative arrays', function () {
       var parser = Parser.start()
         .int8('numlumps')
         .array('lumps', {
@@ -242,7 +228,7 @@ describe('Composite encoder', function() {
           key: 'name',
         });
 
-      assert.throws(function() {
+      assert.throws(function () {
         parser.encode({
           numlumps: 2,
           lumps: {
@@ -260,14 +246,14 @@ describe('Composite encoder', function() {
         });
       }, /Encoding associative array not supported/);
     });
-    it('should use encoder to transform encoded array', function() {
+    it('should use encoder to transform encoded array', function () {
       var parser = Parser.start().array('data', {
         type: 'uint8',
         length: 4,
-        formatter: function(arr) {
+        formatter: function (arr) {
           return arr.join('.');
         },
-        encoder: function(str) {
+        encoder: function (str) {
           return str.split('.');
         },
       });
@@ -280,14 +266,11 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to go into recursion', function() {
-      var parser = Parser.start()
-        .namely('self')
-        .uint8('length')
-        .array('data', {
-          type: 'self',
-          length: 'length',
-        });
+    it('should be able to go into recursion', function () {
+      var parser = Parser.start().namely('self').uint8('length').array('data', {
+        type: 'self',
+        length: 'length',
+      });
 
       var buffer = Buffer.from([1, 1, 1, 0]);
       var decoded = parser.parse(buffer);
@@ -308,14 +291,11 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to go into even deeper recursion', function() {
-      var parser = Parser.start()
-        .namely('self')
-        .uint8('length')
-        .array('data', {
-          type: 'self',
-          length: 'length',
-        });
+    it('should be able to go into even deeper recursion', function () {
+      var parser = Parser.start().namely('self').uint8('length').array('data', {
+        type: 'self',
+        length: 'length',
+      });
 
       //        2
       //       / \
@@ -368,9 +348,9 @@ describe('Composite encoder', function() {
       assert.deepEqual(encoded, buffer);
     });
 
-    it('should allow parent parser attributes as choice key', function() {
+    it('should allow parent parser attributes as choice key', function () {
       var ChildParser = Parser.start().choice('data', {
-        tag: function(vars) {
+        tag: function (vars) {
           return vars.version;
         },
         choices: {
@@ -403,8 +383,8 @@ describe('Composite encoder', function() {
     });
   });
 
-  describe('Choice encoder', function() {
-    it('should encode choices of primitive types', function() {
+  describe('Choice encoder', function () {
+    it('should encode choices of primitive types', function () {
       var parser = Parser.start()
         .uint8('tag1')
         .choice('data1', {
@@ -434,7 +414,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should encode default choice', function() {
+    it('should encode default choice', function () {
       var parser = Parser.start()
         .uint8('tag')
         .choice('data', {
@@ -457,7 +437,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should parse choices of user defied types', function() {
+    it('should parse choices of user defied types', function () {
       var parser = Parser.start()
         .uint8('tag')
         .choice('data', {
@@ -507,7 +487,7 @@ describe('Composite encoder', function() {
       encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to go into recursion', function() {
+    it('should be able to go into recursion', function () {
       var stop = Parser.start();
 
       var parser = Parser.start()
@@ -536,7 +516,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to go into recursion with simple nesting', function() {
+    it('should be able to go into recursion with simple nesting', function () {
       var stop = Parser.start();
 
       var parser = Parser.start()
@@ -574,7 +554,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to refer to other parsers by name', function() {
+    it('should be able to refer to other parsers by name', function () {
       var parser = Parser.start().namely('self');
 
       var stop = Parser.start().namely('stop');
@@ -608,7 +588,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to refer to other parsers both directly and by name', function() {
+    it('should be able to refer to other parsers both directly and by name', function () {
       var parser = Parser.start().namely('self');
 
       var stop = Parser.start();
@@ -641,7 +621,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to go into recursion with complex nesting', function() {
+    it('should be able to go into recursion with complex nesting', function () {
       var stop = Parser.start();
 
       var parser = Parser.start()
@@ -712,7 +692,7 @@ describe('Composite encoder', function() {
       var encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it("should be able to 'flatten' choices when using null varName", function() {
+    it("should be able to 'flatten' choices when using null varName", function () {
       var parser = Parser.start()
         .uint8('tag')
         .choice(null, {
@@ -758,7 +738,7 @@ describe('Composite encoder', function() {
       encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it("should be able to 'flatten' choices when omitting varName paramater", function() {
+    it("should be able to 'flatten' choices when omitting varName paramater", function () {
       var parser = Parser.start()
         .uint8('tag')
         .choice({
@@ -804,11 +784,11 @@ describe('Composite encoder', function() {
       encoded = parser.encode(decoded);
       assert.deepEqual(encoded, buffer);
     });
-    it('should be able to use function as the choice selector', function() {
+    it('should be able to use function as the choice selector', function () {
       var parser = Parser.start()
         .string('selector', { length: 4 })
         .choice(null, {
-          tag: function() {
+          tag: function () {
             return parseInt(this.selector, 2); // string base 2 to integer decimal
           },
           choices: {
@@ -857,8 +837,8 @@ describe('Composite encoder', function() {
     });
   });
 
-  describe('Nest parser', function() {
-    it('should encode nested parsers', function() {
+  describe('Nest parser', function () {
+    it('should encode nested parsers', function () {
       var nameParser = new Parser()
         .string('firstName', {
           zeroTerminated: true,
@@ -893,7 +873,7 @@ describe('Composite encoder', function() {
       assert.deepEqual(encoded, buffer);
     });
 
-    it('should format parsed nested parser', function() {
+    it('should format parsed nested parser', function () {
       var nameParser = new Parser()
         .string('firstName', {
           zeroTerminated: true,
@@ -903,10 +883,10 @@ describe('Composite encoder', function() {
         });
       var personParser = new Parser().nest('name', {
         type: nameParser,
-        formatter: function(name) {
+        formatter: function (name) {
           return name.firstName + ' ' + name.lastName;
         },
-        encoder: function(name) {
+        encoder: function (name) {
           // Reverse of aboce formatter
           var names = name.split(' ');
           return { firstName: names[0], lastName: names[1] };
@@ -922,7 +902,7 @@ describe('Composite encoder', function() {
       assert.deepEqual(encoded, buffer);
     });
 
-    it("should 'flatten' output when using null varName", function() {
+    it("should 'flatten' output when using null varName", function () {
       var parser = new Parser()
         .string('s1', { zeroTerminated: true })
         .nest(null, {
@@ -936,7 +916,7 @@ describe('Composite encoder', function() {
       assert.deepEqual(encoded, buf);
     });
 
-    it("should 'flatten' output when omitting varName", function() {
+    it("should 'flatten' output when omitting varName", function () {
       var parser = new Parser().string('s1', { zeroTerminated: true }).nest({
         type: new Parser().string('s2', { zeroTerminated: true }),
       });
@@ -949,13 +929,13 @@ describe('Composite encoder', function() {
     });
   });
 
-  describe('Buffer encoder', function() {
+  describe('Buffer encoder', function () {
     //this is a test for testing a fix of a bug, that removed the last byte of the
     //buffer parser
-    it('should return a buffer with same size', function() {
+    it('should return a buffer with same size', function () {
       var bufferParser = new Parser().buffer('buf', {
         readUntil: 'eof',
-        formatter: function(buffer) {
+        formatter: function (buffer) {
           return buffer;
         },
       });
@@ -968,19 +948,17 @@ describe('Composite encoder', function() {
     });
   });
 
-  describe('Constructors', function() {
-    it('should create a custom object type', function() {
+  describe('Constructors', function () {
+    it('should create a custom object type', function () {
       function Person() {
         this.name = '';
       }
-      Person.prototype.toString = function() {
+      Person.prototype.toString = function () {
         return '[object Person]';
       };
-      var parser = Parser.start()
-        .create(Person)
-        .string('name', {
-          zeroTerminated: true,
-        });
+      var parser = Parser.start().create(Person).string('name', {
+        zeroTerminated: true,
+      });
 
       var buffer = Buffer.from('John Doe\0');
       var person = parser.parse(buffer);
@@ -991,13 +969,11 @@ describe('Composite encoder', function() {
     });
   });
 
-  describe('encode other fields after bit', function() {
-    it('Encode uint8', function() {
+  describe('encode other fields after bit', function () {
+    it('Encode uint8', function () {
       var buffer = Buffer.from([0, 1, 0, 4]);
       for (var i = 17; i <= 24; i++) {
-        var parser = Parser.start()
-          ['bit' + i]('a')
-          .uint8('b');
+        var parser = Parser.start()['bit' + i]('a').uint8('b');
         var decoded = parser.parse(buffer);
         assert.deepEqual(decoded, {
           a: 1 << (i - 16),

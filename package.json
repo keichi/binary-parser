@@ -1,15 +1,15 @@
 {
   "name": "binary-parser-encoder",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "types": "dist/binary_parser.d.ts",
   "devDependencies": {
-    "mocha": "^6.2.2",
-    "nyc": "^14.1.1",
-    "prettier": "^1.19.1",
-    "@types/node": "^12.12.12",
-    "typescript": "^3.7.2"
+    "mocha": "^8.2.0",
+    "nyc": "^15.1.0",
+    "prettier": "^2.1.2",
+    "@types/node": "^14.14.0",
+    "typescript": "^4.0.3"
   },
   "scripts": {
     "build": "tsc",
@@ -56,6 +56,6 @@
     "smart-buffer": "^4.1.0"
   },
   "engines": {
-    "node": ">=6.4.0"
+    "node": ">=8.9.0"
   }
 }

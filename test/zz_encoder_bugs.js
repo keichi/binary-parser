@@ -2,19 +2,19 @@ var assert = require('assert');
 const { SmartBuffer } = require('smart-buffer/build/smartbuffer');
 var Parser = require('../dist/binary_parser').Parser;
 
-describe('Specific bugs testing', function() {
-  describe('Array encoder with readUntil', function() {
-    it('should limit to array length even if readUntil is never true', function() {
+describe('Specific bugs testing', function () {
+  describe('Array encoder with readUntil', function () {
+    it('should limit to array length even if readUntil is never true', function () {
       var parser = Parser.start()
         .uint16('len')
         .array('payloads', {
           type: new Parser().uint8('cmd').array('params', {
             type: new Parser().uint8('param'),
-            readUntil: function(item, buffer) {
+            readUntil: function (item, buffer) {
               return buffer.length == 2; // Stop when 2 bytes left in parsed buffer
             },
           }),
-          lengthInBytes: function() {
+          lengthInBytes: function () {
             return this.len - 4;
           },
         })
@@ -46,23 +46,23 @@ describe('Specific bugs testing', function() {
 
       var encoded;
       // Although readUntil is never true here, the encoding will be good
-      assert.doesNotThrow(function() {
+      assert.doesNotThrow(function () {
         encoded = parser.encode(decoded);
       });
       assert.deepEqual(encoded, buffer);
     });
 
-    it('is not the reverse of parsing when readUntil gives false information', function() {
+    it('is not the reverse of parsing when readUntil gives false information', function () {
       var parser = Parser.start()
         .uint16('len')
         .array('payloads', {
           type: new Parser().uint8('cmd').array('params', {
             type: new Parser().uint8('param'),
-            readUntil: function(item, buffer) {
+            readUntil: function (item, buffer) {
               return buffer.length <= 2; // Stop when 2 bytes left in buffer
             },
           }),
-          lengthInBytes: function() {
+          lengthInBytes: function () {
             return this.len - 4;
           },
         })
@@ -97,20 +97,20 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, Buffer.from('0008AAB1FFFF', 'hex'));
     });
 
-    it('should ignore readUntil when encodeUntil is provided', function() {
+    it('should ignore readUntil when encodeUntil is provided', function () {
       var parser = Parser.start()
         .uint16('len')
         .array('payloads', {
           type: new Parser().uint8('cmd').array('params', {
             type: new Parser().uint8('param'),
-            readUntil: function(item, buffer) {
+            readUntil: function (item, buffer) {
               return buffer.length == 2; // Stop when 2 bytes left in buffer
             },
-            encodeUntil: function(item, obj) {
+            encodeUntil: function (item, obj) {
               return item.param === 178; // Stop encoding when value 178 is reached
             },
           }),
-          lengthInBytes: function() {
+          lengthInBytes: function () {
             return this.len - 4;
           },
         })
@@ -145,7 +145,7 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, Buffer.from('0008AAB1B2FFFF', 'hex'));
     });
 
-    it('should accept readUntil=eof and no encodeUntil provided', function() {
+    it('should accept readUntil=eof and no encodeUntil provided', function () {
       var parser = Parser.start().array('arr', {
         type: 'uint8',
         readUntil: 'eof', // Read until end of buffer
@@ -162,7 +162,7 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, Buffer.from('01020304050607', 'hex'));
     });
 
-    it('should accept empty array to encode', function() {
+    it('should accept empty array to encode', function () {
       var parser = Parser.start().array('arr', {
         type: 'uint8',
         readUntil: 'eof', // Read until end of buffer
@@ -179,11 +179,11 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, Buffer.from('', 'hex'));
     });
 
-    it('should accept empty array to encode and encodeUntil function', function() {
+    it('should accept empty array to encode and encodeUntil function', function () {
       var parser = Parser.start().array('arr', {
         type: 'uint8',
         readUntil: 'eof', // Read until end of buffer
-        encodeUntil: function(item, obj) {
+        encodeUntil: function (item, obj) {
           return false; // Never stop on content value
         },
       });
@@ -199,7 +199,7 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, Buffer.from('', 'hex'));
     });
 
-    it('should accept undefined or null array', function() {
+    it('should accept undefined or null array', function () {
       var parser = Parser.start().array('arr', {
         type: 'uint8',
         readUntil: 'eof', // Read until end of buffer
@@ -214,15 +214,15 @@ describe('Specific bugs testing', function() {
       });
 
       // Encode undefined, null or empty array as an empty buffer
-      [{}, { arr: undefined }, { arr: null }, { arr: [] }].forEach(data => {
+      [{}, { arr: undefined }, { arr: null }, { arr: [] }].forEach((data) => {
         let encoded = parser.encode(data);
         assert.deepEqual(encoded, Buffer.from('', 'hex'));
       });
     });
   });
 
-  describe('Issue #19 Little endianess incorrect', function() {
-    let binaryLiteral = function(s) {
+  describe('Issue #19 Little endianess incorrect', function () {
+    let binaryLiteral = function (s) {
       var i;
       var bytes = [];
 
@@ -233,17 +233,14 @@ describe('Specific bugs testing', function() {
 
       return Buffer.from(bytes);
     };
-    it('should parse 4-byte-length bit field sequence wit little endian', function() {
+    it('should parse 4-byte-length bit field sequence wit little endian', function () {
       let buf = binaryLiteral('0000000000001111 1010000110100010'); // 000F A1A2
 
       // Parsed as two uint16 with little-endian (BYTES order)
       let parser1 = new Parser().uint16le('a').uint16le('b');
 
       // Parsed as two 16 bits fields with little-endian
-      let parser2 = new Parser()
-        .endianess('little')
-        .bit16('a')
-        .bit16('b');
+      let parser2 = new Parser().endianess('little').bit16('a').bit16('b');
 
       let parsed1 = parser1.parse(buf);
       let parsed2 = parser2.parse(buf);
@@ -260,7 +257,7 @@ describe('Specific bugs testing', function() {
 
       /* This is a little confusing. The endianess with bits fields affect the order of fields */
     });
-    it('should encode bit ranges with little endian correctly', function() {
+    it('should encode bit ranges with little endian correctly', function () {
       let bigParser = Parser.start()
         .endianess('big')
         .bit4('a')
@@ -351,8 +348,8 @@ describe('Specific bugs testing', function() {
     });
   });
 
-  describe('Issue #20 Encoding fixed length null terminated or strip null strings', function() {
-    it('should encode zero terminated fixed-length string', function() {
+  describe('Issue #20 Encoding fixed length null terminated or strip null strings', function () {
+    it('should encode zero terminated fixed-length string', function () {
       // In that case parsing and encoding are not  the exact oposite
       let buffer = Buffer.from(
         '\u0000A\u0000AB\u0000ABC\u0000ABCD\u0000ABCDE\u0000'
@@ -383,7 +380,7 @@ describe('Specific bugs testing', function() {
       assert.deepEqual(encoded, buffer);
     });
 
-    it('should encode fixed-length string with stripNull', function() {
+    it('should encode fixed-length string with stripNull', function () {
       let parser = Parser.start()
         .string('a', { length: 8, zeroTerminated: false, stripNull: true })
         .string('b', { length: 8, zeroTerminated: false, stripNull: true })
@@ -400,8 +397,8 @@ describe('Specific bugs testing', function() {
     });
   });
 
-  describe('Issue #23 Unable to encode uint64', function() {
-    it('should not fail when encoding uint64', function() {
+  describe('Issue #23 Unable to encode uint64', function () {
+    it('should not fail when encoding uint64', function () {
       let ipHeader = new Parser()
         .uint16('fragment_id')
         .uint16('fragment_total')

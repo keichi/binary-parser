@@ -20,7 +20,7 @@ var APP0 = Parser.start()
   .uint8('thumbHeight')
   .array('thumbData', {
     type: 'uint8',
-    length: function() {
+    length: function () {
       return this.Xt * this.Yt * 3;
     },
   });
@@ -30,7 +30,7 @@ var COM = Parser.start()
   .uint16('length')
   .string('comment', {
     encoding: 'ascii',
-    length: function() {
+    length: function () {
       return this.length - 2;
     },
   });
@@ -40,9 +40,7 @@ var SOS = Parser.start()
   .uint16('length')
   .uint8('componentCount')
   .array('components', {
-    type: Parser.start()
-      .uint8('id')
-      .uint8('dht'),
+    type: Parser.start().uint8('id').uint8('dht'),
     length: 'componentCount',
   })
   .uint8('spectrumStart')
@@ -53,13 +51,11 @@ var DQT = Parser.start()
   .endianess('big')
   .uint16('length')
   .array('tables', {
-    type: Parser.start()
-      .uint8('precisionAndTableId')
-      .array('table', {
-        type: 'uint8',
-        length: 64,
-      }),
-    length: function() {
+    type: Parser.start().uint8('precisionAndTableId').array('table', {
+      type: 'uint8',
+      length: 64,
+    }),
+    length: function () {
       return (this.length - 2) / 65;
     },
   });
@@ -82,7 +78,7 @@ var SOF0 = Parser.start()
 var Ignore = Parser.start()
   .endianess('big')
   .uint16('length')
-  .seek(function() {
+  .seek(function () {
     return this.length - 2;
   });
 
@@ -107,6 +103,6 @@ var JPEG = Parser.start().array('segments', {
   readUntil: 'eof',
 });
 
-require('fs').readFile('test.jpg', function(err, data) {
+require('fs').readFile('test.jpg', function (err, data) {
   console.log(require('util').inspect(JPEG.parse(data), { depth: null }));
 });

@@ -6,6 +6,13 @@ export class Context {
   bitFields: Parser[] = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
+  importPath: string;
+  imports: any[] = [];
+  reverseImports = new Map<any, number>();
+
+  constructor(importPath?: string) {
+    this.importPath = importPath;
+  }
 
   generateVariable(name?: string) {
     const arr = [];
@@ -26,7 +33,7 @@ export class Context {
       case 'string':
         return this.generateVariable(val);
       case 'function':
-        return `(${val}).call(${this.generateVariable()}, vars)`;
+        return `${this.addImport(val)}.call(${this.generateVariable()}, vars)`;
     }
   }
 
@@ -62,6 +69,16 @@ export class Context {
     this.scopes.pop();
   }
 
+  addImport(im: any) {
+    if (!this.importPath) return `(${im})`;
+    let id = this.reverseImports.get(im);
+    if (!id) {
+      id = this.imports.push(im) - 1;
+      this.reverseImports.set(im, id);
+    }
+    return `${this.importPath}[${id}]`;
+  }
+
   addReference(alias: string) {
     if (this.references[alias]) return;
     this.references[alias] = { resolved: false, requested: false };
@@ -72,7 +89,7 @@ export class Context {
   }
 
   markRequested(aliasList: string[]) {
-    aliasList.forEach(alias => {
+    aliasList.forEach((alias) => {
       this.references[alias].requested = true;
     });
   }
@@ -80,7 +97,7 @@ export class Context {
   getUnresolvedReferences() {
     const references = this.references;
     return Object.keys(this.references).filter(
-      alias => !references[alias].resolved && !references[alias].requested
+      (alias) => !references[alias].resolved && !references[alias].requested
     );
   }
 }
