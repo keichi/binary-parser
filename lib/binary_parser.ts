@@ -782,7 +782,7 @@ export class Parser {
     )(
       ctx.imports,
       typeof TextDecoder === 'undefined'
-        ? require('util').TextDecoder
+        ? require('text-encoding').TextDecoder
         : TextDecoder
     );
   }
