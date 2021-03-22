@@ -20,7 +20,8 @@
     "prepare": "npm run build"
   },
   "files": [
-    "dist/*.js"
+    "dist/*.js",
+    "dist/*.d.ts"
   ],
   "keywords": [
     "binary",
