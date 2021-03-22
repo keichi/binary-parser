@@ -1,3 +1,4 @@
+import 'fast-text-encoding';
 import { Context } from './context';
 import { SmartBuffer } from 'smart-buffer';
 
@@ -779,12 +780,7 @@ export class Parser {
       importPath,
       'TextDecoder',
       `return function (buffer, constructorFn) { ${ctx.code} };`
-    )(
-      ctx.imports,
-      typeof TextDecoder === 'undefined'
-        ? require('text-encoding').TextDecoder
-        : TextDecoder
-    );
+    )(ctx.imports, TextDecoder);
   }
 
   compileEncode() {
