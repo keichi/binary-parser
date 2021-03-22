@@ -3,11 +3,15 @@
   "version": "1.7.0",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
+  "dependencies": {
+    "fast-text-encoding": "^1.0.3"
+  },
   "devDependencies": {
+    "@types/fast-text-encoding": "^1.0.1",
+    "@types/node": "^14.14.0",
     "mocha": "^8.2.0",
     "nyc": "^15.1.0",
     "prettier": "^2.1.2",
-    "@types/node": "^14.14.0",
     "typescript": "^4.0.3"
   },
   "scripts": {
