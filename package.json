@@ -58,6 +58,6 @@
   },
   "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=10"
   }
 }
