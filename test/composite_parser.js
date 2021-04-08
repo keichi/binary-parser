@@ -897,7 +897,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from(new TextEncoder().encode('John\0Doe\0'));
-        assert.deepEqual(personParser.parse(buffer), {
+        assert.deepStrictEqual(personParser.parse(buffer), {
           name: 'John Doe',
         });
       });
