@@ -928,7 +928,7 @@ export class Parser {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(dataView.getUint8(offset++) !== 0 && offset - ${start}  < ${len});`
+        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
@@ -949,7 +949,7 @@ export class Parser {
       ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
       ctx.pushCode(
         isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');`
+          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
           : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
       );
     } else if (this.options.greedy) {
@@ -957,7 +957,7 @@ export class Parser {
       ctx.pushCode('while(buffer.length > offset++);');
       ctx.pushCode(
         isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');`
+          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
           : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
       );
     }
