@@ -28,6 +28,7 @@ interface ParserOptions {
   key?: string;
   tag?: string;
   offset?: number | string | ((item: any) => number);
+  wrapper?: (buffer: Buffer) => Buffer;
 }
 
 interface EncoderOptions {
@@ -46,6 +47,7 @@ type ComplexTypes =
   | 'seek'
   | 'pointer'
   | 'saveOffset'
+  | 'wrapper'
   | '';
 
 type Endianess = 'be' | 'le';
@@ -510,6 +512,18 @@ export class Parser {
     return this.setNextParser('buffer', varName, options);
   }
 
+  wrapped(varName: string, options: ParserOptions) {
+    if (!options.length && !options.readUntil) {
+      throw new Error('Length nor readUntil is defined in buffer parser');
+    }
+
+    if (!options.wrapper || !options.type) {
+      throw new Error('Both wrapper and type must be defined in wrapper parser');
+    }
+
+    return this.setNextParser('wrapper', varName, options);
+  }
+
   array(varName: string, options: ParserOptions) {
     if (!options.readUntil && !options.length && !options.lengthInBytes) {
       throw new Error('Length option of array is not defined.');
@@ -940,6 +954,9 @@ export class Parser {
           break;
         case 'saveOffset':
           this.generateSaveOffset(ctx);
+          break;
+        case 'wrapper':
+          this.generateWrapper(ctx);
           break;
       }
       this.generateAssert(ctx);
@@ -1666,6 +1683,70 @@ export class Parser {
         ctx.addReference(this.options.type);
       }
     }
+  }
+  
+  private generateWrapper(ctx: Context) {
+    const wrapperVar = ctx.generateVariable(this.varName);
+    const wrappedBuf = ctx.generateTmpVariable();
+    if (typeof this.options.readUntil === 'function') {
+      const pred = this.options.readUntil;
+      const start = ctx.generateTmpVariable();
+      const cur = ctx.generateTmpVariable();
+
+      ctx.pushCode(`var ${start} = offset;`);
+      ctx.pushCode(`var ${cur} = 0;`);
+      ctx.pushCode(`while (offset < buffer.length) {`);
+      ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
+      const func = ctx.addImport(pred);
+      ctx.pushCode(
+        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
+      );
+      ctx.pushCode(`offset += 1;`);
+      ctx.pushCode(`}`);
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(${start}, offset);`);
+    } else if (this.options.readUntil === 'eof') {
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset);`);
+    } else {
+      const len = ctx.generateOption(this.options.length);
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset, offset + ${len});`);
+      ctx.pushCode(`offset += ${len};`);
+    }
+
+    if (this.options.clone) {
+      ctx.pushCode(`${wrappedBuf} = buffer.constructor.from(${wrappedBuf});`);
+    }
+
+    const tempBuf = ctx.generateTmpVariable();
+    const tempOff = ctx.generateTmpVariable();
+    const tempView = ctx.generateTmpVariable();
+    const func = ctx.addImport(this.options.wrapper);
+    ctx.pushCode(
+      `${wrappedBuf} = ${func}.call(this, ${wrappedBuf}).subarray(0);`
+    );
+    ctx.pushCode(`var ${tempBuf} = buffer;`);
+    ctx.pushCode(`var ${tempOff} = offset;`);
+    ctx.pushCode(`var ${tempView} = dataView;`);
+    ctx.pushCode(`buffer = ${wrappedBuf};`);
+    ctx.pushCode(`offset = 0;`);
+    ctx.pushCode(`dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);`);
+    if (this.options.type instanceof Parser) {
+      if (this.varName) {
+        ctx.pushCode(`${wrapperVar} = {};`);
+      }
+      ctx.pushPath(this.varName);
+      this.options.type.generate(ctx);
+      ctx.popPath(this.varName);
+    } else if (aliasRegistry[this.options.type]) {
+      const tempVar = ctx.generateTmpVariable();
+      ctx.pushCode(
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`
+      );
+      ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
+      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
+    }
+    ctx.pushCode(`buffer = ${tempBuf};`);
+    ctx.pushCode(`dataView = ${tempView};`);
+    ctx.pushCode(`offset = ${tempOff};`);
   }
 
   private generateFormatter(
