@@ -2,6 +2,8 @@ require('fast-text-encoding');
 var assert = require('assert');
 var Parser = require('../dist/binary_parser').Parser;
 
+const zlib = require("zlib");
+
 const suite = (Buffer) =>
   describe(`Composite parser (${Buffer.name})`, function () {
     function hexToBuf(hex) {
@@ -1099,6 +1101,46 @@ const suite = (Buffer) =>
           });
         }
       });
+    });
+
+    describe('Wrapper', function () {
+      it('should parse deflated then inflated data', function () {
+        var text = 'This is compressible text.\0';
+        var bufferBefore = Buffer.from([
+          ...Buffer.from([12]),
+          ...Buffer.from(new TextEncoder().encode(text)),
+          ...Buffer.from([34]),
+            ]
+        );
+        var compressedData = zlib.deflateRawSync(bufferBefore);
+
+        var buffer = Buffer.from([
+            ...new Uint8Array(new Uint32Array([compressedData.length]).buffer),
+            ...compressedData,
+            ...new Uint8Array([42])
+        ]);
+
+        var bufferParser = Parser.start().uint8("a").string("b", {
+          zeroTerminated: true
+        }).uint8("c");
+
+        var mainParser = Parser.start()
+            .uint32le('length')
+            .wrapped('compressedData', {
+              length: 'length',
+              wrapper: function buffer(x) {
+                return zlib.inflateRawSync(x)
+              },
+              type: bufferParser
+            })
+            .uint8('answer');
+        assert.deepStrictEqual(mainParser.
+        parse(buffer), {
+            length: compressedData.length,
+            compressedData: { num1: 12, b: text.substring(0,text.length-1), c: 34},
+            answer: 42
+          });
+        });
     });
   });
 
