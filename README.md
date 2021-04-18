@@ -428,6 +428,49 @@ var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
 parser.parse(buffer);
 ```
 
+### wrapped(name[, options])
+Read data then wrap it by transforming it by a function for further parsing.  
+It works similarly to a buffer where it reads a block of data. But instead of returning the buffer it 
+will pass it on to a parser for further processing.
+- `wrapper` - (Required) A function taking a buffer and returning a buffer (`(x: Buffer | Uint8Array ) => Buffer | Uint8Array`) 
+  transforming the buffer into a buffer expected by `type`.
+- `type` - (Required) A `Parser` object to parse the result of wrapper.
+- `length ` - (either `length` or `readUntil` is required) Length of the
+  buffer. Can be a number, string or a function. Use number for statically
+  sized buffers, string to reference another variable and function to do some
+  calculation.
+- `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
+  this parser will read till it reaches the end of the `Buffer`/`Uint8Array`
+  object. If it is a function, this parser will read the buffer until the
+  function returns true.
+
+```javascript
+const zlib = require('zlib');
+// A parser to run on the data returned by the wrapper
+var textParser = Parser.start()
+  .string('text', {
+    zeroTerminated: true,
+  });
+
+var mainParser = Parser.start()
+  // Read length of the data to wrap
+  .uint32le('length')
+  // Read wrapped data 
+  .wrapped('wrappedData', {
+    // Indicate how much data to read, like buffer()
+    length: 'length',
+    // Define function to pre-process the data buffer 
+    wrapper: function (buffer) {
+      // E.g. decompress data and return it for further parsing
+      return zlib.inflateRawSync(buffer);
+    },
+    // The parser to run the dec
+    type: textParser,
+  });
+mainParser.parse(buffer);
+```
+
+
 ### compile()
 Compile this parser on-the-fly and cache its result. Usually, there is no need
 to call this method directly, since it's called when `parse(buffer)` is
