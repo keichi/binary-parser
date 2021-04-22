@@ -1,6 +1,6 @@
 {
   "name": "binary-parser-encoder",
-  "version": "1.5.3",
+  "version": "1.8.0",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "types": "dist/binary_parser.d.ts",
@@ -43,7 +43,7 @@
   "author": {
     "name": "Keichi Takahashi",
     "email": "keichi.t@me.com",
-    "url": "https://keichi.net/"
+    "url": "https://keichi.dev/"
   },
   "contributors": [
     {
