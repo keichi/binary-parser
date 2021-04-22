@@ -2,6 +2,8 @@ require('fast-text-encoding');
 var assert = require('assert');
 var Parser = require('../dist/binary_parser').Parser;
 
+const zlib = require('zlib');
+
 const suite = (Buffer) =>
   describe(`Composite parser (${Buffer.name})`, function () {
     function hexToBuf(hex) {
@@ -17,7 +19,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
@@ -29,7 +31,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
@@ -52,7 +54,7 @@ const suite = (Buffer) =>
           0xd3,
           0x04,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 0x02,
           message: [
             { key: 0xca, value: 1234 },
@@ -78,7 +80,7 @@ const suite = (Buffer) =>
           0xd3,
           0x04,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 0x06,
           message: [
             { key: 0xca, value: 1234 },
@@ -95,7 +97,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           message: [
             { key: 0xca, value: 1234 },
             { key: 0xbe, value: 1235 },
@@ -124,7 +126,7 @@ const suite = (Buffer) =>
           0xd3,
           0x04,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 0x06,
           message: [
             { key: 0xca, value: 1234 },
@@ -160,7 +162,7 @@ const suite = (Buffer) =>
           }
         }
 
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 10,
           rows: [
             { length: 5, cols: [0, 0, 0, 0, 0] },
@@ -194,7 +196,7 @@ const suite = (Buffer) =>
           0xff,
           0xff,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
         });
       });
@@ -218,7 +220,7 @@ const suite = (Buffer) =>
           0xff,
           0xff,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           data: [0xff, 0xff, 0xff, 0x01, 0x00],
         });
       });
@@ -242,7 +244,7 @@ const suite = (Buffer) =>
           0xff,
           0xff,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           data: [0xff, 0xff, 0xff, 0x01],
         });
       });
@@ -293,7 +295,7 @@ const suite = (Buffer) =>
           0x62,
           0x62,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           numlumps: 2,
           lumps: {
             AAAAAAAA: {
@@ -319,7 +321,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([0x0a, 0x0a, 0x01, 0x6e]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           data: '10.10.1.110',
         });
       });
@@ -333,7 +335,7 @@ const suite = (Buffer) =>
           });
 
         var buffer = Buffer.from([1, 1, 1, 0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 1,
           data: [
             {
@@ -380,7 +382,7 @@ const suite = (Buffer) =>
           /* 1 */ 1,
           /* 0 */ 0,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           length: 2,
           data: [
             {
@@ -421,13 +423,13 @@ const suite = (Buffer) =>
           .nest('child', { type: ChildParser });
 
         var buffer = Buffer.from([0x1, 0x2]);
-        assert.deepEqual(ParentParser.parse(buffer), {
+        assert.deepStrictEqual(ParentParser.parse(buffer), {
           version: 1,
           child: { data: { v1: 2 } },
         });
 
         buffer = Buffer.from([0x2, 0x3, 0x4]);
-        assert.deepEqual(ParentParser.parse(buffer), {
+        assert.deepStrictEqual(ParentParser.parse(buffer), {
           version: 2,
           child: { data: { v2: 0x0304 } },
         });
@@ -464,7 +466,7 @@ const suite = (Buffer) =>
           0xd2,
           0x04,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag1: 0,
           data1: 12345678,
           tag2: 1,
@@ -485,7 +487,7 @@ const suite = (Buffer) =>
           .int32le('test');
 
         var buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 3,
           data: 0xff,
           test: 314159,
@@ -520,7 +522,7 @@ const suite = (Buffer) =>
           0x6c,
           0x64,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 1,
           data: {
             length: 12,
@@ -528,7 +530,7 @@ const suite = (Buffer) =>
           },
         });
         buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 3,
           data: {
             number: 12345678,
@@ -550,7 +552,7 @@ const suite = (Buffer) =>
           });
 
         var buffer = Buffer.from([1, 1, 1, 0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           type: 1,
           data: {
             type: 1,
@@ -579,7 +581,7 @@ const suite = (Buffer) =>
           });
 
         var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
             left: {
@@ -610,7 +612,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
             left: {
@@ -640,7 +642,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
             left: {
@@ -695,7 +697,7 @@ const suite = (Buffer) =>
           /* right -> */ 1,
           /* -> */ 0,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
             left: {
@@ -748,13 +750,13 @@ const suite = (Buffer) =>
           0x6c,
           0x64,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 1,
           length: 12,
           message: 'hello, world',
         });
         buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 3,
           number: 12345678,
         });
@@ -788,13 +790,13 @@ const suite = (Buffer) =>
           0x6c,
           0x64,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 1,
           length: 12,
           message: 'hello, world',
         });
         buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           tag: 3,
           number: 12345678,
         });
@@ -833,13 +835,13 @@ const suite = (Buffer) =>
           0x6c,
           0x64,
         ]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           selector: '0010', // -> choice 2
           length: 12,
           message: 'hello, world',
         });
         buffer = Buffer.from([48, 49, 49, 49, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer), {
           selector: '0111', // -> choice 7
           number: 12345678,
         });
@@ -868,7 +870,7 @@ const suite = (Buffer) =>
           ...Buffer.from(new TextEncoder().encode('John\0Doe\0')),
           ...Buffer.from([0x20]),
         ]);
-        assert.deepEqual(personParser.parse(buffer), {
+        assert.deepStrictEqual(personParser.parse(buffer), {
           name: {
             firstName: 'John',
             lastName: 'Doe',
@@ -895,7 +897,7 @@ const suite = (Buffer) =>
         });
 
         var buffer = Buffer.from(new TextEncoder().encode('John\0Doe\0'));
-        assert.deepEqual(personParser.parse(buffer), {
+        assert.deepStrictEqual(personParser.parse(buffer), {
           name: 'John Doe',
         });
       });
@@ -909,7 +911,7 @@ const suite = (Buffer) =>
 
         var buf = Buffer.from(new TextEncoder().encode('foo\0bar\0'));
 
-        assert.deepEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
+        assert.deepStrictEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
       });
 
       it("should 'flatten' output when omitting varName", function () {
@@ -919,7 +921,7 @@ const suite = (Buffer) =>
 
         var buf = Buffer.from(new TextEncoder().encode('foo\0bar\0'));
 
-        assert.deepEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
+        assert.deepStrictEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
       });
     });
 
@@ -938,7 +940,7 @@ const suite = (Buffer) =>
         var buffer = Buffer.from(new TextEncoder().encode('John Doe\0'));
         var person = parser.parse(buffer);
         assert.ok(person instanceof Person);
-        assert.equal(person.name, 'John Doe');
+        assert.strictEqual(person.name, 'John Doe');
       });
     });
 
@@ -947,7 +949,7 @@ const suite = (Buffer) =>
         var parser = Parser.start().pointer('x', { type: 'uint8', offset: 2 });
         var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        assert.deepEqual(parser.parse(buf), { x: 3 });
+        assert.deepStrictEqual(parser.parse(buf), { x: 3 });
       });
 
       it('should restore pointer to original position', function () {
@@ -956,7 +958,7 @@ const suite = (Buffer) =>
           .uint16be('y');
         var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        assert.deepEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
+        assert.deepStrictEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
       });
 
       it('should work with child parser', function () {
@@ -968,7 +970,7 @@ const suite = (Buffer) =>
           });
         var buf = Buffer.from(new TextEncoder().encode('\1\2\3\4hello\0\6'));
 
-        assert.deepEqual(parser.parse(buf), {
+        assert.deepStrictEqual(parser.parse(buf), {
           x: 0x04030201,
           y: { s: 'hello' },
         });
@@ -988,7 +990,7 @@ const suite = (Buffer) =>
         });
       var buf = Buffer.from(new TextEncoder().encode('\0\6\0\0\1\2\3\4\5\6'));
 
-      assert.deepEqual(parser.parse(buf), {
+      assert.deepStrictEqual(parser.parse(buf), {
         len: 6,
         child: { a: [1, 2, 3, 4, 5, 6] },
       });
@@ -1002,7 +1004,7 @@ const suite = (Buffer) =>
           .int16('b')
           .saveOffset('bytesRead');
 
-        assert.deepEqual(parser.parse(buff), {
+        assert.deepStrictEqual(parser.parse(buff), {
           a: 1,
           b: 2,
           bytesRead: 3,
@@ -1016,7 +1018,7 @@ const suite = (Buffer) =>
           .saveOffset('bytesRead')
           .int16('b');
 
-        assert.deepEqual(parser.parse(buff), {
+        assert.deepStrictEqual(parser.parse(buff), {
           a: 1,
           b: 2,
           bytesRead: 1,
@@ -1029,7 +1031,7 @@ const suite = (Buffer) =>
           .string('name', { zeroTerminated: true })
           .saveOffset('bytesRead');
 
-        assert.deepEqual(parser.parse(buff), {
+        assert.deepStrictEqual(parser.parse(buff), {
           name: 'test',
           bytesRead: 5,
         });
@@ -1049,7 +1051,7 @@ const suite = (Buffer) =>
           })
           .buffer('raw', { length: 8 });
 
-        assert.equal(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
+        assert.strictEqual(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
       });
       it('should assert parsed values', function () {
         var parser = Parser.start().string('msg', {
@@ -1093,11 +1095,56 @@ const suite = (Buffer) =>
         for (var i = 17; i <= 24; i++) {
           var parser = Parser.start()['bit' + i]('a').uint8('b');
 
-          assert.deepEqual(parser.parse(buffer), {
+          assert.deepStrictEqual(parser.parse(buffer), {
             a: 1 << (i - 16),
             b: 4,
           });
         }
+      });
+    });
+
+    describe('Wrapper', function () {
+      it('should parse deflated then inflated data', function () {
+        var text = 'This is compressible text.\0';
+        var bufferBefore = Buffer.from([
+          ...Buffer.from([12]),
+          ...Buffer.from(new TextEncoder().encode(text)),
+          ...Buffer.from([34]),
+        ]);
+        var compressedData = zlib.deflateRawSync(bufferBefore);
+
+        var buffer = Buffer.from([
+          ...new Uint8Array(new Uint32Array([compressedData.length]).buffer),
+          ...compressedData,
+          ...new Uint8Array([42]),
+        ]);
+
+        var bufferParser = Parser.start()
+          .uint8('a')
+          .string('b', {
+            zeroTerminated: true,
+          })
+          .uint8('c');
+
+        var mainParser = Parser.start()
+          .uint32le('length')
+          .wrapped('compressedData', {
+            length: 'length',
+            wrapper: function buffer(x) {
+              return zlib.inflateRawSync(x);
+            },
+            type: bufferParser,
+          })
+          .uint8('answer');
+        assert.deepStrictEqual(mainParser.parse(buffer), {
+          length: compressedData.length,
+          compressedData: {
+            a: 12,
+            b: text.substring(0, text.length - 1),
+            c: 34,
+          },
+          answer: 42,
+        });
       });
     });
   });

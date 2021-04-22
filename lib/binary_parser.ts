@@ -21,6 +21,7 @@ interface ParserOptions {
   key?: null;
   tag?: string;
   offset?: number | string | ((item: any) => number);
+  wrapper?: (buffer: Buffer) => Buffer;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -35,6 +36,7 @@ type ComplexTypes =
   | 'seek'
   | 'pointer'
   | 'saveOffset'
+  | 'wrapper'
   | '';
 
 type Endianess = 'be' | 'le';
@@ -213,9 +215,11 @@ export class Parser {
   uint16(varName: string, options?: ParserOptions) {
     return this.primitiveN(this.useThisEndian('uint16'), varName, options);
   }
+
   uint16le(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint16le', varName, options);
   }
+
   uint16be(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint16be', varName, options);
   }
@@ -223,9 +227,11 @@ export class Parser {
   uint32(varName: string, options?: ParserOptions) {
     return this.primitiveN(this.useThisEndian('uint32'), varName, options);
   }
+
   uint32le(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint32le', varName, options);
   }
+
   uint32be(varName: string, options?: ParserOptions) {
     return this.primitiveN('uint32be', varName, options);
   }
@@ -237,9 +243,11 @@ export class Parser {
   int16(varName: string, options?: ParserOptions) {
     return this.primitiveN(this.useThisEndian('int16'), varName, options);
   }
+
   int16le(varName: string, options?: ParserOptions) {
     return this.primitiveN('int16le', varName, options);
   }
+
   int16be(varName: string, options?: ParserOptions) {
     return this.primitiveN('int16be', varName, options);
   }
@@ -247,9 +255,11 @@ export class Parser {
   int32(varName: string, options?: ParserOptions) {
     return this.primitiveN(this.useThisEndian('int32'), varName, options);
   }
+
   int32le(varName: string, options?: ParserOptions) {
     return this.primitiveN('int32le', varName, options);
   }
+
   int32be(varName: string, options?: ParserOptions) {
     return this.primitiveN('int32be', varName, options);
   }
@@ -258,14 +268,17 @@ export class Parser {
     if (!DataView.prototype.getBigInt64)
       throw new Error('BigInt64 is unsupported in this runtime');
   }
+
   int64(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian('int64'), varName, options);
   }
+
   int64be(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
     return this.primitiveN('int64be', varName, options);
   }
+
   int64le(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
     return this.primitiveN('int64le', varName, options);
@@ -275,10 +288,12 @@ export class Parser {
     this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian('uint64'), varName, options);
   }
+
   uint64be(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
     return this.primitiveN('uint64be', varName, options);
   }
+
   uint64le(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
     return this.primitiveN('uint64le', varName, options);
@@ -287,6 +302,7 @@ export class Parser {
   floatle(varName: string, options?: ParserOptions) {
     return this.primitiveN('floatle', varName, options);
   }
+
   floatbe(varName: string, options?: ParserOptions) {
     return this.primitiveN('floatbe', varName, options);
   }
@@ -294,6 +310,7 @@ export class Parser {
   doublele(varName: string, options?: ParserOptions) {
     return this.primitiveN('doublele', varName, options);
   }
+
   doublebe(varName: string, options?: ParserOptions) {
     return this.primitiveN('doublebe', varName, options);
   }
@@ -305,99 +322,131 @@ export class Parser {
     options.length = size;
     return this.setNextParser('bit', varName, options);
   }
+
   bit1(varName: string, options?: ParserOptions) {
     return this.bitN(1, varName, options);
   }
+
   bit2(varName: string, options?: ParserOptions) {
     return this.bitN(2, varName, options);
   }
+
   bit3(varName: string, options?: ParserOptions) {
     return this.bitN(3, varName, options);
   }
+
   bit4(varName: string, options?: ParserOptions) {
     return this.bitN(4, varName, options);
   }
+
   bit5(varName: string, options?: ParserOptions) {
     return this.bitN(5, varName, options);
   }
+
   bit6(varName: string, options?: ParserOptions) {
     return this.bitN(6, varName, options);
   }
+
   bit7(varName: string, options?: ParserOptions) {
     return this.bitN(7, varName, options);
   }
+
   bit8(varName: string, options?: ParserOptions) {
     return this.bitN(8, varName, options);
   }
+
   bit9(varName: string, options?: ParserOptions) {
     return this.bitN(9, varName, options);
   }
+
   bit10(varName: string, options?: ParserOptions) {
     return this.bitN(10, varName, options);
   }
+
   bit11(varName: string, options?: ParserOptions) {
     return this.bitN(11, varName, options);
   }
+
   bit12(varName: string, options?: ParserOptions) {
     return this.bitN(12, varName, options);
   }
+
   bit13(varName: string, options?: ParserOptions) {
     return this.bitN(13, varName, options);
   }
+
   bit14(varName: string, options?: ParserOptions) {
     return this.bitN(14, varName, options);
   }
+
   bit15(varName: string, options?: ParserOptions) {
     return this.bitN(15, varName, options);
   }
+
   bit16(varName: string, options?: ParserOptions) {
     return this.bitN(16, varName, options);
   }
+
   bit17(varName: string, options?: ParserOptions) {
     return this.bitN(17, varName, options);
   }
+
   bit18(varName: string, options?: ParserOptions) {
     return this.bitN(18, varName, options);
   }
+
   bit19(varName: string, options?: ParserOptions) {
     return this.bitN(19, varName, options);
   }
+
   bit20(varName: string, options?: ParserOptions) {
     return this.bitN(20, varName, options);
   }
+
   bit21(varName: string, options?: ParserOptions) {
     return this.bitN(21, varName, options);
   }
+
   bit22(varName: string, options?: ParserOptions) {
     return this.bitN(22, varName, options);
   }
+
   bit23(varName: string, options?: ParserOptions) {
     return this.bitN(23, varName, options);
   }
+
   bit24(varName: string, options?: ParserOptions) {
     return this.bitN(24, varName, options);
   }
+
   bit25(varName: string, options?: ParserOptions) {
     return this.bitN(25, varName, options);
   }
+
   bit26(varName: string, options?: ParserOptions) {
     return this.bitN(26, varName, options);
   }
+
   bit27(varName: string, options?: ParserOptions) {
     return this.bitN(27, varName, options);
   }
+
   bit28(varName: string, options?: ParserOptions) {
     return this.bitN(28, varName, options);
   }
+
   bit29(varName: string, options?: ParserOptions) {
     return this.bitN(29, varName, options);
   }
+
   bit30(varName: string, options?: ParserOptions) {
     return this.bitN(30, varName, options);
   }
+
   bit31(varName: string, options?: ParserOptions) {
     return this.bitN(31, varName, options);
   }
+
   bit32(varName: string, options?: ParserOptions) {
     return this.bitN(32, varName, options);
   }
@@ -447,6 +496,20 @@ export class Parser {
     }
 
     return this.setNextParser('buffer', varName, options);
+  }
+
+  wrapped(varName: string, options: ParserOptions) {
+    if (!options.length && !options.readUntil) {
+      throw new Error('Length nor readUntil is defined in buffer parser');
+    }
+
+    if (!options.wrapper || !options.type) {
+      throw new Error(
+        'Both wrapper and type must be defined in wrapper parser'
+      );
+    }
+
+    return this.setNextParser('wrapper', varName, options);
   }
 
   array(varName: string, options: ParserOptions) {
@@ -789,6 +852,9 @@ export class Parser {
         case 'saveOffset':
           this.generateSaveOffset(ctx);
           break;
+        case 'wrapper':
+          this.generateWrapper(ctx);
+          break;
       }
       this.generateAssert(ctx);
     }
@@ -911,7 +977,7 @@ export class Parser {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(dataView.getUint8(offset++) !== 0 && offset - ${start}  < ${len});`
+        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
@@ -932,7 +998,7 @@ export class Parser {
       ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
       ctx.pushCode(
         isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1)), ${toHex}).join('');`
+          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
           : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
       );
     } else if (this.options.greedy) {
@@ -940,7 +1006,7 @@ export class Parser {
       ctx.pushCode('while(buffer.length > offset++);');
       ctx.pushCode(
         isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset)), ${toHex}).join('');`
+          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
           : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
       );
     }
@@ -1125,6 +1191,72 @@ export class Parser {
       );
       if (this.options.type !== this.alias) ctx.addReference(this.options.type);
     }
+  }
+
+  private generateWrapper(ctx: Context) {
+    const wrapperVar = ctx.generateVariable(this.varName);
+    const wrappedBuf = ctx.generateTmpVariable();
+    if (typeof this.options.readUntil === 'function') {
+      const pred = this.options.readUntil;
+      const start = ctx.generateTmpVariable();
+      const cur = ctx.generateTmpVariable();
+
+      ctx.pushCode(`var ${start} = offset;`);
+      ctx.pushCode(`var ${cur} = 0;`);
+      ctx.pushCode(`while (offset < buffer.length) {`);
+      ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
+      const func = ctx.addImport(pred);
+      ctx.pushCode(
+        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
+      );
+      ctx.pushCode(`offset += 1;`);
+      ctx.pushCode(`}`);
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(${start}, offset);`);
+    } else if (this.options.readUntil === 'eof') {
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset);`);
+    } else {
+      const len = ctx.generateOption(this.options.length);
+      ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset, offset + ${len});`);
+      ctx.pushCode(`offset += ${len};`);
+    }
+
+    if (this.options.clone) {
+      ctx.pushCode(`${wrappedBuf} = buffer.constructor.from(${wrappedBuf});`);
+    }
+
+    const tempBuf = ctx.generateTmpVariable();
+    const tempOff = ctx.generateTmpVariable();
+    const tempView = ctx.generateTmpVariable();
+    const func = ctx.addImport(this.options.wrapper);
+    ctx.pushCode(
+      `${wrappedBuf} = ${func}.call(this, ${wrappedBuf}).subarray(0);`
+    );
+    ctx.pushCode(`var ${tempBuf} = buffer;`);
+    ctx.pushCode(`var ${tempOff} = offset;`);
+    ctx.pushCode(`var ${tempView} = dataView;`);
+    ctx.pushCode(`buffer = ${wrappedBuf};`);
+    ctx.pushCode(`offset = 0;`);
+    ctx.pushCode(
+      `dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);`
+    );
+    if (this.options.type instanceof Parser) {
+      if (this.varName) {
+        ctx.pushCode(`${wrapperVar} = {};`);
+      }
+      ctx.pushPath(this.varName);
+      this.options.type.generate(ctx);
+      ctx.popPath(this.varName);
+    } else if (aliasRegistry[this.options.type]) {
+      const tempVar = ctx.generateTmpVariable();
+      ctx.pushCode(
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`
+      );
+      ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
+      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
+    }
+    ctx.pushCode(`buffer = ${tempBuf};`);
+    ctx.pushCode(`dataView = ${tempView};`);
+    ctx.pushCode(`offset = ${tempOff};`);
   }
 
   private generateFormatter(
