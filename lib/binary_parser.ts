@@ -457,11 +457,11 @@ export class Parser {
     return this;
   }
 
-  skip(length: number, options?: ParserOptions) {
+  skip(length: ParserOptions['length'], options?: ParserOptions) {
     return this.seek(length, options);
   }
 
-  seek(relOffset: number, options?: ParserOptions) {
+  seek(relOffset: ParserOptions['length'], options?: ParserOptions) {
     if (options && options.assert) {
       throw new Error('assert option on seek is not allowed.');
     }
@@ -571,7 +571,7 @@ export class Parser {
     return this.setNextParser('choice', varName as string, options);
   }
 
-  nest(varName: string | ParserOptions, options: ParserOptions) {
+  nest(varName: string | ParserOptions, options?: ParserOptions) {
     if (typeof options !== 'object' && typeof varName === 'object') {
       options = varName;
       varName = null;
