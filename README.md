@@ -603,6 +603,42 @@ These options can be used in all parsers.
       });
     ```
 
+### Context variables
+You can use some special fields while parsing to traverse your structure. These
+context variables will be removed after the parsing process:
+- `$parent` - This field references the parent structure. This variable will be
+  `null` while parsing the root structure.
+  ```js
+  var parser = new Parser()
+    .nest("header", {
+      type: new Parser().uint32("length"),
+    })
+    .array("data", {
+      type: "int32",
+      length: function() {
+        return this.$parent.header.length
+      }
+    })
+  ```
+- `$root` - This field references the root structure.
+  ```js
+  var parser = new Parser()
+    .nest("header", {
+      type: new Parser().uint32("length"),
+    })
+    .nest("data", {
+      type: new Parser()
+        .uint32("value")
+        .array("data", {
+          type: "int32",
+          length: function() {
+            return this.$root.header.length
+          }
+        }),
+    })
+
+  ```
+
 ## Examples
 See `example/` for real-world examples.
 

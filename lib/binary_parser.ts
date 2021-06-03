@@ -757,17 +757,18 @@ export class Parser {
 
   private addRawCode(ctx: Context) {
     ctx.pushCode('var offset = 0;');
-
-    if (this.constructorFn) {
-      ctx.pushCode('var vars = new constructorFn();');
-    } else {
-      ctx.pushCode('var vars = {};');
-    }
+    ctx.pushCode(
+      `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
+    );
+    ctx.pushCode('vars.$parent = null;');
+    ctx.pushCode('vars.$root = vars;');
 
     this.generate(ctx);
 
     this.resolveReferences(ctx);
 
+    ctx.pushCode('delete vars.$parent;');
+    ctx.pushCode('delete vars.$root;');
     ctx.pushCode('return vars;');
   }
 
@@ -785,19 +786,22 @@ export class Parser {
   }
 
   private addAliasedCode(ctx: Context) {
-    ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset) {`);
-
-    if (this.constructorFn) {
-      ctx.pushCode('var vars = new constructorFn();');
-    } else {
-      ctx.pushCode('var vars = {};');
-    }
+    ctx.pushCode(
+      `function ${FUNCTION_PREFIX + this.alias}(offset, parent, root) {`
+    );
+    ctx.pushCode(
+      `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
+    );
+    ctx.pushCode('vars.$parent = parent || null;');
+    ctx.pushCode('vars.$root = root || vars;');
 
     this.generate(ctx);
 
     ctx.markResolved(this.alias);
     this.resolveReferences(ctx);
 
+    ctx.pushCode('delete vars.$parent;');
+    ctx.pushCode('delete vars.$root;');
     ctx.pushCode('return { offset: offset, result: vars };');
     ctx.pushCode('}');
 
@@ -1461,18 +1465,28 @@ export class Parser {
         );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
+        const parentVar = ctx.generateVariable();
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
+        ctx.pushCode(
+          `var ${tempVar} = ${
+            FUNCTION_PREFIX + type
+          }(offset, ${parentVar}, ${parentVar}.$root);`
+        );
         ctx.pushCode(
           `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`
         );
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
+      const parentVar = ctx.generateVariable();
       ctx.pushCode(`var ${item} = {};`);
 
       ctx.pushScope(item);
+      ctx.pushCode(`${item}.$parent = ${parentVar};`);
+      ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
       type.generate(ctx);
+      ctx.pushCode(`delete ${item}.$parent`);
+      ctx.pushCode(`delete ${item}.$root`);
       ctx.popScope();
     }
 
@@ -1604,7 +1618,11 @@ export class Parser {
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset);`);
+        ctx.pushCode(
+          `var ${tempVar} = ${
+            FUNCTION_PREFIX + type
+          }(offset, ${varName}.$parent, ${varName}.$root);`
+        );
         ctx.pushCode(
           `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`
         );
@@ -1648,8 +1666,14 @@ export class Parser {
 
   private generateChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
+    const nestVar = ctx.generateVariable(this.varName);
+
     if (this.varName) {
-      ctx.pushCode(`${ctx.generateVariable(this.varName)} = {};`);
+      ctx.pushCode(`${nestVar} = {};`);
+
+      const parentVar = ctx.generateVariable();
+      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
     }
     ctx.pushCode(`switch(${tag}) {`);
     Object.keys(this.options.choices).forEach((tag) => {
@@ -1666,6 +1690,11 @@ export class Parser {
       ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
     }
     ctx.pushCode('}');
+
+    if (this.varName) {
+      ctx.pushCode(`delete ${nestVar}.$parent`);
+      ctx.pushCode(`delete ${nestVar}.$root`);
+    }
   }
 
   private generate_encodeChoice(ctx: Context) {
@@ -1696,15 +1725,25 @@ export class Parser {
 
     if (this.options.type instanceof Parser) {
       if (this.varName) {
+        const parentVar = ctx.generateVariable();
         ctx.pushCode(`${nestVar} = {};`);
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
       }
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
+      if (this.varName) {
+        ctx.pushCode(`delete ${nestVar}.$parent`);
+        ctx.pushCode(`delete ${nestVar}.$root`);
+      }
     } else if (aliasRegistry[this.options.type]) {
+      const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`
+        `var ${tempVar} = ${
+          FUNCTION_PREFIX + this.options.type
+        }(offset, ${parentVar}, ${parentVar}.$root);`
       );
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
@@ -1830,14 +1869,22 @@ export class Parser {
     ctx.pushCode(`offset = ${offset};`);
 
     if (this.options.type instanceof Parser) {
+      const parentVar = ctx.generateVariable();
       ctx.pushCode(`${nestVar} = {};`);
+      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
+      ctx.pushCode(`delete ${nestVar}.$parent`);
+      ctx.pushCode(`delete ${nestVar}.$root`);
     } else if (aliasRegistry[this.options.type]) {
+      const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset);`
+        `var ${tempVar} = ${
+          FUNCTION_PREFIX + this.options.type
+        }(offset, ${parentVar}, ${parentVar}.$root);`
       );
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
