@@ -11,7 +11,7 @@ interface ParserOptions {
   type?: string | Parser;
   formatter?: (item: any) => string | number;
   encoding?: string;
-  readUntil?: 'eof';
+  readUntil?: 'eof' | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
   choices?: { [key: number]: string | Parser };
   defaultChoice?: string | Parser;
@@ -1029,7 +1029,7 @@ export class Parser {
       ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
+        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
@@ -1115,7 +1115,7 @@ export class Parser {
       const pred = this.options.readUntil;
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `while (!${func}.call(this, ${item}, buffer.subarray(offset)));`
+        `while (!${func}.call(${ctx.generateVariable()}, ${item}, buffer.subarray(offset)));`
       );
     }
   }
@@ -1207,7 +1207,7 @@ export class Parser {
       ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${func}.call(this, ${cur}, buffer.subarray(offset))) break;`
+        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
@@ -1266,7 +1266,9 @@ export class Parser {
   ) {
     if (typeof formatter === 'function') {
       const func = ctx.addImport(formatter);
-      ctx.pushCode(`${varName} = ${func}.call(this, ${varName});`);
+      ctx.pushCode(
+        `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`
+      );
     }
   }
 
