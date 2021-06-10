@@ -4,7 +4,6 @@ var fs = require('fs');
 var chs = new Parser({
   formatter: function (val) {
     val.cylinder |= val.cylinderHigh << 8;
-    delete val.cylinderHigh;
     return val;
   },
 })
@@ -17,10 +16,18 @@ var partitionTable = new Parser()
   .uint8('bootFlag')
   .nest('startCHS', {
     type: chs,
+    formatter: function (val) {
+      delete val.cylinderHigh;
+      return val;
+    },
   })
   .uint8('type')
   .nest('endCHS', {
     type: chs,
+    formatter: function (val) {
+      delete val.cylinderHigh;
+      return val;
+    },
   })
   .uint32le('startLBA')
   .uint32le('endLBA');
