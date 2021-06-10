@@ -62,6 +62,74 @@ const suite = (Buffer) =>
           ],
         });
       });
+      it('should parse array of user defined types and have access to parent context', function () {
+        var elementParser = new Parser().uint8('key').array('value', {
+          type: "uint8",
+          length: function () {
+            return this.$parent.valueLength;
+          }
+        });
+
+        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
+          length: 'length',
+          type: elementParser,
+        });
+
+        var buffer = Buffer.from([
+          0x02,
+          0x00,
+          0x02,
+          0x00,
+          0xca,
+          0xd2,
+          0x04,
+          0xbe,
+          0xd3,
+          0x04,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          length: 0x02,
+          valueLength: 0x02,
+          message: [
+            { key: 0xca, value: [0xd2, 0x04] },
+            { key: 0xbe, value: [0xd3, 0x04] },
+          ],
+        });
+      });
+      it('should parse array of user defined types and have access to root context', function () {
+        var elementParser = new Parser().uint8('key').nest("data", {
+          type: new Parser().array('value', {
+            type: "uint8",
+            length: "$root.valueLength"
+          })
+        });
+
+        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
+          length: 'length',
+          type: elementParser,
+        });
+
+        var buffer = Buffer.from([
+          0x02,
+          0x00,
+          0x02,
+          0x00,
+          0xca,
+          0xd2,
+          0x04,
+          0xbe,
+          0xd3,
+          0x04,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          length: 0x02,
+          valueLength: 0x02,
+          message: [
+            { key: 0xca, data: {value: [0xd2, 0x04]} },
+            { key: 0xbe, data: {value: [0xd3, 0x04]} },
+          ],
+        });
+      });
       it('should parse array of user defined types with lengthInBytes', function () {
         var elementParser = new Parser().uint8('key').int16le('value');
 
@@ -493,7 +561,7 @@ const suite = (Buffer) =>
           test: 314159,
         });
       });
-      it('should parse choices of user defied types', function () {
+      it('should parse choices of user defined types', function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice('data', {
@@ -761,7 +829,7 @@ const suite = (Buffer) =>
           number: 12345678,
         });
       });
-      it("should be able to 'flatten' choices when omitting varName paramater", function () {
+      it("should be able to 'flatten' choices when omitting varName parameter", function () {
         var parser = Parser.start()
           .uint8('tag')
           .choice({
@@ -846,6 +914,60 @@ const suite = (Buffer) =>
           number: 12345678,
         });
       });
+      it('should be able to use parsing context', function () {
+        var parser = Parser.start()
+          .uint8('tag')
+          .uint8('items')
+          .choice('data', {
+            tag: 'tag',
+            choices: {
+              1: Parser.start()
+                .uint8('length')
+                .string('message', { length: 'length' })
+                .array('value', { type: "uint8", length: "$parent.items"}),
+              3: Parser.start().int32le('number'),
+            },
+          });
+
+        var buffer = Buffer.from([
+          0x1,
+          0x2,
+          0xc,
+          0x68,
+          0x65,
+          0x6c,
+          0x6c,
+          0x6f,
+          0x2c,
+          0x20,
+          0x77,
+          0x6f,
+          0x72,
+          0x6c,
+          0x64,
+          0x01,
+          0x02,
+          0x02,
+          0x02,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          tag: 1,
+          items: 2,
+          data: {
+            length: 12,
+            message: 'hello, world',
+            value: [0x01, 0x02],
+          },
+        });
+        buffer = Buffer.from([0x03, 0x0, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          tag: 3,
+          items: 0,
+          data: {
+            number: 12345678,
+          },
+        });
+      });
     });
 
     describe('Nest parser', function () {
@@ -922,6 +1044,46 @@ const suite = (Buffer) =>
         var buf = Buffer.from(new TextEncoder().encode('foo\0bar\0'));
 
         assert.deepStrictEqual(parser.parse(buf), { s1: 'foo', s2: 'bar' });
+      });
+
+      it('should be able to use parsing context', function () {
+        var parser = Parser.start()
+          .uint8('items')
+          .nest('data', {
+              type: Parser.start()
+                .uint8('length')
+                .string('message', { length: 'length' })
+                .array('value', { type: "uint8", length: "$parent.items"}),
+            });
+
+        var buffer = Buffer.from([
+          0x2,
+          0xc,
+          0x68,
+          0x65,
+          0x6c,
+          0x6c,
+          0x6f,
+          0x2c,
+          0x20,
+          0x77,
+          0x6f,
+          0x72,
+          0x6c,
+          0x64,
+          0x01,
+          0x02,
+          0x02,
+          0x02,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          items: 2,
+          data: {
+            length: 12,
+            message: 'hello, world',
+            value: [0x01, 0x02],
+          },
+        });
       });
     });
 

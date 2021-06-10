@@ -429,10 +429,10 @@ parser.parse(buffer);
 ```
 
 ### wrapped(name[, options])
-Read data then wrap it by transforming it by a function for further parsing.  
-It works similarly to a buffer where it reads a block of data. But instead of returning the buffer it 
+Read data then wrap it by transforming it by a function for further parsing.
+It works similarly to a buffer where it reads a block of data. But instead of returning the buffer it
 will pass it on to a parser for further processing.
-- `wrapper` - (Required) A function taking a buffer and returning a buffer (`(x: Buffer | Uint8Array ) => Buffer | Uint8Array`) 
+- `wrapper` - (Required) A function taking a buffer and returning a buffer (`(x: Buffer | Uint8Array ) => Buffer | Uint8Array`)
   transforming the buffer into a buffer expected by `type`.
 - `type` - (Required) A `Parser` object to parse the result of wrapper.
 - `length ` - (either `length` or `readUntil` is required) Length of the
@@ -455,11 +455,11 @@ var textParser = Parser.start()
 var mainParser = Parser.start()
   // Read length of the data to wrap
   .uint32le('length')
-  // Read wrapped data 
+  // Read wrapped data
   .wrapped('wrappedData', {
     // Indicate how much data to read, like buffer()
     length: 'length',
-    // Define function to pre-process the data buffer 
+    // Define function to pre-process the data buffer
     wrapper: function (buffer) {
       // E.g. decompress data and return it for further parsing
       return zlib.inflateRawSync(buffer);
@@ -518,6 +518,42 @@ These options can be used in all parsers.
         }
       });
     ```
+
+### Context variables
+You can use some special fields while parsing to traverse your structure. These
+context variables will be removed after the parsing process:
+- `$parent` - This field references the parent structure. This variable will be
+  `null` while parsing the root structure.
+  ```js
+  var parser = new Parser()
+    .nest("header", {
+      type: new Parser().uint32("length"),
+    })
+    .array("data", {
+      type: "int32",
+      length: function() {
+        return this.$parent.header.length
+      }
+    })
+  ```
+- `$root` - This field references the root structure.
+  ```js
+  var parser = new Parser()
+    .nest("header", {
+      type: new Parser().uint32("length"),
+    })
+    .nest("data", {
+      type: new Parser()
+        .uint32("value")
+        .array("data", {
+          type: "int32",
+          length: function() {
+            return this.$root.header.length
+          }
+        }),
+    })
+
+  ```
 
 ## Examples
 See `example/` for real-world examples.
