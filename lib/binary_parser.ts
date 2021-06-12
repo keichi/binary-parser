@@ -1,6 +1,6 @@
 import 'fast-text-encoding';
-import { Context } from './context';
 import { SmartBuffer } from 'smart-buffer';
+import { Context } from './context';
 
 const aliasRegistry: { [key: string]: Parser } = {};
 const FUNCTION_PREFIX = '___parser_';
@@ -11,7 +11,7 @@ interface ParserOptions {
   assert?: number | string | ((item: number | string) => boolean);
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
-  formatter?: (item: any) => string | number;
+  formatter?: (item: any) => any;
   encoder?: (item: any) => any;
   encoding?: string;
   readUntil?: 'eof' | ((item: any, buffer: any) => number);
@@ -1772,7 +1772,7 @@ export class Parser {
       }
     }
   }
-  
+
   private generateWrapper(ctx: Context) {
     const wrapperVar = ctx.generateVariable(this.varName);
     const wrappedBuf = ctx.generateTmpVariable();

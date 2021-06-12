@@ -64,16 +64,19 @@ const suite = (Buffer) =>
       });
       it('should parse array of user defined types and have access to parent context', function () {
         var elementParser = new Parser().uint8('key').array('value', {
-          type: "uint8",
+          type: 'uint8',
           length: function () {
             return this.$parent.valueLength;
-          }
+          },
         });
 
-        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
-          length: 'length',
-          type: elementParser,
-        });
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: elementParser,
+          });
 
         var buffer = Buffer.from([
           0x02,
@@ -97,17 +100,20 @@ const suite = (Buffer) =>
         });
       });
       it('should parse array of user defined types and have access to root context', function () {
-        var elementParser = new Parser().uint8('key').nest("data", {
+        var elementParser = new Parser().uint8('key').nest('data', {
           type: new Parser().array('value', {
-            type: "uint8",
-            length: "$root.valueLength"
-          })
+            type: 'uint8',
+            length: '$root.valueLength',
+          }),
         });
 
-        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
-          length: 'length',
-          type: elementParser,
-        });
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: elementParser,
+          });
 
         var buffer = Buffer.from([
           0x02,
@@ -125,8 +131,8 @@ const suite = (Buffer) =>
           length: 0x02,
           valueLength: 0x02,
           message: [
-            { key: 0xca, data: {value: [0xd2, 0x04]} },
-            { key: 0xbe, data: {value: [0xd3, 0x04]} },
+            { key: 0xca, data: { value: [0xd2, 0x04] } },
+            { key: 0xbe, data: { value: [0xd3, 0x04] } },
           ],
         });
       });
@@ -474,7 +480,6 @@ const suite = (Buffer) =>
           ],
         });
       });
-
       it('should allow parent parser attributes as choice key', function () {
         var ChildParser = Parser.start().choice('data', {
           tag: function (vars) {
@@ -924,7 +929,7 @@ const suite = (Buffer) =>
               1: Parser.start()
                 .uint8('length')
                 .string('message', { length: 'length' })
-                .array('value', { type: "uint8", length: "$parent.items"}),
+                .array('value', { type: 'uint8', length: '$parent.items' }),
               3: Parser.start().int32le('number'),
             },
           });
@@ -1050,11 +1055,11 @@ const suite = (Buffer) =>
         var parser = Parser.start()
           .uint8('items')
           .nest('data', {
-              type: Parser.start()
-                .uint8('length')
-                .string('message', { length: 'length' })
-                .array('value', { type: "uint8", length: "$parent.items"}),
-            });
+            type: Parser.start()
+              .uint8('length')
+              .string('message', { length: 'length' })
+              .array('value', { type: 'uint8', length: '$parent.items' }),
+          });
 
         var buffer = Buffer.from([
           0x2,
