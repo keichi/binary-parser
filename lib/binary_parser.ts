@@ -9,7 +9,7 @@ interface ParserOptions {
   assert?: number | string | ((item: number | string) => boolean);
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
-  formatter?: (item: any) => string | number;
+  formatter?: (item: any) => any;
   encoding?: string;
   readUntil?: 'eof' | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
