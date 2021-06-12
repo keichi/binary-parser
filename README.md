@@ -524,7 +524,8 @@ You can use some special fields while parsing to traverse your structure. These
 context variables will be removed after the parsing process:
 - `$parent` - This field references the parent structure. This variable will be
   `null` while parsing the root structure.
-  ```js
+
+  ```javascript
   var parser = new Parser()
     .nest("header", {
       type: new Parser().uint32("length"),
@@ -534,10 +535,12 @@ context variables will be removed after the parsing process:
       length: function() {
         return this.$parent.header.length
       }
-    })
+    });
   ```
+
 - `$root` - This field references the root structure.
-  ```js
+
+  ```javascript
   var parser = new Parser()
     .nest("header", {
       type: new Parser().uint32("length"),
@@ -551,8 +554,30 @@ context variables will be removed after the parsing process:
             return this.$root.header.length
           }
         }),
-    })
+    });
+  ```
 
+- `$index` - This field references the actual index in array parsing. This
+  variable will be available only when using the `length` mode for arrays.
+
+  ```javascript
+  var parser = new Parser()
+    .nest("header", {
+      type: new Parser().uint32("length"),
+    })
+    .nest("data", {
+      type: new Parser()
+        .uint32("value")
+        .array("data", {
+          type: new Parser().nest({
+            type: new Parser().uint8("_tmp"),
+            formatter: function(item) {
+              return this.$index % 2 === 0 ? item._tmp : String.fromCharCode(item._tmp);
+            }
+          }),
+          length: "$root.header.length"
+        }),
+    });
   ```
 
 ## Examples
