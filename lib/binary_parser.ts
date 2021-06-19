@@ -691,9 +691,9 @@ export class Parser {
       `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
     );
     ctx.pushCode(
-      `var ctx = Object.assign({$parent: null, $root: vars}, context || {})`
+      `var ctx = Object.assign({$parent: null, $root: vars}, context || {});`
     );
-    ctx.pushCode(`vars = Object.assign(vars, ctx)`);
+    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
 
     this.generate(ctx);
 
@@ -1118,9 +1118,9 @@ export class Parser {
         ctx.pushCode(`${item}.$index = ${length} - ${counter},`);
       }
       type.generate(ctx);
-      ctx.pushCode(`delete ${item}.$parent`);
-      ctx.pushCode(`delete ${item}.$root`);
-      ctx.pushCode(`delete ${item}.$index`);
+      ctx.pushCode(`delete ${item}.$parent;`);
+      ctx.pushCode(`delete ${item}.$root;`);
+      ctx.pushCode(`delete ${item}.$index;`);
       ctx.popScope();
     }
 
@@ -1201,8 +1201,8 @@ export class Parser {
     ctx.pushCode('}');
 
     if (this.varName) {
-      ctx.pushCode(`delete ${nestVar}.$parent`);
-      ctx.pushCode(`delete ${nestVar}.$root`);
+      ctx.pushCode(`delete ${nestVar}.$parent;`);
+      ctx.pushCode(`delete ${nestVar}.$root;`);
     }
   }
 
@@ -1220,8 +1220,8 @@ export class Parser {
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
       if (this.varName) {
-        ctx.pushCode(`delete ${nestVar}.$parent`);
-        ctx.pushCode(`delete ${nestVar}.$root`);
+        ctx.pushCode(`delete ${nestVar}.$parent;`);
+        ctx.pushCode(`delete ${nestVar}.$root;`);
       }
     } else if (aliasRegistry[this.options.type]) {
       const parentVar = ctx.generateVariable();
@@ -1338,8 +1338,8 @@ export class Parser {
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
-      ctx.pushCode(`delete ${nestVar}.$parent`);
-      ctx.pushCode(`delete ${nestVar}.$root`);
+      ctx.pushCode(`delete ${nestVar}.$parent;`);
+      ctx.pushCode(`delete ${nestVar}.$root;`);
     } else if (aliasRegistry[this.options.type]) {
       const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
