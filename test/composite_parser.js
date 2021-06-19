@@ -11,6 +11,7 @@ const suite = (Buffer) =>
         hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
       );
     }
+
     describe('Array parser', function () {
       it('should parse array of primitive types', function () {
         var parser = Parser.start().uint8('length').array('message', {
@@ -64,16 +65,19 @@ const suite = (Buffer) =>
       });
       it('should parse array of user defined types and have access to parent context', function () {
         var elementParser = new Parser().uint8('key').array('value', {
-          type: "uint8",
+          type: 'uint8',
           length: function () {
             return this.$parent.valueLength;
-          }
+          },
         });
 
-        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
-          length: 'length',
-          type: elementParser,
-        });
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: elementParser,
+          });
 
         var buffer = Buffer.from([
           0x02,
@@ -97,17 +101,20 @@ const suite = (Buffer) =>
         });
       });
       it('should parse array of user defined types and have access to root context', function () {
-        var elementParser = new Parser().uint8('key').nest("data", {
+        var elementParser = new Parser().uint8('key').nest('data', {
           type: new Parser().array('value', {
-            type: "uint8",
-            length: "$root.valueLength"
-          })
+            type: 'uint8',
+            length: '$root.valueLength',
+          }),
         });
 
-        var parser = Parser.start().uint16le('length').uint16le('valueLength').array('message', {
-          length: 'length',
-          type: elementParser,
-        });
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: elementParser,
+          });
 
         var buffer = Buffer.from([
           0x02,
@@ -125,8 +132,8 @@ const suite = (Buffer) =>
           length: 0x02,
           valueLength: 0x02,
           message: [
-            { key: 0xca, data: {value: [0xd2, 0x04]} },
-            { key: 0xbe, data: {value: [0xd3, 0x04]} },
+            { key: 0xca, data: { value: [0xd2, 0x04] } },
+            { key: 0xbe, data: { value: [0xd3, 0x04] } },
           ],
         });
       });
@@ -474,7 +481,6 @@ const suite = (Buffer) =>
           ],
         });
       });
-
       it('should allow parent parser attributes as choice key', function () {
         var ChildParser = Parser.start().choice('data', {
           tag: function (vars) {
@@ -500,6 +506,93 @@ const suite = (Buffer) =>
         assert.deepStrictEqual(ParentParser.parse(buffer), {
           version: 2,
           child: { data: { v2: 0x0304 } },
+        });
+      });
+      it('should be able to access to index context variable when using length', function () {
+        var elementParser = new Parser()
+          .uint8('key', {
+            formatter: function (item) {
+              return this.$index % 2 === 0 ? item : String.fromCharCode(item);
+            },
+          })
+          .nest('data', {
+            type: new Parser().array('value', {
+              type: 'uint8',
+              length: '$root.valueLength',
+            }),
+          });
+
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: elementParser,
+          });
+
+        var buffer = Buffer.from([
+          0x02,
+          0x00,
+          0x02,
+          0x00,
+          0x50,
+          0xd2,
+          0x04,
+          0x51,
+          0xd3,
+          0x04,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          length: 0x02,
+          valueLength: 0x02,
+          message: [
+            { key: 0x50, data: { value: [0xd2, 0x04] } },
+            { key: 'Q', data: { value: [0xd3, 0x04] } },
+          ],
+        });
+      });
+      it('should be able to access to index context variable when using length on named parser', function () {
+        var elementParser = new Parser()
+          .uint8('key', {
+            formatter: function (item) {
+              return this.$index % 2 === 0 ? item : String.fromCharCode(item);
+            },
+          })
+          .nest('data', {
+            type: new Parser().array('value', {
+              type: 'uint8',
+              length: '$root.valueLength',
+            }),
+          })
+          .namely('ArrayLengthIndexTest');
+
+        var parser = Parser.start()
+          .uint16le('length')
+          .uint16le('valueLength')
+          .array('message', {
+            length: 'length',
+            type: 'ArrayLengthIndexTest',
+          });
+
+        var buffer = Buffer.from([
+          0x02,
+          0x00,
+          0x02,
+          0x00,
+          0x50,
+          0xd2,
+          0x04,
+          0x51,
+          0xd3,
+          0x04,
+        ]);
+        assert.deepStrictEqual(parser.parse(buffer), {
+          length: 0x02,
+          valueLength: 0x02,
+          message: [
+            { key: 0x50, data: { value: [0xd2, 0x04] } },
+            { key: 'Q', data: { value: [0xd3, 0x04] } },
+          ],
         });
       });
     });
@@ -924,7 +1017,7 @@ const suite = (Buffer) =>
               1: Parser.start()
                 .uint8('length')
                 .string('message', { length: 'length' })
-                .array('value', { type: "uint8", length: "$parent.items"}),
+                .array('value', { type: 'uint8', length: '$parent.items' }),
               3: Parser.start().int32le('number'),
             },
           });
@@ -1050,11 +1143,11 @@ const suite = (Buffer) =>
         var parser = Parser.start()
           .uint8('items')
           .nest('data', {
-              type: Parser.start()
-                .uint8('length')
-                .string('message', { length: 'length' })
-                .array('value', { type: "uint8", length: "$parent.items"}),
-            });
+            type: Parser.start()
+              .uint8('length')
+              .string('message', { length: 'length' })
+              .array('value', { type: 'uint8', length: '$parent.items' }),
+          });
 
         var buffer = Buffer.from([
           0x2,
@@ -1092,6 +1185,7 @@ const suite = (Buffer) =>
         function Person() {
           this.name = '';
         }
+
         Person.prototype.toString = function () {
           return '[object Person]';
         };

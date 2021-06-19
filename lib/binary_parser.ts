@@ -9,7 +9,7 @@ interface ParserOptions {
   assert?: number | string | ((item: number | string) => boolean);
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
-  formatter?: (item: any) => string | number;
+  formatter?: (item: any) => any;
   encoding?: string;
   readUntil?: 'eof' | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
@@ -686,22 +686,23 @@ export class Parser {
   }
 
   private addAliasedCode(ctx: Context) {
-    ctx.pushCode(
-      `function ${FUNCTION_PREFIX + this.alias}(offset, parent, root) {`
-    );
+    ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
     ctx.pushCode(
       `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
     );
-    ctx.pushCode('vars.$parent = parent || null;');
-    ctx.pushCode('vars.$root = root || vars;');
+    ctx.pushCode(
+      `var ctx = Object.assign({$parent: null, $root: vars}, context || {})`
+    );
+    ctx.pushCode(`vars = Object.assign(vars, ctx)`);
 
     this.generate(ctx);
 
     ctx.markResolved(this.alias);
     this.resolveReferences(ctx);
 
-    ctx.pushCode('delete vars.$parent;');
-    ctx.pushCode('delete vars.$root;');
+    ctx.pushCode(
+      'Object.keys(ctx).forEach(function (item) { delete vars[item]; });'
+    );
     ctx.pushCode('return { offset: offset, result: vars };');
     ctx.pushCode('}');
 
@@ -1094,11 +1095,13 @@ export class Parser {
       } else {
         const parentVar = ctx.generateVariable();
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(
-          `var ${tempVar} = ${
-            FUNCTION_PREFIX + type
-          }(offset, ${parentVar}, ${parentVar}.$root);`
-        );
+        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+        if (!this.options.readUntil && lengthInBytes === undefined) {
+          ctx.pushCode(`$index: ${length} - ${counter},`);
+        }
+        ctx.pushCode(`});`);
         ctx.pushCode(
           `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`
         );
@@ -1111,9 +1114,13 @@ export class Parser {
       ctx.pushScope(item);
       ctx.pushCode(`${item}.$parent = ${parentVar};`);
       ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
+      if (!this.options.readUntil && lengthInBytes === undefined) {
+        ctx.pushCode(`${item}.$index = ${length} - ${counter},`);
+      }
       type.generate(ctx);
       ctx.pushCode(`delete ${item}.$parent`);
       ctx.pushCode(`delete ${item}.$root`);
+      ctx.pushCode(`delete ${item}.$index`);
       ctx.popScope();
     }
 
@@ -1150,11 +1157,10 @@ export class Parser {
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(
-          `var ${tempVar} = ${
-            FUNCTION_PREFIX + type
-          }(offset, ${varName}.$parent, ${varName}.$root);`
-        );
+        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
+        ctx.pushCode(`$parent: ${varName}.$parent,`);
+        ctx.pushCode(`$root: ${varName}.$root,`);
+        ctx.pushCode(`});`);
         ctx.pushCode(
           `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`
         );
@@ -1221,10 +1227,11 @@ export class Parser {
       const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${
-          FUNCTION_PREFIX + this.options.type
-        }(offset, ${parentVar}, ${parentVar}.$root);`
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
       );
+      ctx.pushCode(`$parent: ${parentVar},`);
+      ctx.pushCode(`$root: ${parentVar}.$root,`);
+      ctx.pushCode(`});`);
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
       );
@@ -1337,10 +1344,11 @@ export class Parser {
       const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${
-          FUNCTION_PREFIX + this.options.type
-        }(offset, ${parentVar}, ${parentVar}.$root);`
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
       );
+      ctx.pushCode(`$parent: ${parentVar},`);
+      ctx.pushCode(`$root: ${parentVar}.$root,`);
+      ctx.pushCode(`});`);
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
       );
