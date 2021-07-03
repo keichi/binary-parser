@@ -1115,7 +1115,7 @@ export class Parser {
       ctx.pushCode(`${item}.$parent = ${parentVar};`);
       ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
       if (!this.options.readUntil && lengthInBytes === undefined) {
-        ctx.pushCode(`${item}.$index = ${length} - ${counter},`);
+        ctx.pushCode(`${item}.$index = ${length} - ${counter};`);
       }
       type.generate(ctx);
       ctx.pushCode(`delete ${item}.$parent;`);
