@@ -22,10 +22,10 @@ interface ParserOptions {
   zeroTerminated?: boolean;
   clone?: boolean;
   stripNull?: boolean;
+  key?: string;
   trim?: boolean;
   padding?: string;
   padd?: string;
-  key?: string;
   tag?: string;
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
