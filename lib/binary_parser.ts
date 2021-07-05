@@ -16,9 +16,9 @@ interface ParserOptions {
   choices?: { [key: number]: string | Parser };
   defaultChoice?: string | Parser;
   zeroTerminated?: boolean;
-  clone?: null;
-  stripNull?: null;
-  key?: null;
+  clone?: boolean;
+  stripNull?: boolean;
+  key?: string;
   tag?: string;
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
