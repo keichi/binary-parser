@@ -1,6 +1,6 @@
 {
   "name": "binary-parser",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "dependencies": {
