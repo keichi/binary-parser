@@ -8,11 +8,11 @@
   },
   "devDependencies": {
     "@types/fast-text-encoding": "^1.0.1",
-    "@types/node": "^16.0.0",
-    "mocha": "^9.0.2",
+    "@types/node": "^16.9.1",
+    "mocha": "^9.1.1",
     "nyc": "^15.1.0",
-    "prettier": "^2.3.2",
-    "typescript": "^4.3.5"
+    "prettier": "^2.4.0",
+    "typescript": "^4.4.3"
   },
   "scripts": {
     "build": "tsc",
