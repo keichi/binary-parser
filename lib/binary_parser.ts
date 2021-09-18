@@ -1,8 +1,8 @@
-import 'fast-text-encoding';
-import { Context } from './context';
+import "fast-text-encoding";
+import { Context } from "./context";
 
 const aliasRegistry: { [key: string]: Parser } = {};
-const FUNCTION_PREFIX = '___parser_';
+const FUNCTION_PREFIX = "___parser_";
 
 interface ParserOptions {
   length?: number | string | ((item: any) => number);
@@ -11,7 +11,7 @@ interface ParserOptions {
   type?: string | Parser;
   formatter?: (item: any) => any;
   encoding?: string;
-  readUntil?: 'eof' | ((item: any, buffer: Buffer) => boolean);
+  readUntil?: "eof" | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
   choices?: { [key: number]: string | Parser };
   defaultChoice?: string | Parser;
@@ -27,49 +27,49 @@ interface ParserOptions {
 type Types = PrimitiveTypes | ComplexTypes;
 
 type ComplexTypes =
-  | 'bit'
-  | 'string'
-  | 'buffer'
-  | 'array'
-  | 'choice'
-  | 'nest'
-  | 'seek'
-  | 'pointer'
-  | 'saveOffset'
-  | 'wrapper'
-  | '';
+  | "bit"
+  | "string"
+  | "buffer"
+  | "array"
+  | "choice"
+  | "nest"
+  | "seek"
+  | "pointer"
+  | "saveOffset"
+  | "wrapper"
+  | "";
 
-type Endianess = 'be' | 'le';
+type Endianess = "be" | "le";
 
 type PrimitiveTypes =
-  | 'uint8'
-  | 'uint16le'
-  | 'uint16be'
-  | 'uint32le'
-  | 'uint32be'
-  | 'uint64le'
-  | 'uint64be'
-  | 'int8'
-  | 'int16le'
-  | 'int16be'
-  | 'int32le'
-  | 'int32be'
-  | 'int64le'
-  | 'int64be'
-  | 'floatle'
-  | 'floatbe'
-  | 'doublele'
-  | 'doublebe';
+  | "uint8"
+  | "uint16le"
+  | "uint16be"
+  | "uint32le"
+  | "uint32be"
+  | "uint64le"
+  | "uint64be"
+  | "int8"
+  | "int16le"
+  | "int16be"
+  | "int32le"
+  | "int32be"
+  | "int64le"
+  | "int64be"
+  | "floatle"
+  | "floatbe"
+  | "doublele"
+  | "doublebe";
 
 type PrimitiveTypesWithoutEndian =
-  | 'uint8'
-  | 'uint16'
-  | 'uint32'
-  | 'int8'
-  | 'int16'
-  | 'int32'
-  | 'int64'
-  | 'uint64';
+  | "uint8"
+  | "uint16"
+  | "uint32"
+  | "int8"
+  | "int16"
+  | "int32"
+  | "int64"
+  | "uint64";
 
 type BitSizes =
   | 1
@@ -127,24 +127,24 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
 };
 
 const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
-  uint8: 'Uint8',
-  uint16le: 'Uint16',
-  uint16be: 'Uint16',
-  uint32le: 'Uint32',
-  uint32be: 'Uint32',
-  int8: 'Int8',
-  int16le: 'Int16',
-  int16be: 'Int16',
-  int32le: 'Int32',
-  int32be: 'Int32',
-  int64be: 'BigInt64',
-  int64le: 'BigInt64',
-  uint64be: 'BigUint64',
-  uint64le: 'BigUint64',
-  floatle: 'Float32',
-  floatbe: 'Float32',
-  doublele: 'Float64',
-  doublebe: 'Float64',
+  uint8: "Uint8",
+  uint16le: "Uint16",
+  uint16be: "Uint16",
+  uint32le: "Uint32",
+  uint32be: "Uint32",
+  int8: "Int8",
+  int16le: "Int16",
+  int16be: "Int16",
+  int32le: "Int32",
+  int32be: "Int32",
+  int64be: "BigInt64",
+  int64le: "BigInt64",
+  uint64be: "BigUint64",
+  uint64le: "BigUint64",
+  floatle: "Float32",
+  floatbe: "Float32",
+  doublele: "Float64",
+  doublebe: "Float64",
 };
 
 const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
@@ -169,13 +169,13 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
 };
 
 export class Parser {
-  varName = '';
-  type: Types = '';
+  varName = "";
+  type: Types = "";
   options: ParserOptions = {};
   next: Parser | null = null;
   head: Parser | null = null;
   compiled: Function | null = null;
-  endian: Endianess = 'be';
+  endian: Endianess = "be";
   constructorFn: Function | null = null;
   alias: string | null = null;
   useContextVariables: boolean = false;
@@ -210,110 +210,110 @@ export class Parser {
   }
 
   uint8(varName: string, options?: ParserOptions) {
-    return this.primitiveN('uint8', varName, options);
+    return this.primitiveN("uint8", varName, options);
   }
 
   uint16(varName: string, options?: ParserOptions) {
-    return this.primitiveN(this.useThisEndian('uint16'), varName, options);
+    return this.primitiveN(this.useThisEndian("uint16"), varName, options);
   }
 
   uint16le(varName: string, options?: ParserOptions) {
-    return this.primitiveN('uint16le', varName, options);
+    return this.primitiveN("uint16le", varName, options);
   }
 
   uint16be(varName: string, options?: ParserOptions) {
-    return this.primitiveN('uint16be', varName, options);
+    return this.primitiveN("uint16be", varName, options);
   }
 
   uint32(varName: string, options?: ParserOptions) {
-    return this.primitiveN(this.useThisEndian('uint32'), varName, options);
+    return this.primitiveN(this.useThisEndian("uint32"), varName, options);
   }
 
   uint32le(varName: string, options?: ParserOptions) {
-    return this.primitiveN('uint32le', varName, options);
+    return this.primitiveN("uint32le", varName, options);
   }
 
   uint32be(varName: string, options?: ParserOptions) {
-    return this.primitiveN('uint32be', varName, options);
+    return this.primitiveN("uint32be", varName, options);
   }
 
   int8(varName: string, options?: ParserOptions) {
-    return this.primitiveN('int8', varName, options);
+    return this.primitiveN("int8", varName, options);
   }
 
   int16(varName: string, options?: ParserOptions) {
-    return this.primitiveN(this.useThisEndian('int16'), varName, options);
+    return this.primitiveN(this.useThisEndian("int16"), varName, options);
   }
 
   int16le(varName: string, options?: ParserOptions) {
-    return this.primitiveN('int16le', varName, options);
+    return this.primitiveN("int16le", varName, options);
   }
 
   int16be(varName: string, options?: ParserOptions) {
-    return this.primitiveN('int16be', varName, options);
+    return this.primitiveN("int16be", varName, options);
   }
 
   int32(varName: string, options?: ParserOptions) {
-    return this.primitiveN(this.useThisEndian('int32'), varName, options);
+    return this.primitiveN(this.useThisEndian("int32"), varName, options);
   }
 
   int32le(varName: string, options?: ParserOptions) {
-    return this.primitiveN('int32le', varName, options);
+    return this.primitiveN("int32le", varName, options);
   }
 
   int32be(varName: string, options?: ParserOptions) {
-    return this.primitiveN('int32be', varName, options);
+    return this.primitiveN("int32be", varName, options);
   }
 
   private bigIntVersionCheck() {
     if (!DataView.prototype.getBigInt64)
-      throw new Error('BigInt64 is unsupported in this runtime');
+      throw new Error("BigInt64 is unsupported in this runtime");
   }
 
   int64(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN(this.useThisEndian('int64'), varName, options);
+    return this.primitiveN(this.useThisEndian("int64"), varName, options);
   }
 
   int64be(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN('int64be', varName, options);
+    return this.primitiveN("int64be", varName, options);
   }
 
   int64le(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN('int64le', varName, options);
+    return this.primitiveN("int64le", varName, options);
   }
 
   uint64(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN(this.useThisEndian('uint64'), varName, options);
+    return this.primitiveN(this.useThisEndian("uint64"), varName, options);
   }
 
   uint64be(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN('uint64be', varName, options);
+    return this.primitiveN("uint64be", varName, options);
   }
 
   uint64le(varName: string, options?: ParserOptions) {
     this.bigIntVersionCheck();
-    return this.primitiveN('uint64le', varName, options);
+    return this.primitiveN("uint64le", varName, options);
   }
 
   floatle(varName: string, options?: ParserOptions) {
-    return this.primitiveN('floatle', varName, options);
+    return this.primitiveN("floatle", varName, options);
   }
 
   floatbe(varName: string, options?: ParserOptions) {
-    return this.primitiveN('floatbe', varName, options);
+    return this.primitiveN("floatbe", varName, options);
   }
 
   doublele(varName: string, options?: ParserOptions) {
-    return this.primitiveN('doublele', varName, options);
+    return this.primitiveN("doublele", varName, options);
   }
 
   doublebe(varName: string, options?: ParserOptions) {
-    return this.primitiveN('doublebe', varName, options);
+    return this.primitiveN("doublebe", varName, options);
   }
 
   private bitN(size: BitSizes, varName: string, options?: ParserOptions) {
@@ -321,7 +321,7 @@ export class Parser {
       options = {};
     }
     options.length = size;
-    return this.setNextParser('bit', varName, options);
+    return this.setNextParser("bit", varName, options);
   }
 
   bit1(varName: string, options?: ParserOptions) {
@@ -458,70 +458,70 @@ export class Parser {
     return this;
   }
 
-  skip(length: ParserOptions['length'], options?: ParserOptions) {
+  skip(length: ParserOptions["length"], options?: ParserOptions) {
     return this.seek(length, options);
   }
 
-  seek(relOffset: ParserOptions['length'], options?: ParserOptions) {
+  seek(relOffset: ParserOptions["length"], options?: ParserOptions) {
     if (options && options.assert) {
-      throw new Error('assert option on seek is not allowed.');
+      throw new Error("assert option on seek is not allowed.");
     }
 
-    return this.setNextParser('seek', '', { length: relOffset });
+    return this.setNextParser("seek", "", { length: relOffset });
   }
 
   string(varName: string, options: ParserOptions) {
     if (!options.zeroTerminated && !options.length && !options.greedy) {
       throw new Error(
-        'Neither length, zeroTerminated, nor greedy is defined for string.'
+        "Neither length, zeroTerminated, nor greedy is defined for string."
       );
     }
     if ((options.zeroTerminated || options.length) && options.greedy) {
       throw new Error(
-        'greedy is mutually exclusive with length and zeroTerminated for string.'
+        "greedy is mutually exclusive with length and zeroTerminated for string."
       );
     }
     if (options.stripNull && !(options.length || options.greedy)) {
       throw new Error(
-        'Length or greedy must be defined if stripNull is defined.'
+        "Length or greedy must be defined if stripNull is defined."
       );
     }
-    options.encoding = options.encoding || 'utf8';
+    options.encoding = options.encoding || "utf8";
 
-    return this.setNextParser('string', varName, options);
+    return this.setNextParser("string", varName, options);
   }
 
   buffer(varName: string, options: ParserOptions) {
     if (!options.length && !options.readUntil) {
-      throw new Error('Length nor readUntil is defined in buffer parser');
+      throw new Error("Length nor readUntil is defined in buffer parser");
     }
 
-    return this.setNextParser('buffer', varName, options);
+    return this.setNextParser("buffer", varName, options);
   }
 
   wrapped(varName: string, options: ParserOptions) {
     if (!options.length && !options.readUntil) {
-      throw new Error('Length nor readUntil is defined in buffer parser');
+      throw new Error("Length nor readUntil is defined in buffer parser");
     }
 
     if (!options.wrapper || !options.type) {
       throw new Error(
-        'Both wrapper and type must be defined in wrapper parser'
+        "Both wrapper and type must be defined in wrapper parser"
       );
     }
 
-    return this.setNextParser('wrapper', varName, options);
+    return this.setNextParser("wrapper", varName, options);
   }
 
   array(varName: string, options: ParserOptions) {
     if (!options.readUntil && !options.length && !options.lengthInBytes) {
-      throw new Error('Length option of array is not defined.');
+      throw new Error("Length option of array is not defined.");
     }
     if (!options.type) {
-      throw new Error('Type option of array is not defined.');
+      throw new Error("Type option of array is not defined.");
     }
     if (
-      typeof options.type === 'string' &&
+      typeof options.type === "string" &&
       !aliasRegistry[options.type] &&
       Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0
     ) {
@@ -530,20 +530,20 @@ export class Parser {
       );
     }
 
-    return this.setNextParser('array', varName, options);
+    return this.setNextParser("array", varName, options);
   }
 
   choice(varName: string | ParserOptions, options?: ParserOptions) {
-    if (typeof options !== 'object' && typeof varName === 'object') {
+    if (typeof options !== "object" && typeof varName === "object") {
       options = varName;
       varName = null;
     }
 
     if (!options.tag) {
-      throw new Error('Tag option of array is not defined.');
+      throw new Error("Tag option of array is not defined.");
     }
     if (!options.choices) {
-      throw new Error('Choices option of array is not defined.');
+      throw new Error("Choices option of array is not defined.");
     }
 
     Object.keys(options.choices).forEach((keyString: string) => {
@@ -551,7 +551,7 @@ export class Parser {
       const value = options.choices[key];
 
       if (isNaN(key)) {
-        throw new Error('Key of choices must be a number.');
+        throw new Error("Key of choices must be a number.");
       }
 
       if (!value) {
@@ -559,7 +559,7 @@ export class Parser {
       }
 
       if (
-        typeof value === 'string' &&
+        typeof value === "string" &&
         !aliasRegistry[value] &&
         Object.keys(PRIMITIVE_SIZES).indexOf(value) < 0
       ) {
@@ -569,38 +569,38 @@ export class Parser {
       }
     });
 
-    return this.setNextParser('choice', varName as string, options);
+    return this.setNextParser("choice", varName as string, options);
   }
 
   nest(varName: string | ParserOptions, options?: ParserOptions) {
-    if (typeof options !== 'object' && typeof varName === 'object') {
+    if (typeof options !== "object" && typeof varName === "object") {
       options = varName;
       varName = null;
     }
 
     if (!options.type) {
-      throw new Error('Type option of nest is not defined.');
+      throw new Error("Type option of nest is not defined.");
     }
     if (!(options.type instanceof Parser) && !aliasRegistry[options.type]) {
-      throw new Error('Type option of nest must be a Parser object.');
+      throw new Error("Type option of nest must be a Parser object.");
     }
     if (!(options.type instanceof Parser) && !varName) {
       throw new Error(
-        'options.type must be a object if variable name is omitted.'
+        "options.type must be a object if variable name is omitted."
       );
     }
 
-    return this.setNextParser('nest', varName as string, options);
+    return this.setNextParser("nest", varName as string, options);
   }
 
   pointer(varName: string, options?: ParserOptions) {
     if (!options.offset) {
-      throw new Error('Offset option of pointer is not defined.');
+      throw new Error("Offset option of pointer is not defined.");
     }
 
     if (!options.type) {
-      throw new Error('Type option of pointer is not defined.');
-    } else if (typeof options.type === 'string') {
+      throw new Error("Type option of pointer is not defined.");
+    } else if (typeof options.type === "string") {
       if (
         Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0 &&
         !aliasRegistry[options.type]
@@ -612,24 +612,24 @@ export class Parser {
     } else if (options.type instanceof Parser) {
     } else {
       throw new Error(
-        'Type option of pointer must be a string or a Parser object.'
+        "Type option of pointer must be a string or a Parser object."
       );
     }
 
-    return this.setNextParser('pointer', varName, options);
+    return this.setNextParser("pointer", varName, options);
   }
 
   saveOffset(varName: string, options?: ParserOptions) {
-    return this.setNextParser('saveOffset', varName, options);
+    return this.setNextParser("saveOffset", varName, options);
   }
 
-  endianess(endianess: 'little' | 'big') {
+  endianess(endianess: "little" | "big") {
     switch (endianess.toLowerCase()) {
-      case 'little':
-        this.endian = 'le';
+      case "little":
+        this.endian = "le";
         break;
-      case 'big':
-        this.endian = 'be';
+      case "big":
+        this.endian = "be";
         break;
       default:
         throw new Error(`Invalid endianess: ${endianess}`);
@@ -646,7 +646,7 @@ export class Parser {
 
   create(constructorFn: Function) {
     if (!(constructorFn instanceof Function)) {
-      throw new Error('Constructor must be a Function object.');
+      throw new Error("Constructor must be a Function object.");
     }
 
     this.constructorFn = constructorFn;
@@ -658,7 +658,7 @@ export class Parser {
     const ctx = new Context(importPath, this.useContextVariables);
 
     ctx.pushCode(
-      'var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);'
+      "var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);"
     );
 
     if (!this.alias) {
@@ -676,30 +676,30 @@ export class Parser {
   }
 
   private addRawCode(ctx: Context) {
-    ctx.pushCode('var offset = 0;');
+    ctx.pushCode("var offset = 0;");
     ctx.pushCode(
-      `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
+      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`
     );
 
-    ctx.pushCode('vars.$parent = null;');
-    ctx.pushCode('vars.$root = vars;');
+    ctx.pushCode("vars.$parent = null;");
+    ctx.pushCode("vars.$root = vars;");
 
     this.generate(ctx);
     this.resolveReferences(ctx);
 
-    ctx.pushCode('delete vars.$parent;');
-    ctx.pushCode('delete vars.$root;');
+    ctx.pushCode("delete vars.$parent;");
+    ctx.pushCode("delete vars.$root;");
 
-    ctx.pushCode('return vars;');
+    ctx.pushCode("return vars;");
   }
 
   private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
     ctx.pushCode(
-      `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
+      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`
     );
     ctx.pushCode(
-      'var ctx = Object.assign({$parent: null, $root: vars}, context || {});'
+      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});"
     );
     ctx.pushCode(`vars = Object.assign(vars, ctx);`);
 
@@ -709,10 +709,10 @@ export class Parser {
     this.resolveReferences(ctx);
 
     ctx.pushCode(
-      'Object.keys(ctx).forEach(function (item) { delete vars[item]; });'
+      "Object.keys(ctx).forEach(function (item) { delete vars[item]; });"
     );
-    ctx.pushCode('return { offset: offset, result: vars };');
-    ctx.pushCode('}');
+    ctx.pushCode("return { offset: offset, result: vars };");
+    ctx.pushCode("}");
 
     return ctx;
   }
@@ -727,11 +727,11 @@ export class Parser {
   }
 
   compile() {
-    const importPath = 'imports';
+    const importPath = "imports";
     const ctx = this.getContext(importPath);
     this.compiled = new Function(
       importPath,
-      'TextDecoder',
+      "TextDecoder",
       `return function (buffer, constructorFn) { ${ctx.code} };`
     )(ctx.imports, TextDecoder);
   }
@@ -744,25 +744,25 @@ export class Parser {
 
       // if this is a fixed length string
     } else if (
-      this.type === 'string' &&
-      typeof this.options.length === 'number'
+      this.type === "string" &&
+      typeof this.options.length === "number"
     ) {
       size = this.options.length;
 
       // if this is a fixed length buffer
     } else if (
-      this.type === 'buffer' &&
-      typeof this.options.length === 'number'
+      this.type === "buffer" &&
+      typeof this.options.length === "number"
     ) {
       size = this.options.length;
 
       // if this is a fixed length array
     } else if (
-      this.type === 'array' &&
-      typeof this.options.length === 'number'
+      this.type === "array" &&
+      typeof this.options.length === "number"
     ) {
       let elementSize = NaN;
-      if (typeof this.options.type === 'string') {
+      if (typeof this.options.type === "string") {
         elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
       } else if (this.options.type instanceof Parser) {
         elementSize = this.options.type.sizeOf();
@@ -770,11 +770,11 @@ export class Parser {
       size = this.options.length * elementSize;
 
       // if this a skip
-    } else if (this.type === 'seek') {
+    } else if (this.type === "seek") {
       size = this.options.length as number;
 
       // if this is a nested parser
-    } else if (this.type === 'nest') {
+    } else if (this.type === "nest") {
       size = (this.options.type as Parser).sizeOf();
     } else if (!this.type) {
       size = 0;
@@ -818,54 +818,54 @@ export class Parser {
   private generate(ctx: Context) {
     if (this.type) {
       switch (this.type) {
-        case 'uint8':
-        case 'uint16le':
-        case 'uint16be':
-        case 'uint32le':
-        case 'uint32be':
-        case 'int8':
-        case 'int16le':
-        case 'int16be':
-        case 'int32le':
-        case 'int32be':
-        case 'int64be':
-        case 'int64le':
-        case 'uint64be':
-        case 'uint64le':
-        case 'floatle':
-        case 'floatbe':
-        case 'doublele':
-        case 'doublebe':
+        case "uint8":
+        case "uint16le":
+        case "uint16be":
+        case "uint32le":
+        case "uint32be":
+        case "int8":
+        case "int16le":
+        case "int16be":
+        case "int32le":
+        case "int32be":
+        case "int64be":
+        case "int64le":
+        case "uint64be":
+        case "uint64le":
+        case "floatle":
+        case "floatbe":
+        case "doublele":
+        case "doublebe":
           this.primitiveGenerateN(this.type, ctx);
           break;
-        case 'bit':
+        case "bit":
           this.generateBit(ctx);
           break;
-        case 'string':
+        case "string":
           this.generateString(ctx);
           break;
-        case 'buffer':
+        case "buffer":
           this.generateBuffer(ctx);
           break;
-        case 'seek':
+        case "seek":
           this.generateSeek(ctx);
           break;
-        case 'nest':
+        case "nest":
           this.generateNest(ctx);
           break;
-        case 'array':
+        case "array":
           this.generateArray(ctx);
           break;
-        case 'choice':
+        case "choice":
           this.generateChoice(ctx);
           break;
-        case 'pointer':
+        case "pointer":
           this.generatePointer(ctx);
           break;
-        case 'saveOffset':
+        case "saveOffset":
           this.generateSaveOffset(ctx);
           break;
-        case 'wrapper':
+        case "wrapper":
           this.generateWrapper(ctx);
           break;
       }
@@ -888,25 +888,25 @@ export class Parser {
     const varName = ctx.generateVariable(this.varName);
 
     switch (typeof this.options.assert) {
-      case 'function':
+      case "function":
         const func = ctx.addImport(this.options.assert);
         ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
         break;
-      case 'number':
+      case "number":
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
         break;
-      case 'string':
+      case "string":
         ctx.pushCode(`if ("${this.options.assert}" !== ${varName}) {`);
         break;
       default:
         throw new Error(
-          'Assert option supports only strings, numbers and assert functions.'
+          "Assert option supports only strings, numbers and assert functions."
         );
     }
     ctx.generateError(
       `"Assert error: ${varName} is " + ${this.options.assert}`
     );
-    ctx.pushCode('}');
+    ctx.pushCode("}");
   }
 
   // Recursively call code generators and append results
@@ -926,7 +926,7 @@ export class Parser {
 
     if (
       !this.next ||
-      (this.next && ['bit', 'nest'].indexOf(this.next.type) < 0)
+      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
     ) {
       let sum = 0;
       ctx.bitFields.forEach(
@@ -953,13 +953,13 @@ export class Parser {
         sum = 32;
       } else {
         throw new Error(
-          'Currently, bit field sequence longer than 4-bytes is not supported.'
+          "Currently, bit field sequence longer than 4-bytes is not supported."
         );
       }
       ctx.pushCode(`offset += ${sum / 8};`);
 
       let bitOffset = 0;
-      const isBigEndian = this.endian === 'be';
+      const isBigEndian = this.endian === "be";
 
       ctx.bitFields.forEach((parser) => {
         const length = parser.options.length as number;
@@ -983,7 +983,7 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding;
-    const isHex = encoding.toLowerCase() === 'hex';
+    const isHex = encoding.toLowerCase() === "hex";
     const toHex = 'b => b.toString(16).padStart(2, "0")';
 
     if (this.options.length && this.options.zeroTerminated) {
@@ -1008,7 +1008,7 @@ export class Parser {
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode('while(dataView.getUint8(offset++) !== 0);');
+      ctx.pushCode("while(dataView.getUint8(offset++) !== 0);");
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
@@ -1016,7 +1016,7 @@ export class Parser {
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode('while(buffer.length > offset++);');
+      ctx.pushCode("while(buffer.length > offset++);");
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
@@ -1031,7 +1031,7 @@ export class Parser {
   private generateBuffer(ctx: Context) {
     const varName = ctx.generateVariable(this.varName);
 
-    if (typeof this.options.readUntil === 'function') {
+    if (typeof this.options.readUntil === "function") {
       const pred = this.options.readUntil;
       const start = ctx.generateTmpVariable();
       const cur = ctx.generateTmpVariable();
@@ -1047,7 +1047,7 @@ export class Parser {
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
       ctx.pushCode(`${varName} = buffer.subarray(${start}, offset);`);
-    } else if (this.options.readUntil === 'eof') {
+    } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${varName} = buffer.subarray(offset);`);
     } else {
       const len = ctx.generateOption(this.options.length);
@@ -1069,16 +1069,16 @@ export class Parser {
     const lhs = ctx.generateVariable(this.varName);
     const item = ctx.generateTmpVariable();
     const key = this.options.key;
-    const isHash = typeof key === 'string';
+    const isHash = typeof key === "string";
 
     if (isHash) {
       ctx.pushCode(`${lhs} = {};`);
     } else {
       ctx.pushCode(`${lhs} = [];`);
     }
-    if (typeof this.options.readUntil === 'function') {
-      ctx.pushCode('do {');
-    } else if (this.options.readUntil === 'eof') {
+    if (typeof this.options.readUntil === "function") {
+      ctx.pushCode("do {");
+    } else if (this.options.readUntil === "eof") {
       ctx.pushCode(
         `for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`
       );
@@ -1092,7 +1092,7 @@ export class Parser {
       );
     }
 
-    if (typeof type === 'string') {
+    if (typeof type === "string") {
       if (!aliasRegistry[type]) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
@@ -1146,9 +1146,9 @@ export class Parser {
       ctx.pushCode(`${lhs}.push(${item});`);
     }
 
-    ctx.pushCode('}');
+    ctx.pushCode("}");
 
-    if (typeof this.options.readUntil === 'function') {
+    if (typeof this.options.readUntil === "function") {
       const pred = this.options.readUntil;
       const func = ctx.addImport(pred);
       ctx.pushCode(
@@ -1162,7 +1162,7 @@ export class Parser {
     varName: string,
     type: string | Parser
   ) {
-    if (typeof type === 'string') {
+    if (typeof type === "string") {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry[type]) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
@@ -1210,15 +1210,15 @@ export class Parser {
 
       ctx.pushCode(`case ${tag}:`);
       this.generateChoiceCase(ctx, this.varName, type);
-      ctx.pushCode('break;');
+      ctx.pushCode("break;");
     });
-    ctx.pushCode('default:');
+    ctx.pushCode("default:");
     if (this.options.defaultChoice) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);
     } else {
       ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
     }
-    ctx.pushCode('}');
+    ctx.pushCode("}");
 
     if (this.varName && ctx.useContextVariables) {
       ctx.pushCode(`delete ${nestVar}.$parent;`);
@@ -1271,7 +1271,7 @@ export class Parser {
   private generateWrapper(ctx: Context) {
     const wrapperVar = ctx.generateVariable(this.varName);
     const wrappedBuf = ctx.generateTmpVariable();
-    if (typeof this.options.readUntil === 'function') {
+    if (typeof this.options.readUntil === "function") {
       const pred = this.options.readUntil;
       const start = ctx.generateTmpVariable();
       const cur = ctx.generateTmpVariable();
@@ -1287,7 +1287,7 @@ export class Parser {
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(${start}, offset);`);
-    } else if (this.options.readUntil === 'eof') {
+    } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset);`);
     } else {
       const len = ctx.generateOption(this.options.length);
@@ -1339,7 +1339,7 @@ export class Parser {
     varName: string,
     formatter: Function
   ) {
-    if (typeof formatter === 'function') {
+    if (typeof formatter === "function") {
       const func = ctx.addImport(formatter);
       ctx.pushCode(
         `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`
