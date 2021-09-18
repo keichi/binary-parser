@@ -520,13 +520,17 @@ These options can be used in all parsers.
     ```
 
 ### Context variables
-You can use some special fields while parsing to traverse your structure. These
-context variables will be removed after the parsing process:
+You can use some special fields while parsing to traverse your structure.
+These context variables will be removed after the parsing process.
+Note that this feature is turned off by default for performance reasons, and
+you need to call `.useContextVars()` to enable it.
+
 - `$parent` - This field references the parent structure. This variable will be
   `null` while parsing the root structure.
 
   ```javascript
   var parser = new Parser()
+    .useContextVars()
     .nest("header", {
       type: new Parser().uint32("length"),
     })
@@ -542,6 +546,7 @@ context variables will be removed after the parsing process:
 
   ```javascript
   var parser = new Parser()
+    .useContextVars()
     .nest("header", {
       type: new Parser().uint32("length"),
     })
@@ -562,6 +567,7 @@ context variables will be removed after the parsing process:
 
   ```javascript
   var parser = new Parser()
+    .useContextVars()
     .nest("header", {
       type: new Parser().uint32("length"),
     })

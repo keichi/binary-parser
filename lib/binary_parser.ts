@@ -178,6 +178,7 @@ export class Parser {
   endian: Endianess = 'be';
   constructorFn: Function | null = null;
   alias: string | null = null;
+  useContextVariables: boolean = false;
 
   constructor() {}
 
@@ -637,6 +638,12 @@ export class Parser {
     return this;
   }
 
+  useContextVars(useContextVariables: boolean = true) {
+    this.useContextVariables = useContextVariables;
+
+    return this;
+  }
+
   create(constructorFn: Function) {
     if (!(constructorFn instanceof Function)) {
       throw new Error('Constructor must be a Function object.');
@@ -648,7 +655,7 @@ export class Parser {
   }
 
   private getContext(importPath?: string) {
-    const ctx = new Context(importPath);
+    const ctx = new Context(importPath, this.useContextVariables);
 
     ctx.pushCode(
       'var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);'
@@ -673,15 +680,16 @@ export class Parser {
     ctx.pushCode(
       `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
     );
+
     ctx.pushCode('vars.$parent = null;');
     ctx.pushCode('vars.$root = vars;');
 
     this.generate(ctx);
-
     this.resolveReferences(ctx);
 
     ctx.pushCode('delete vars.$parent;');
     ctx.pushCode('delete vars.$root;');
+
     ctx.pushCode('return vars;');
   }
 
@@ -691,7 +699,7 @@ export class Parser {
       `var vars = ${this.constructorFn ? 'new constructorFn()' : '{}'};`
     );
     ctx.pushCode(
-      `var ctx = Object.assign({$parent: null, $root: vars}, context || {});`
+      'var ctx = Object.assign({$parent: null, $root: vars}, context || {});'
     );
     ctx.pushCode(`vars = Object.assign(vars, ctx);`);
 
@@ -1093,13 +1101,15 @@ export class Parser {
         );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
-        const parentVar = ctx.generateVariable();
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
-        ctx.pushCode(`$parent: ${parentVar},`);
-        ctx.pushCode(`$root: ${parentVar}.$root,`);
-        if (!this.options.readUntil && lengthInBytes === undefined) {
-          ctx.pushCode(`$index: ${length} - ${counter},`);
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`$parent: ${parentVar},`);
+          ctx.pushCode(`$root: ${parentVar}.$root,`);
+          if (!this.options.readUntil && lengthInBytes === undefined) {
+            ctx.pushCode(`$index: ${length} - ${counter},`);
+          }
         }
         ctx.pushCode(`});`);
         ctx.pushCode(
@@ -1108,19 +1118,25 @@ export class Parser {
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
-      const parentVar = ctx.generateVariable();
       ctx.pushCode(`var ${item} = {};`);
-
+      const parentVar = ctx.generateVariable();
       ctx.pushScope(item);
-      ctx.pushCode(`${item}.$parent = ${parentVar};`);
-      ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
-      if (!this.options.readUntil && lengthInBytes === undefined) {
-        ctx.pushCode(`${item}.$index = ${length} - ${counter};`);
+
+      if (ctx.useContextVariables) {
+        ctx.pushCode(`${item}.$parent = ${parentVar};`);
+        ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
+        if (!this.options.readUntil && lengthInBytes === undefined) {
+          ctx.pushCode(`${item}.$index = ${length} - ${counter};`);
+        }
       }
+
       type.generate(ctx);
-      ctx.pushCode(`delete ${item}.$parent;`);
-      ctx.pushCode(`delete ${item}.$root;`);
-      ctx.pushCode(`delete ${item}.$index;`);
+
+      if (ctx.useContextVariables) {
+        ctx.pushCode(`delete ${item}.$parent;`);
+        ctx.pushCode(`delete ${item}.$root;`);
+        ctx.pushCode(`delete ${item}.$index;`);
+      }
       ctx.popScope();
     }
 
@@ -1158,8 +1174,10 @@ export class Parser {
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
-        ctx.pushCode(`$parent: ${varName}.$parent,`);
-        ctx.pushCode(`$root: ${varName}.$root,`);
+        if (ctx.useContextVariables) {
+          ctx.pushCode(`$parent: ${varName}.$parent,`);
+          ctx.pushCode(`$root: ${varName}.$root,`);
+        }
         ctx.pushCode(`});`);
         ctx.pushCode(
           `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`
@@ -1180,9 +1198,11 @@ export class Parser {
     if (this.varName) {
       ctx.pushCode(`${nestVar} = {};`);
 
-      const parentVar = ctx.generateVariable();
-      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
-      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+      }
     }
     ctx.pushCode(`switch(${tag}) {`);
     Object.keys(this.options.choices).forEach((tag) => {
@@ -1200,7 +1220,7 @@ export class Parser {
     }
     ctx.pushCode('}');
 
-    if (this.varName) {
+    if (this.varName && ctx.useContextVariables) {
       ctx.pushCode(`delete ${nestVar}.$parent;`);
       ctx.pushCode(`delete ${nestVar}.$root;`);
     }
@@ -1211,26 +1231,35 @@ export class Parser {
 
     if (this.options.type instanceof Parser) {
       if (this.varName) {
-        const parentVar = ctx.generateVariable();
         ctx.pushCode(`${nestVar} = {};`);
-        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
-        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+          ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+        }
       }
+
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
-      if (this.varName) {
-        ctx.pushCode(`delete ${nestVar}.$parent;`);
-        ctx.pushCode(`delete ${nestVar}.$root;`);
+
+      if (this.varName && ctx.useContextVariables) {
+        if (ctx.useContextVariables) {
+          ctx.pushCode(`delete ${nestVar}.$parent;`);
+          ctx.pushCode(`delete ${nestVar}.$root;`);
+        }
       }
     } else if (aliasRegistry[this.options.type]) {
-      const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
       );
-      ctx.pushCode(`$parent: ${parentVar},`);
-      ctx.pushCode(`$root: ${parentVar}.$root,`);
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+      }
       ctx.pushCode(`});`);
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
@@ -1331,23 +1360,32 @@ export class Parser {
     ctx.pushCode(`offset = ${offset};`);
 
     if (this.options.type instanceof Parser) {
-      const parentVar = ctx.generateVariable();
       ctx.pushCode(`${nestVar} = {};`);
-      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
-      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+      }
+
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
-      ctx.pushCode(`delete ${nestVar}.$parent;`);
-      ctx.pushCode(`delete ${nestVar}.$root;`);
+
+      if (ctx.useContextVariables) {
+        ctx.pushCode(`delete ${nestVar}.$parent;`);
+        ctx.pushCode(`delete ${nestVar}.$root;`);
+      }
     } else if (aliasRegistry[this.options.type]) {
-      const parentVar = ctx.generateVariable();
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
       );
-      ctx.pushCode(`$parent: ${parentVar},`);
-      ctx.pushCode(`$root: ${parentVar}.$root,`);
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+      }
       ctx.pushCode(`});`);
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`

@@ -9,9 +9,11 @@ export class Context {
   importPath: string;
   imports: any[] = [];
   reverseImports = new Map<any, number>();
+  useContextVariables: boolean = false;
 
-  constructor(importPath?: string) {
+  constructor(importPath?: string, useContextVariables?: boolean) {
     this.importPath = importPath;
+    this.useContextVariables = useContextVariables;
   }
 
   generateVariable(name?: string) {

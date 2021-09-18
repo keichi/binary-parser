@@ -72,6 +72,7 @@ const suite = (Buffer) =>
         });
 
         var parser = Parser.start()
+          .useContextVars()
           .uint16le('length')
           .uint16le('valueLength')
           .array('message', {
@@ -109,6 +110,7 @@ const suite = (Buffer) =>
         });
 
         var parser = Parser.start()
+          .useContextVars()
           .uint16le('length')
           .uint16le('valueLength')
           .array('message', {
@@ -444,6 +446,7 @@ const suite = (Buffer) =>
         //      /
         //     0
 
+        // prettier-ignore
         var buffer = Buffer.from([
           2,
           /* 0 */ 3,
@@ -523,6 +526,7 @@ const suite = (Buffer) =>
           });
 
         var parser = Parser.start()
+          .useContextVars()
           .uint16le('length')
           .uint16le('valueLength')
           .array('message', {
@@ -567,6 +571,7 @@ const suite = (Buffer) =>
           .namely('ArrayLengthIndexTest');
 
         var parser = Parser.start()
+          .useContextVars()
           .uint16le('length')
           .uint16le('valueLength')
           .array('message', {
@@ -845,6 +850,7 @@ const suite = (Buffer) =>
         //      /
         //     0
 
+        // prettier-ignore
         var buffer = Buffer.from([
           2,
           /* left -> */ 3,
@@ -1009,6 +1015,7 @@ const suite = (Buffer) =>
       });
       it('should be able to use parsing context', function () {
         var parser = Parser.start()
+          .useContextVars()
           .uint8('tag')
           .uint8('items')
           .choice('data', {
@@ -1141,6 +1148,7 @@ const suite = (Buffer) =>
 
       it('should be able to use parsing context', function () {
         var parser = Parser.start()
+          .useContextVars()
           .uint8('items')
           .nest('data', {
             type: Parser.start()
