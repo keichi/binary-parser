@@ -16,8 +16,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "fmt": "prettier --write \"{lib,example,test}/**/*.{ts,js}\"",
-    "check-fmt": "prettier --list-different \"{lib,example,test}/**/*.{ts,js}\"",
+    "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
+    "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "mocha",
     "test-browser": "parcel test/browser.html --open",
     "cover": "nyc --reporter html mocha",

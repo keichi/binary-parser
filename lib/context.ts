@@ -1,17 +1,19 @@
-import { Parser } from './binary_parser';
+import { Parser } from "./binary_parser";
 
 export class Context {
-  code = '';
-  scopes = [['vars']];
+  code = "";
+  scopes = [["vars"]];
   bitFields: Parser[] = [];
   tmpVariableCount = 0;
   references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
   importPath: string;
   imports: any[] = [];
   reverseImports = new Map<any, number>();
+  useContextVariables: boolean = false;
 
-  constructor(importPath?: string) {
+  constructor(importPath?: string, useContextVariables?: boolean) {
     this.importPath = importPath;
+    this.useContextVariables = useContextVariables;
   }
 
   generateVariable(name?: string) {
@@ -23,30 +25,30 @@ export class Context {
       arr.push(name);
     }
 
-    return arr.join('.');
+    return arr.join(".");
   }
 
   generateOption(val: number | string | Function) {
     switch (typeof val) {
-      case 'number':
+      case "number":
         return val.toString();
-      case 'string':
+      case "string":
         return this.generateVariable(val);
-      case 'function':
+      case "function":
         return `${this.addImport(val)}.call(${this.generateVariable()}, vars)`;
     }
   }
 
   generateError(err: string) {
-    this.pushCode('throw new Error(' + err + ');');
+    this.pushCode("throw new Error(" + err + ");");
   }
 
   generateTmpVariable() {
-    return '$tmp' + this.tmpVariableCount++;
+    return "$tmp" + this.tmpVariableCount++;
   }
 
   pushCode(code: string) {
-    this.code += code + '\n';
+    this.code += code + "\n";
   }
 
   pushPath(name: string) {
