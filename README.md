@@ -348,15 +348,15 @@ offset.
 var parser = new Parser()
   // this call advances the buffer offset by
   // a variable (i.e. unknown to us) number of bytes
-  .string('name', {
+  .string("name", {
     zeroTerminated: true
   })
   // this variable points to an absolute position
   // in the buffer
-  .uint32('seekOffset')
+  .uint32("seekOffset")
   // now, save the "current" offset in the stream
   // as the variable "currentOffset"
-  .saveOffset('currentOffset')
+  .saveOffset("currentOffset")
   // finally, use the saved offset to figure out
   // how many bytes we need to skip
   .seek(function() {
@@ -469,7 +469,7 @@ too deep.
 An example of referencing other patches:
 
 ```javascript
-// the line below registers the name 'self', so we will be able to use it in
+// the line below registers the name "self", so we will be able to use it in
 // `twoCells` as a reference
 var parser = Parser.start().namely("self");
 
@@ -511,20 +511,20 @@ will pass it on to a parser for further processing.
   function returns true.
 
 ```javascript
-const zlib = require('zlib');
+const zlib = require("zlib");
 // A parser to run on the data returned by the wrapper
 var textParser = Parser.start()
-  .string('text', {
+  .string("text", {
     zeroTerminated: true,
   });
 
 var mainParser = Parser.start()
   // Read length of the data to wrap
-  .uint32le('length')
+  .uint32le("length")
   // Read wrapped data
-  .wrapped('wrappedData', {
+  .wrapped("wrappedData", {
     // Indicate how much data to read, like buffer()
-    length: 'length',
+    length: "length",
     // Define function to pre-process the data buffer
     wrapper: function (buffer) {
       // E.g. decompress data and return it for further parsing
