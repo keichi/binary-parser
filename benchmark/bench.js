@@ -64,6 +64,17 @@ for (var i = 0; i < n; i++) {
 
 // Run benchmarks
 suite
+  .add("hand-written", function () {
+    n = buf.readUInt32LE(0);
+    const points = [];
+    for (var i = 0; i < n; i++) {
+      points.push({
+        x: buf.readUInt16LE(i * 6 + 0 + 4),
+        y: buf.readUInt16LE(i * 6 + 2 + 4),
+        z: buf.readUInt16LE(i * 6 + 4 + 4),
+      });
+    }
+  })
   .add("binparse", function () {
     const points = PointsParser.read(buf);
   })
