@@ -1,4 +1,3 @@
-import "fast-text-encoding";
 import { SmartBuffer } from "smart-buffer";
 import { Context } from "./context";
 
