@@ -19,7 +19,8 @@
     "./*": "./*"
   },
   "scripts": {
-    "build": "tsc && npm run build:esm",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc",
     "build:esm": "tsc --target esnext --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
