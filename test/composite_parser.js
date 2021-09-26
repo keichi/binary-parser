@@ -1,5 +1,5 @@
-var assert = require("assert");
-var Parser = require("../dist/binary_parser").Parser;
+const assert = require("assert");
+const Parser = require("../dist/binary_parser").Parser;
 
 const zlib = require("zlib");
 
@@ -13,38 +13,38 @@ const suite = (Buffer) =>
 
     describe("Array parser", function () {
       it("should parse array of primitive types", function () {
-        var parser = Parser.start().uint8("length").array("message", {
+        const parser = Parser.start().uint8("length").array("message", {
           length: "length",
           type: "uint8",
         });
 
-        var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        const buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
         assert.deepStrictEqual(parser.parse(buffer), {
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
       });
       it("should parse array of primitive types with lengthInBytes", function () {
-        var parser = Parser.start().uint8("length").array("message", {
+        const parser = Parser.start().uint8("length").array("message", {
           lengthInBytes: "length",
           type: "uint8",
         });
 
-        var buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        const buffer = Buffer.from([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
         assert.deepStrictEqual(parser.parse(buffer), {
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
       });
       it("should parse array of user defined types", function () {
-        var elementParser = new Parser().uint8("key").int16le("value");
+        const elementParser = new Parser().uint8("key").int16le("value");
 
-        var parser = Parser.start().uint16le("length").array("message", {
+        const parser = Parser.start().uint16le("length").array("message", {
           length: "length",
           type: elementParser,
         });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -56,14 +56,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of user defined types and have access to parent context", function () {
-        var elementParser = new Parser().uint8("key").array("value", {
+        const elementParser = new Parser().uint8("key").array("value", {
           type: "uint8",
           length: function () {
             return this.$parent.valueLength;
           },
         });
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint16le("length")
           .uint16le("valueLength")
@@ -72,7 +72,7 @@ const suite = (Buffer) =>
             type: elementParser,
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0x00, 0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -85,14 +85,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of user defined types and have access to root context", function () {
-        var elementParser = new Parser().uint8("key").nest("data", {
+        const elementParser = new Parser().uint8("key").nest("data", {
           type: new Parser().array("value", {
             type: "uint8",
             length: "$root.valueLength",
           }),
         });
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint16le("length")
           .uint16le("valueLength")
@@ -101,7 +101,7 @@ const suite = (Buffer) =>
             type: elementParser,
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0x00, 0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -114,14 +114,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of user defined types with lengthInBytes", function () {
-        var elementParser = new Parser().uint8("key").int16le("value");
+        const elementParser = new Parser().uint8("key").int16le("value");
 
-        var parser = Parser.start().uint16le("length").array("message", {
+        const parser = Parser.start().uint16le("length").array("message", {
           lengthInBytes: "length",
           type: elementParser,
         });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x06, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -133,14 +133,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of user defined types with lengthInBytes literal", function () {
-        var elementParser = new Parser().uint8("key").int16le("value");
+        const elementParser = new Parser().uint8("key").int16le("value");
 
-        var parser = Parser.start().array("message", {
+        const parser = Parser.start().array("message", {
           lengthInBytes: 0x06,
           type: elementParser,
         });
 
-        var buffer = Buffer.from([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
+        const buffer = Buffer.from([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
         assert.deepStrictEqual(parser.parse(buffer), {
           message: [
             { key: 0xca, value: 1234 },
@@ -149,9 +149,9 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of user defined types with lengthInBytes function", function () {
-        var elementParser = new Parser().uint8("key").int16le("value");
+        const elementParser = new Parser().uint8("key").int16le("value");
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint16le("length")
           .array("message", {
             lengthInBytes: function () {
@@ -160,7 +160,7 @@ const suite = (Buffer) =>
             type: elementParser,
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x06, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -172,28 +172,27 @@ const suite = (Buffer) =>
         });
       });
       it("should parse array of arrays", function () {
-        var rowParser = Parser.start().uint8("length").array("cols", {
+        const rowParser = Parser.start().uint8("length").array("cols", {
           length: "length",
           type: "int32le",
         });
 
-        var parser = Parser.start().uint8("length").array("rows", {
+        const parser = Parser.start().uint8("length").array("rows", {
           length: "length",
           type: rowParser,
         });
 
-        var size = 1 + 10 * (1 + 5 * 4);
-        var buffer = Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
-        var dataView = new DataView(buffer.buffer);
-        var i, j;
+        const size = 1 + 10 * (1 + 5 * 4);
+        const buffer = Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
+        const dataView = new DataView(buffer.buffer);
 
-        var iterator = 0;
+        let iterator = 0;
         buffer[iterator] = 10;
         iterator += 1;
-        for (i = 0; i < 10; i++) {
+        for (let i = 0; i < 10; i++) {
           buffer[iterator] = 5;
           iterator += 1;
-          for (j = 0; j < 5; j++) {
+          for (let j = 0; j < 5; j++) {
             dataView.setInt32(iterator, i * j, true);
             iterator += 4;
           }
@@ -216,12 +215,12 @@ const suite = (Buffer) =>
         });
       });
       it("should parse until eof when readUntil is specified", function () {
-        var parser = Parser.start().array("data", {
+        const parser = Parser.start().array("data", {
           readUntil: "eof",
           type: "uint8",
         });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -229,14 +228,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse until function returns true when readUntil is function", function () {
-        var parser = Parser.start().array("data", {
+        const parser = Parser.start().array("data", {
           readUntil: function (item, buf) {
             return item === 0;
           },
           type: "uint8",
         });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -244,14 +243,14 @@ const suite = (Buffer) =>
         });
       });
       it("should parse until function returns true when readUntil is function (using read-ahead)", function () {
-        var parser = Parser.start().array("data", {
+        const parser = Parser.start().array("data", {
           readUntil: function (item, buf) {
             return buf.length > 0 && buf[0] === 0;
           },
           type: "uint8",
         });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -259,7 +258,7 @@ const suite = (Buffer) =>
         });
       });
       it("should parse associative arrays", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .int8("numlumps")
           .array("lumps", {
             type: Parser.start()
@@ -270,7 +269,7 @@ const suite = (Buffer) =>
             key: "name",
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0xd2, 0x04, 0x00, 0x00, 0x2e, 0x16, 0x00, 0x00, 0x41, 0x41,
           0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x2e, 0x16, 0x00, 0x00, 0xd2,
           0x04, 0x00, 0x00, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62,
@@ -292,7 +291,7 @@ const suite = (Buffer) =>
         });
       });
       it("should use formatter to transform parsed array", function () {
-        var parser = Parser.start().array("data", {
+        const parser = Parser.start().array("data", {
           type: "uint8",
           length: 4,
           formatter: function (arr) {
@@ -300,13 +299,13 @@ const suite = (Buffer) =>
           },
         });
 
-        var buffer = Buffer.from([0x0a, 0x0a, 0x01, 0x6e]);
+        const buffer = Buffer.from([0x0a, 0x0a, 0x01, 0x6e]);
         assert.deepStrictEqual(parser.parse(buffer), {
           data: "10.10.1.110",
         });
       });
       it("should be able to go into recursion", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .namely("self")
           .uint8("length")
           .array("data", {
@@ -314,7 +313,7 @@ const suite = (Buffer) =>
             length: "length",
           });
 
-        var buffer = Buffer.from([1, 1, 1, 0]);
+        const buffer = Buffer.from([1, 1, 1, 0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           length: 1,
           data: [
@@ -331,7 +330,7 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to go into even deeper recursion", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .namely("self")
           .uint8("length")
           .array("data", {
@@ -350,7 +349,7 @@ const suite = (Buffer) =>
         //     0
 
         // prettier-ignore
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           2,
           /* 0 */ 3,
           /* 0 */ 1,
@@ -388,7 +387,7 @@ const suite = (Buffer) =>
         });
       });
       it("should allow parent parser attributes as choice key", function () {
-        var ChildParser = Parser.start().choice("data", {
+        const ChildParser = Parser.start().choice("data", {
           tag: function (vars) {
             return vars.version;
           },
@@ -398,24 +397,24 @@ const suite = (Buffer) =>
           },
         });
 
-        var ParentParser = Parser.start()
+        const ParentParser = Parser.start()
           .uint8("version")
           .nest("child", { type: ChildParser });
 
-        var buffer = Buffer.from([0x1, 0x2]);
-        assert.deepStrictEqual(ParentParser.parse(buffer), {
+        const buffer1 = Buffer.from([0x1, 0x2]);
+        assert.deepStrictEqual(ParentParser.parse(buffer1), {
           version: 1,
           child: { data: { v1: 2 } },
         });
 
-        buffer = Buffer.from([0x2, 0x3, 0x4]);
-        assert.deepStrictEqual(ParentParser.parse(buffer), {
+        const buffer2 = Buffer.from([0x2, 0x3, 0x4]);
+        assert.deepStrictEqual(ParentParser.parse(buffer2), {
           version: 2,
           child: { data: { v2: 0x0304 } },
         });
       });
       it("should be able to access to index context variable when using length", function () {
-        var elementParser = new Parser()
+        const elementParser = new Parser()
           .uint8("key", {
             formatter: function (item) {
               return this.$index % 2 === 0 ? item : String.fromCharCode(item);
@@ -428,7 +427,7 @@ const suite = (Buffer) =>
             }),
           });
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint16le("length")
           .uint16le("valueLength")
@@ -437,7 +436,7 @@ const suite = (Buffer) =>
             type: elementParser,
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0x00, 0x02, 0x00, 0x50, 0xd2, 0x04, 0x51, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -450,7 +449,7 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to access to index context variable when using length on named parser", function () {
-        var elementParser = new Parser()
+        const elementParser = new Parser()
           .uint8("key", {
             formatter: function (item) {
               return this.$index % 2 === 0 ? item : String.fromCharCode(item);
@@ -464,7 +463,7 @@ const suite = (Buffer) =>
           })
           .namely("ArrayLengthIndexTest");
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint16le("length")
           .uint16le("valueLength")
@@ -473,7 +472,7 @@ const suite = (Buffer) =>
             type: "ArrayLengthIndexTest",
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x02, 0x00, 0x02, 0x00, 0x50, 0xd2, 0x04, 0x51, 0xd3, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -489,7 +488,7 @@ const suite = (Buffer) =>
 
     describe("Choice parser", function () {
       it("should parse choices of primitive types", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint8("tag1")
           .choice("data1", {
             tag: "tag1",
@@ -507,7 +506,7 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x0, 0x4e, 0x61, 0xbc, 0x00, 0x01, 0xd2, 0x04,
         ]);
         assert.deepStrictEqual(parser.parse(buffer), {
@@ -518,7 +517,7 @@ const suite = (Buffer) =>
         });
       });
       it("should parse default choice", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint8("tag")
           .choice("data", {
             tag: "tag",
@@ -530,7 +529,7 @@ const suite = (Buffer) =>
           })
           .int32le("test");
 
-        var buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
+        const buffer = Buffer.from([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           tag: 3,
           data: 0xff,
@@ -538,7 +537,7 @@ const suite = (Buffer) =>
         });
       });
       it("should parse choices of user defined types", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint8("tag")
           .choice("data", {
             tag: "tag",
@@ -550,19 +549,20 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer1 = Buffer.from([
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer1), {
           tag: 1,
           data: {
             length: 12,
             message: "hello, world",
           },
         });
-        buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+
+        const buffer2 = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer2), {
           tag: 3,
           data: {
             number: 12345678,
@@ -570,9 +570,9 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to go into recursion", function () {
-        var stop = Parser.start();
+        const stop = Parser.start();
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .namely("self")
           .uint8("type")
           .choice("data", {
@@ -583,7 +583,7 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([1, 1, 1, 0]);
+        const buffer = Buffer.from([1, 1, 1, 0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           type: 1,
           data: {
@@ -596,9 +596,9 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to go into recursion with simple nesting", function () {
-        var stop = Parser.start();
+        const stop = Parser.start();
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .namely("self")
           .uint8("type")
           .choice("data", {
@@ -612,7 +612,7 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
+        const buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
@@ -625,11 +625,11 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to refer to other parsers by name", function () {
-        var parser = Parser.start().namely("self");
+        const parser = Parser.start().namely("self");
 
-        var stop = Parser.start().namely("stop");
+        const stop = Parser.start().namely("stop");
 
-        var twoCells = Parser.start()
+        const twoCells = Parser.start()
           .namely("twoCells")
           .nest("left", { type: "self" })
           .nest("right", { type: "stop" });
@@ -643,7 +643,7 @@ const suite = (Buffer) =>
           },
         });
 
-        var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
+        const buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
@@ -656,11 +656,11 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to refer to other parsers both directly and by name", function () {
-        var parser = Parser.start().namely("self");
+        const parser = Parser.start().namely("self");
 
-        var stop = Parser.start();
+        const stop = Parser.start();
 
-        var twoCells = Parser.start()
+        const twoCells = Parser.start()
           .nest("left", { type: "self" })
           .nest("right", { type: stop });
 
@@ -673,7 +673,7 @@ const suite = (Buffer) =>
           },
         });
 
-        var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
+        const buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
         assert.deepStrictEqual(parser.parse(buffer), {
           type: 2,
           data: {
@@ -686,9 +686,9 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to go into recursion with complex nesting", function () {
-        var stop = Parser.start();
+        const stop = Parser.start();
 
-        var parser = Parser.start()
+        const parser = Parser.start()
           .namely("self")
           .uint8("type")
           .choice("data", {
@@ -717,7 +717,7 @@ const suite = (Buffer) =>
         //     0
 
         // prettier-ignore
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           2,
           /* left -> */ 3,
           /* one   -> */ 1,
@@ -755,7 +755,7 @@ const suite = (Buffer) =>
         });
       });
       it("should be able to 'flatten' choices when using null varName", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint8("tag")
           .choice(null, {
             tag: "tag",
@@ -767,23 +767,24 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer1 = Buffer.from([
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer1), {
           tag: 1,
           length: 12,
           message: "hello, world",
         });
-        buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+
+        const buffer2 = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer2), {
           tag: 3,
           number: 12345678,
         });
       });
       it("should be able to 'flatten' choices when omitting varName parameter", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint8("tag")
           .choice({
             tag: "tag",
@@ -795,23 +796,24 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer1 = Buffer.from([
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer1), {
           tag: 1,
           length: 12,
           message: "hello, world",
         });
-        buffer = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+
+        const buffer2 = Buffer.from([0x03, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer2), {
           tag: 3,
           number: 12345678,
         });
       });
       it("should be able to use function as the choice selector", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .string("selector", { length: 4 })
           .choice(null, {
             tag: function () {
@@ -825,23 +827,24 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer1 = Buffer.from([
           48, 48, 49, 48, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77,
           0x6f, 0x72, 0x6c, 0x64,
         ]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer1), {
           selector: "0010", // -> choice 2
           length: 12,
           message: "hello, world",
         });
-        buffer = Buffer.from([48, 49, 49, 49, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+
+        const buffer2 = Buffer.from([48, 49, 49, 49, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer2), {
           selector: "0111", // -> choice 7
           number: 12345678,
         });
       });
       it("should be able to use parsing context", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint8("tag")
           .uint8("items")
@@ -859,11 +862,11 @@ const suite = (Buffer) =>
             },
           });
 
-        var buffer = Buffer.from([
+        const buffer1 = Buffer.from([
           0x1, 0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f,
           0x72, 0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
         ]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        assert.deepStrictEqual(parser.parse(buffer1), {
           tag: 1,
           items: 2,
           data: {
@@ -872,8 +875,8 @@ const suite = (Buffer) =>
             value: [0x01, 0x02],
           },
         });
-        buffer = Buffer.from([0x03, 0x0, 0x4e, 0x61, 0xbc, 0x00]);
-        assert.deepStrictEqual(parser.parse(buffer), {
+        const buffer2 = Buffer.from([0x03, 0x0, 0x4e, 0x61, 0xbc, 0x00]);
+        assert.deepStrictEqual(parser.parse(buffer2), {
           tag: 3,
           items: 0,
           data: {
@@ -885,15 +888,15 @@ const suite = (Buffer) =>
 
     describe("Nest parser", function () {
       it("should parse nested parsers", function () {
-        var nameParser = new Parser()
+        const nameParser = new Parser()
           .string("firstName", {
             zeroTerminated: true,
           })
           .string("lastName", {
             zeroTerminated: true,
           });
-        var infoParser = new Parser().uint8("age");
-        var personParser = new Parser()
+        const infoParser = new Parser().uint8("age");
+        const personParser = new Parser()
           .nest("name", {
             type: nameParser,
           })
@@ -901,7 +904,7 @@ const suite = (Buffer) =>
             type: infoParser,
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           ...Buffer.from(new TextEncoder().encode("John\0Doe\0")),
           ...Buffer.from([0x20]),
         ]);
@@ -917,50 +920,52 @@ const suite = (Buffer) =>
       });
 
       it("should format parsed nested parser", function () {
-        var nameParser = new Parser()
+        const nameParser = new Parser()
           .string("firstName", {
             zeroTerminated: true,
           })
           .string("lastName", {
             zeroTerminated: true,
           });
-        var personParser = new Parser().nest("name", {
+        const personParser = new Parser().nest("name", {
           type: nameParser,
           formatter: function (name) {
             return name.firstName + " " + name.lastName;
           },
         });
 
-        var buffer = Buffer.from(new TextEncoder().encode("John\0Doe\0"));
+        const buffer = Buffer.from(new TextEncoder().encode("John\0Doe\0"));
         assert.deepStrictEqual(personParser.parse(buffer), {
           name: "John Doe",
         });
       });
 
       it("should 'flatten' output when using null varName", function () {
-        var parser = new Parser()
+        const parser = new Parser()
           .string("s1", { zeroTerminated: true })
           .nest(null, {
             type: new Parser().string("s2", { zeroTerminated: true }),
           });
 
-        var buf = Buffer.from(new TextEncoder().encode("foo\0bar\0"));
+        const buf = Buffer.from(new TextEncoder().encode("foo\0bar\0"));
 
         assert.deepStrictEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
       });
 
       it("should 'flatten' output when omitting varName", function () {
-        var parser = new Parser().string("s1", { zeroTerminated: true }).nest({
-          type: new Parser().string("s2", { zeroTerminated: true }),
-        });
+        const parser = new Parser()
+          .string("s1", { zeroTerminated: true })
+          .nest({
+            type: new Parser().string("s2", { zeroTerminated: true }),
+          });
 
-        var buf = Buffer.from(new TextEncoder().encode("foo\0bar\0"));
+        const buf = Buffer.from(new TextEncoder().encode("foo\0bar\0"));
 
         assert.deepStrictEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
       });
 
       it("should be able to use parsing context", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .useContextVars()
           .uint8("items")
           .nest("data", {
@@ -973,7 +978,7 @@ const suite = (Buffer) =>
               }),
           });
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
         ]);
@@ -997,12 +1002,12 @@ const suite = (Buffer) =>
         Person.prototype.toString = function () {
           return "[object Person]";
         };
-        var parser = Parser.start().create(Person).string("name", {
+        const parser = Parser.start().create(Person).string("name", {
           zeroTerminated: true,
         });
 
-        var buffer = Buffer.from(new TextEncoder().encode("John Doe\0"));
-        var person = parser.parse(buffer);
+        const buffer = Buffer.from(new TextEncoder().encode("John Doe\0"));
+        const person = parser.parse(buffer);
         assert.ok(person instanceof Person);
         assert.strictEqual(person.name, "John Doe");
       });
@@ -1010,29 +1015,32 @@ const suite = (Buffer) =>
 
     describe("Pointer parser", function () {
       it("should move pointer to specified offset", function () {
-        var parser = Parser.start().pointer("x", { type: "uint8", offset: 2 });
-        var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
+        const parser = Parser.start().pointer("x", {
+          type: "uint8",
+          offset: 2,
+        });
+        const buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
 
         assert.deepStrictEqual(parser.parse(buf), { x: 3 });
       });
 
       it("should restore pointer to original position", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .pointer("x", { type: "uint8", offset: 2 })
           .uint16be("y");
-        var buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
+        const buf = Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]);
 
         assert.deepStrictEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
       });
 
       it("should work with child parser", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .uint32le("x")
           .pointer("y", {
             type: Parser.start().string("s", { zeroTerminated: true }),
             offset: 4,
           });
-        var buf = Buffer.from(new TextEncoder().encode("\1\2\3\4hello\0\6"));
+        const buf = Buffer.from(new TextEncoder().encode("\1\2\3\4hello\0\6"));
 
         assert.deepStrictEqual(parser.parse(buf), {
           x: 0x04030201,
@@ -1041,7 +1049,7 @@ const suite = (Buffer) =>
       });
 
       it("should pass variable context to child parser", function () {});
-      var parser = Parser.start()
+      const parser = Parser.start()
         .uint16be("len")
         .pointer("child", {
           offset: 4,
@@ -1052,7 +1060,7 @@ const suite = (Buffer) =>
             },
           }),
         });
-      var buf = Buffer.from(new TextEncoder().encode("\0\6\0\0\1\2\3\4\5\6"));
+      const buf = Buffer.from(new TextEncoder().encode("\0\6\0\0\1\2\3\4\5\6"));
 
       assert.deepStrictEqual(parser.parse(buf), {
         len: 6,
@@ -1104,7 +1112,7 @@ const suite = (Buffer) =>
 
     describe("Utilities", function () {
       it("should count size for fixed size structs", function () {
-        var parser = Parser.start()
+        const parser = Parser.start()
           .int8("a")
           .int32le("b")
           .string("msg", { length: 10 })
@@ -1118,22 +1126,22 @@ const suite = (Buffer) =>
         assert.strictEqual(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
       });
       it("should assert parsed values", function () {
-        var parser = Parser.start().string("msg", {
+        const parser1 = Parser.start().string("msg", {
           encoding: "utf8",
           zeroTerminated: true,
           assert: "hello, world",
         });
-        var buffer = hexToBuf("68656c6c6f2c20776f726c6400");
+        const buffer1 = hexToBuf("68656c6c6f2c20776f726c6400");
         assert.doesNotThrow(function () {
-          parser.parse(buffer);
+          parser1.parse(buffer1);
         });
 
-        buffer = hexToBuf("68656c6c6f2c206a7300");
+        const buffer2 = hexToBuf("68656c6c6f2c206a7300");
         assert.throws(function () {
-          parser.parse(buffer);
+          parser1.parse(buffer2);
         });
 
-        parser = new Parser()
+        let parser2 = new Parser()
           .int16le("a")
           .int16le("b")
           .int16le("c", {
@@ -1142,22 +1150,23 @@ const suite = (Buffer) =>
             },
           });
 
-        buffer = hexToBuf("d2042e16001b");
+        const buffer3 = hexToBuf("d2042e16001b");
         assert.doesNotThrow(function () {
-          parser.parse(buffer);
+          parser2.parse(buffer3);
         });
-        buffer = hexToBuf("2e16001bd204");
+
+        const buffer4 = hexToBuf("2e16001bd204");
         assert.throws(function () {
-          parser.parse(buffer);
+          parser2.parse(buffer4);
         });
       });
     });
 
     describe("Parse other fields after bit", function () {
       it("Parse uint8", function () {
-        var buffer = Buffer.from([0, 1, 0, 4]);
-        for (var i = 17; i <= 24; i++) {
-          var parser = Parser.start()["bit" + i]("a").uint8("b");
+        const buffer = Buffer.from([0, 1, 0, 4]);
+        for (let i = 17; i <= 24; i++) {
+          const parser = Parser.start()["bit" + i]("a").uint8("b");
 
           assert.deepStrictEqual(parser.parse(buffer), {
             a: 1 << (i - 16),
@@ -1169,28 +1178,28 @@ const suite = (Buffer) =>
 
     describe("Wrapper", function () {
       it("should parse deflated then inflated data", function () {
-        var text = "This is compressible text.\0";
-        var bufferBefore = Buffer.from([
+        const text = "This is compressible text.\0";
+        const bufferBefore = Buffer.from([
           ...Buffer.from([12]),
           ...Buffer.from(new TextEncoder().encode(text)),
           ...Buffer.from([34]),
         ]);
-        var compressedData = zlib.deflateRawSync(bufferBefore);
+        const compressedData = zlib.deflateRawSync(bufferBefore);
 
-        var buffer = Buffer.from([
+        const buffer = Buffer.from([
           ...new Uint8Array(new Uint32Array([compressedData.length]).buffer),
           ...compressedData,
           ...new Uint8Array([42]),
         ]);
 
-        var bufferParser = Parser.start()
+        const bufferParser = Parser.start()
           .uint8("a")
           .string("b", {
             zeroTerminated: true,
           })
           .uint8("c");
 
-        var mainParser = Parser.start()
+        const mainParser = Parser.start()
           .uint32le("length")
           .wrapped("compressedData", {
             length: "length",

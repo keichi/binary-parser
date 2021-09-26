@@ -1,10 +1,10 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
-var SOI = Parser.start();
+const SOI = Parser.start();
 
-var EOI = Parser.start();
+const EOI = Parser.start();
 
-var APP0 = Parser.start()
+const APP0 = Parser.start()
   .endianess("big")
   .uint16("length")
   .string("id", {
@@ -25,7 +25,7 @@ var APP0 = Parser.start()
     },
   });
 
-var COM = Parser.start()
+const COM = Parser.start()
   .endianess("big")
   .uint16("length")
   .string("comment", {
@@ -35,7 +35,7 @@ var COM = Parser.start()
     },
   });
 
-var SOS = Parser.start()
+const SOS = Parser.start()
   .endianess("big")
   .uint16("length")
   .uint8("componentCount")
@@ -47,7 +47,7 @@ var SOS = Parser.start()
   .uint8("spectrumEnd")
   .uint8("spectrumSelect");
 
-var DQT = Parser.start()
+const DQT = Parser.start()
   .endianess("big")
   .uint16("length")
   .array("tables", {
@@ -60,7 +60,7 @@ var DQT = Parser.start()
     },
   });
 
-var SOF0 = Parser.start()
+const SOF0 = Parser.start()
   .endianess("big")
   .uint16("length")
   .uint8("precision")
@@ -75,14 +75,14 @@ var SOF0 = Parser.start()
     length: "componentCount",
   });
 
-var Ignore = Parser.start()
+const Ignore = Parser.start()
   .endianess("big")
   .uint16("length")
   .seek(function () {
     return this.length - 2;
   });
 
-var Segment = Parser.start()
+const Segment = Parser.start()
   .endianess("big")
   .uint16("marker")
   .choice("segment", {
@@ -98,7 +98,7 @@ var Segment = Parser.start()
     defaultChoice: Ignore,
   });
 
-var JPEG = Parser.start().array("segments", {
+const JPEG = Parser.start().array("segments", {
   type: Segment,
   readUntil: "eof",
 });

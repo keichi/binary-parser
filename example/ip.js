@@ -1,6 +1,6 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
-var ipHeader = new Parser()
+const ipHeader = new Parser()
   .endianess("big")
   .bit4("version")
   .bit4("headerLength")
@@ -21,6 +21,6 @@ var ipHeader = new Parser()
     length: 4,
   });
 
-var buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
+const buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 console.log(ipHeader.parse(buf));
