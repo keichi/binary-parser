@@ -9,10 +9,10 @@
     "smart-buffer": "^4.1.0"
   },
   "devDependencies": {
-    "@types/node": "^16.9.1",
-    "mocha": "^9.1.1",
+    "@types/node": "^16.10.1",
+    "mocha": "^9.1.2",
     "nyc": "^15.1.0",
-    "prettier": "^2.4.0",
+    "prettier": "^2.4.1",
     "typescript": "^4.4.3"
   },
   "exports": {
