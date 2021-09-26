@@ -1,4 +1,3 @@
-require("fast-text-encoding");
 var assert = require("assert");
 var Parser = require("../dist/binary_parser").Parser;
 

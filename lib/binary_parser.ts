@@ -1,4 +1,3 @@
-import "fast-text-encoding";
 import { Context } from "./context";
 
 const aliasRegistry: { [key: string]: Parser } = {};
