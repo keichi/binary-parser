@@ -4,7 +4,7 @@
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "types": "dist/binary_parser.d.ts",
-  "module": "dist/esm/binary-parser.mjs",
+  "module": "dist/esm/binary_parser.mjs",
   "dependencies": {
     "smart-buffer": "^4.1.0"
   },
@@ -18,13 +18,13 @@
   "exports": {
     ".": {
       "import": "./dist/esm/binary_parser.mjs",
-      "require": "./dist/binary-parser.js"
+      "require": "./dist/binary_parser.js"
     },
     "./*": "./*"
   },
   "scripts": {
     "build": "tsc && npm run build:esm",
-    "build:esm": "tsc --target esnext --module esnext --outDir dist/esm && node rename",
+    "build:esm": "tsc --target esnext --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "mocha",
