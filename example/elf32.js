@@ -1,6 +1,6 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
-var ELF32ProgramHeader = new Parser()
+const ELF32ProgramHeader = new Parser()
   .endianess("little")
   .uint32("type")
   .uint32("offset")
@@ -11,14 +11,14 @@ var ELF32ProgramHeader = new Parser()
   .uint32("flags")
   .uint32("align");
 
-var ELF32ProgramHeaderTable = new Parser().array("items", {
+const ELF32ProgramHeaderTable = new Parser().array("items", {
   type: ELF32ProgramHeader,
   length: function (vars) {
     return vars.phnum;
   },
 });
 
-var ELF32SectionHeader = new Parser()
+const ELF32SectionHeader = new Parser()
   .endianess("little")
   .uint32("name")
   .uint32("type")
@@ -31,22 +31,22 @@ var ELF32SectionHeader = new Parser()
   .uint32("addralign")
   .uint32("entsize");
 
-var ELF32SectionHeaderTable = new Parser().array("items", {
+const ELF32SectionHeaderTable = new Parser().array("items", {
   type: ELF32SectionHeader,
   length: function (vars) {
     return vars.shnum;
   },
 });
 
-var ELF32SectionHeaderStringTable = new Parser().seek(1).array("items", {
+const ELF32SectionHeaderStringTable = new Parser().seek(1).array("items", {
   type: new Parser().string("name", { zeroTerminated: true }),
   lengthInBytes: function (vars) {
-    var shstr = vars.section_headers.items[vars.shstrndx];
+    const shstr = vars.section_headers.items[vars.shstrndx];
     return shstr.size - 1;
   },
 });
 
-var ELF32Header = new Parser()
+const ELF32Header = new Parser()
   .endianess("little")
   .buffer("ident", { length: 16 })
   .uint16("type")
@@ -72,13 +72,13 @@ var ELF32Header = new Parser()
   })
   .pointer("strings", {
     type: ELF32SectionHeaderStringTable,
-    offset: function () {
-      var shstr = vars.section_headers.items[vars.shstrndx];
+    offset: function (vars) {
+      const shstr = vars.section_headers.items[vars.shstrndx];
       return shstr.offset;
     },
   });
 
 require("fs").readFile("hello", function (err, data) {
-  var result = ELF32Header.parse(data);
+  const result = ELF32Header.parse(data);
   console.log(require("util").inspect(result, { depth: null }));
 });

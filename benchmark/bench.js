@@ -1,11 +1,11 @@
-var binary = require("binary");
-var Benchmark = require("benchmark");
-var bp = require("binparse").bp;
-var Parser = require("../dist/binary_parser").Parser;
-var Destruct = require("destruct-js");
+const binary = require("binary");
+const Benchmark = require("benchmark");
+const bp = require("binparse").bp;
+const Parser = require("../dist/binary_parser").Parser;
+const Destruct = require("destruct-js");
 const Struct = require("structron");
 
-var suite = new Benchmark.Suite();
+const suite = new Benchmark.Suite();
 
 // binparse
 const PointParser = bp.object("Point", {
@@ -52,11 +52,11 @@ const PointsStruct = new Struct()
   );
 
 // Prepare input
-var n = 1000;
-var buf = Buffer.alloc(4 + n * 2 * 3);
+const n = 1000;
+const buf = Buffer.alloc(4 + n * 2 * 3);
 
 buf.writeUInt32LE(n, 0);
-for (var i = 0; i < n; i++) {
+for (let i = 0; i < n; i++) {
   buf.writeUInt16LE(123, i * 6 + 0 + 4);
   buf.writeUInt16LE(456, i * 6 + 2 + 4);
   buf.writeUInt16LE(789, i * 6 + 4 + 4);
@@ -65,9 +65,9 @@ for (var i = 0; i < n; i++) {
 // Run benchmarks
 suite
   .add("hand-written", function () {
-    n = buf.readUInt32LE(0);
+    const n = buf.readUInt32LE(0);
     const points = [];
-    for (var i = 0; i < n; i++) {
+    for (let i = 0; i < n; i++) {
       points.push({
         x: buf.readUInt16LE(i * 6 + 0 + 4),
         y: buf.readUInt16LE(i * 6 + 2 + 4),

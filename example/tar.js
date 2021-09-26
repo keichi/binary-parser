@@ -1,11 +1,11 @@
-var Parser = require("../dist/binary_parser").Parser;
-var fs = require("fs");
+const Parser = require("../dist/binary_parser").Parser;
+const fs = require("fs");
 
-var oct2int = function (s) {
+const oct2int = function (s) {
   return parseInt(s, 8);
 };
 
-var tarHeader = new Parser()
+const tarHeader = new Parser()
   .string("name", { length: 100, stripNull: true })
   .string("mode", { length: 8, stripNull: true, formatter: oct2int })
   .string("uid", { length: 8, stripNull: true, formatter: oct2int })
@@ -24,7 +24,7 @@ var tarHeader = new Parser()
   .string("prefix", { length: 155, stripNull: true })
   .seek(12);
 
-var tarItem = new Parser()
+const tarItem = new Parser()
   .nest({
     type: tarHeader,
   })
@@ -32,7 +32,7 @@ var tarItem = new Parser()
     return Math.ceil(this.size / 512) * 512;
   });
 
-var tarArchive = new Parser().array("files", {
+const tarArchive = new Parser().array("files", {
   type: tarItem,
   readUntil: "eof",
 });

@@ -1,4 +1,4 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
 // C structure BITMAPFILEHEADER
 // typedef struct tagBITMAPFILEHEADER {
@@ -8,7 +8,7 @@ var Parser = require("../dist/binary_parser").Parser;
 //   WORD  bfReserved2;
 //   DWORD bfOffBits;
 // } BITMAPFILEHEADER, *PBITMAPFILEHEADER;
-var bmpFileHeader = new Parser()
+const bmpFileHeader = new Parser()
   .endianess("little")
   .string("type", {
     length: 2,
@@ -33,7 +33,7 @@ var bmpFileHeader = new Parser()
 //     DWORD  biClrUsed;
 //     DWORD  biClrImportant;
 // } BITMAPINFOHEADER;
-var bmpInfoHeader = new Parser()
+const bmpInfoHeader = new Parser()
   .endianess("little")
   .uint32("size")
   .int32("width")
@@ -47,7 +47,7 @@ var bmpInfoHeader = new Parser()
   .uint32("clrUsed")
   .uint32("clrImportant");
 
-var bmpFile = new Parser()
+const bmpFile = new Parser()
   .nest("fileHeader", {
     type: bmpFileHeader,
   })

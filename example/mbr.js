@@ -1,7 +1,7 @@
-var Parser = require("../dist/binary_parser").Parser;
-var fs = require("fs");
+const Parser = require("../dist/binary_parser").Parser;
+const fs = require("fs");
 
-var chs = new Parser({
+const chs = new Parser({
   formatter: function (val) {
     val.cylinder |= val.cylinderHigh << 8;
     return val;
@@ -12,7 +12,7 @@ var chs = new Parser({
   .bit6("sector")
   .uint8("cylinder");
 
-var partitionTable = new Parser()
+const partitionTable = new Parser()
   .uint8("bootFlag")
   .nest("startCHS", {
     type: chs,
@@ -32,7 +32,7 @@ var partitionTable = new Parser()
   .uint32le("startLBA")
   .uint32le("endLBA");
 
-var mbrParser = new Parser()
+const mbrParser = new Parser()
   .seek(446)
   .array("partitionTables", {
     type: partitionTable,
