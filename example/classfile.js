@@ -1,52 +1,52 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
-var ConstantClassInfo = Parser.start().uint16be("name_index");
+const ConstantClassInfo = Parser.start().uint16be("name_index");
 
-var ConstantFieldrefInfo = Parser.start()
+const ConstantFieldrefInfo = Parser.start()
   .uint16be("class_index")
   .uint16be("name_and_type_index");
 
-var ConstantMethodrefInfo = Parser.start()
+const ConstantMethodrefInfo = Parser.start()
   .uint16be("class_index")
   .uint16be("name_and_type_index");
 
-var ConstantInterfaceMethodrefInfo = Parser.start()
+const ConstantInterfaceMethodrefInfo = Parser.start()
   .uint16be("class_index")
   .uint16be("name_and_type_index");
 
-var ConstantStringInfo = Parser.start().uint16be("string_index");
+const ConstantStringInfo = Parser.start().uint16be("string_index");
 
-var ConstantIntegerInfo = Parser.start().uint32be("bytes");
+const ConstantIntegerInfo = Parser.start().uint32be("bytes");
 
-var ConstantFloatInfo = Parser.start().uint32be("bytes");
+const ConstantFloatInfo = Parser.start().uint32be("bytes");
 
-var ConstantLongInfo = Parser.start()
+const ConstantLongInfo = Parser.start()
   .uint32be("high_bytes")
   .uint32be("low_bytes");
 
-var ConstantDoubleInfo = Parser.start()
+const ConstantDoubleInfo = Parser.start()
   .uint32be("high_bytes")
   .uint32be("low_bytes");
 
-var ConstantNameAndTypeInfo = Parser.start()
+const ConstantNameAndTypeInfo = Parser.start()
   .uint16be("name_index")
   .uint16be("descriptor_index");
 
-var ConstantUtf8Info = Parser.start()
+const ConstantUtf8Info = Parser.start()
   .uint16be("len")
   .string("bytes", { length: "len" });
 
-var ConstantMethodHandleInfo = Parser.start()
+const ConstantMethodHandleInfo = Parser.start()
   .uint8("reference_kind")
   .uint16be("reference_index");
 
-var ConstantMethodTypeInfo = Parser.start().uint16be("descriptor_index");
+const ConstantMethodTypeInfo = Parser.start().uint16be("descriptor_index");
 
-var ConstantInvokeDynamicInfo = Parser.start()
+const ConstantInvokeDynamicInfo = Parser.start()
   .uint16be("bootstrap_method_attr_index")
   .uint16be("name_and_type_index");
 
-var CpInfo = Parser.start()
+const CpInfo = Parser.start()
   .uint8("tag")
   .choice("info", {
     tag: "tag",
@@ -67,7 +67,7 @@ var CpInfo = Parser.start()
     },
   });
 
-var ClassFile = Parser.start()
+const ClassFile = Parser.start()
   .endianess("big")
   .uint32("magic", { assert: 0xcafebabe })
   .uint16("minor_version")

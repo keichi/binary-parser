@@ -1,6 +1,6 @@
-var Parser = require("../dist/binary_parser").Parser;
+const Parser = require("../dist/binary_parser").Parser;
 
-var tcpHeader = new Parser()
+const tcpHeader = new Parser()
   .endianess("big")
   .uint16("srcPort")
   .uint16("dstPort")
@@ -21,7 +21,7 @@ var tcpHeader = new Parser()
   .uint16("checksum")
   .uint16("urgentPointer");
 
-var buf = Buffer.from(
+const buf = Buffer.from(
   "e8a203e108e177e13d20756b801829d3004100000101080a2ea486ba793310bc",
   "hex"
 );
