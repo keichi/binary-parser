@@ -20,8 +20,8 @@
   },
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc",
-    "build:esm": "tsc --target esnext --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
+    "build:cjs": "tsc --module commonjs",
+    "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "mocha",
