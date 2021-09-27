@@ -1,4 +1,3 @@
-const binary = require("binary");
 const Benchmark = require("benchmark");
 const bp = require("binparse").bp;
 const Parser = require("../dist/binary_parser").Parser;
