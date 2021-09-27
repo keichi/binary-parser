@@ -40,10 +40,10 @@ and [binary](https://github.com/substack/node-binary).
 
 ```javascript
 // Module import
-var Parser = require("binary-parser").Parser;
+const Parser = require("binary-parser").Parser;
 
 // Build an IP packet header Parser
-var ipHeader = new Parser()
+const ipHeader = new Parser()
   .endianess("big")
   .bit4("version")
   .bit4("headerLength")
@@ -65,11 +65,21 @@ var ipHeader = new Parser()
   });
 
 // Prepare buffer to parse.
-var buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
+const buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 // Parse buffer and show result
 console.log(ipHeader.parse(buf));
 ```
+
+## Installation
+
+You can install `binary-parser ` via npm:
+
+```bash
+npm install binary-parser
+```
+
+The npm package provides entry points for both CommonJS and ES modules.
 
 ## API
 
@@ -98,7 +108,7 @@ returned by the 64 bit is `bigint`.
 greater. Lower version will throw a runtime error.
 
 ```javascript
-var parser = new Parser()
+const parser = new Parser()
   // Signed 32-bit integer (little endian)
   .int32le("a")
   // Unsigned 8-bit integer
@@ -119,7 +129,7 @@ Parse bytes as a floating-point value and stores it to a variable named
 `name`.
 
 ```javascript
-var parser = new Parser()
+const parser = new Parser()
   // 32-bit floating value (big endian)
   .floatbe("a")
   // 64-bit floating value (little endian)
@@ -182,7 +192,7 @@ keys:
   object. If function it reads until the function returns true.
 
 ```javascript
-var parser = new Parser()
+const parser = new Parser()
   // Statically sized array
   .array("data", {
     type: "int32",
@@ -254,11 +264,11 @@ an object which can have the following keys:
   `choices`, this parser is used.
 
 ```javascript
-var parser1 = ...;
-var parser2 = ...;
-var parser3 = ...;
+const parser1 = ...;
+const parser2 = ...;
+const parser3 = ...;
 
-var parser = new Parser().uint8("tagValue").choice("data", {
+const parser = new Parser().uint8("tagValue").choice("data", {
   tag: "tagValue",
   choices: {
     1: parser1, // if tagValue == 1, execute parser1
@@ -294,7 +304,7 @@ when called after another function which would advance the internal buffer
 offset.
 
 ```javascript
-var parser = new Parser()
+const parser = new Parser()
   // this call advances the buffer offset by
   // a variable (i.e. unknown to us) number of bytes
   .string("name", {
@@ -324,7 +334,7 @@ Define what endianess to use in this parser. `endianess` can be either
 `"little"` or `"big"`. The default endianess of `Parser` is set to big-endian.
 
 ```javascript
-var parser = new Parser()
+const parser = new Parser()
   .endianess("little")
   // You can specify endianess explicitly
   .uint16be("a")
@@ -342,9 +352,9 @@ to have an instance of it.
 Especially, the parser may reference itself:
 
 ```javascript
-var stop = new Parser();
+const stop = new Parser();
 
-var parser = new Parser()
+const parser = new Parser()
   .namely("self") // use 'self' to refer to the parser itself
   .uint8("type")
   .choice("data", {
@@ -372,7 +382,7 @@ var parser = new Parser()
 //      /
 //     0
 
-var buffer = Buffer.from([
+const buffer = Buffer.from([
   2,
   /* left -> */ 3,
     /* one   -> */ 1, /* -> */ 0,
@@ -405,11 +415,11 @@ An example of referencing other patches:
 ```javascript
 // the line below registers the name "self", so we will be able to use it in
 // `twoCells` as a reference
-var parser = Parser.start().namely("self");
+const parser = Parser.start().namely("self");
 
-var stop = Parser.start().namely("stop");
+const stop = Parser.start().namely("stop");
 
-var twoCells = Parser.start()
+const twoCells = Parser.start()
   .namely("twoCells")
   .nest("left", { type: "self" })
   .nest("right", { type: "stop" });
@@ -423,7 +433,7 @@ parser.uint8("type").choice("data", {
   }
 });
 
-var buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
+const buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
 
 parser.parse(buffer);
 ```
@@ -447,12 +457,12 @@ will pass it on to a parser for further processing.
 ```javascript
 const zlib = require("zlib");
 // A parser to run on the data returned by the wrapper
-var textParser = Parser.start()
+const textParser = Parser.start()
   .string("text", {
     zeroTerminated: true,
   });
 
-var mainParser = Parser.start()
+const mainParser = Parser.start()
   // Read length of the data to wrap
   .uint32le("length")
   // Read wrapped data
@@ -486,7 +496,7 @@ These options can be used in all parsers.
 - `formatter` - Function that transforms the parsed value into a more desired
   form.
     ```javascript
-    var parser = new Parser().array("ipv4", {
+    const parser = new Parser().array("ipv4", {
       type: uint8,
       length: "4",
       formatter: function(arr) {
@@ -504,12 +514,12 @@ These options can be used in all parsers.
 
     ```javascript
     // simple maginc number validation
-    var ClassFile = Parser.start()
+    const ClassFile = Parser.start()
       .endianess("big")
       .uint32("magic", { assert: 0xcafebabe });
 
     // Doing more complex assertion with a predicate function
-    var parser = new Parser()
+    const parser = new Parser()
       .int16le("a")
       .int16le("b")
       .int16le("c", {
@@ -545,7 +555,7 @@ you need to call `.useContextVars()` to enable it.
 - `$root` - This field references the root structure.
 
   ```javascript
-  var parser = new Parser()
+  const parser = new Parser()
     .useContextVars()
     .nest("header", {
       type: new Parser().uint32("length"),
@@ -566,7 +576,7 @@ you need to call `.useContextVars()` to enable it.
   variable will be available only when using the `length` mode for arrays.
 
   ```javascript
-  var parser = new Parser()
+  const parser = new Parser()
     .useContextVars()
     .nest("header", {
       type: new Parser().uint32("length"),
@@ -587,9 +597,16 @@ you need to call `.useContextVars()` to enable it.
   ```
 
 ## Examples
+
 See `example/` for real-world examples.
 
-## Support
+## Benchmarks
+
+A benchmark script to compare the parsing performance with binparse, structron
+and destruct.js is available under `benchmark/`.
+
+## Contributing
+
 Please report issues to the
 [issue tracker](https://github.com/keichi/binary-parser/issues) if you have
 any difficulties using this module, found a bug, or request a new feature.
