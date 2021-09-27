@@ -98,7 +98,7 @@ console.log(ipHeader.encode(anIpHeader).toString("hex"));
 
 ## Installation
 
-You can install `binary-parser ` via npm:
+You can install `binary-parser` via npm:
 
 ```bash
 npm install binary-parser
