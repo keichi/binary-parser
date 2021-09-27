@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "benchmark": "^2.1.4",
-    "binary": "0.3.0",
     "binparse": "1.2.1",
     "destruct-js": "^0.2.9",
     "structron": "^0.4.3"
