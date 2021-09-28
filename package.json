@@ -1,6 +1,6 @@
 {
   "name": "binary-parser",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "module": "dist/esm/binary_parser.mjs",
@@ -25,7 +25,6 @@
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "mocha",
-    "test-browser": "parcel test/browser.html --open",
     "cover": "nyc --reporter html mocha",
     "prepare": "npm run build"
   },
