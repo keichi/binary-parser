@@ -1,94 +1,102 @@
 ---
-title: 'Binary-parser: A blazing-fast declarative parser builder for binary data'
+title: 'Binary-parser: A declarative and efficient parser generator for binary data'
 tags:
   - JavaScript
+  - TypeScript
+  - binary
+  - parser
 authors:
   - name: Keichi Takahashi
     orcid: 0000-0002-1607-5694
     affiliation: 1
 affiliations:
  - name: Nara Institute of Science and Technology
-date: 21 September 2021
+   index: 1
+date: 27 September 2021
 bibliography: paper.bib
 ---
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+This paper presents `binary-parser`, a JavaScript/TypeScript library that
+allows users to write high-performance binary parsers, and facilitates the
+rapid prototyping of research software that works with binary files and
+network protocols. `Binary-parser`'s declarative API is designed such that
+expressing complex binary structures is straightforward and easy. In addition
+to the high productivity, `binary-parser` utilizes meta-programming to
+dynamically generate parser codes to achieve parsing performance equivalent
+to a hand-written parser. `Binary-parser` is being used by over 700 GitHub
+repositories and 120 npm packages as of September 2021.
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+Parsing binary data is a ubiquitous task in developing research software. Many
+scientific instruments and software tools use proprietary file formats and
+network protocols, while open-source libraries to work with them are often
+unavailable or limited. In such situations, the programmer has no choice but
+to write a binary parser. However, writing a binary parser by hand is
+error-prone and tedious because the programmer faces challenges such as
+understanding the specification of the binary format, correctly managing the
+byte/bit offsets during parsing, and constructing complex data structures as
+outputs.
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+`Binary-parser` significantly reduces the programmer's effort by automatically
+generating efficient parser code from a declarative description of the binary
+format supplied by the user. The generated parser code is converted to a
+JavaScript function and executed for efficient parsing. To accommodate diverse
+needs by different users, `binary-parser` exposes various options to ensure
+flexibility and provide opportunities for customization.
 
-# Mathematics
+A large number of software packages have been developed using `binary-parser`
+that demonstrates its usefulness and practicality. Some examples include
+libraries and applications to work with rainfall radars [@nimrod],
+software-defined radio [@flexradio], GNSS receivers [@libsbp], smart meters
+[@linky], drones [@djiparsetxt], and thermostats [@maxcul].
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+# Design
 
-Double dollars make self-standing equations:
+`Binary-parser`'s design is characterized by the following three key features:
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+1. **Fast**: `Binary-parser` takes advantage of meta-programming to generate
+   a JavaScript source code during runtime from the user's description of the
+   target binary format. The generated source code is then passed to the
+   `Function` constructor to dynamically create a function that performs
+   parsing. This design enables `binary-parser` to achieve parsing
+   performance comparable to a hand-written parser.
+2. **Declarative**: As opposed to parser combinator libraries [@monadic; @nom],
+   `binary-parser` allows the user to express the target binary format in a
+   declarative manner, similar to a human-readable network protocol or file
+   format specification. The user can combine _primitive_ parsers (integers,
+   floating point numbers, bit fields, strings and bytes) using _composite_
+   parsers (arrays, choices, nests and pointers) to express a wide variety of
+   binary formats.
+3. **Flexible**: Unlike binary parser generators that use an external Domain
+   Specific Language (DSL) [@kaitai; @nail], `binary-parser` uses an internal
+   DSL implemented on top of JavaScript. This design allows the user to
+   specify most parsing options as return values of user-defined JavaScript
+   functions that are invoked at runtime. For example, the offset and length
+   of a field can be computed from another field that has been parsed already.
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
+# Performance evaluation
 
-# Citations
+To evaluate the parsing performance of `binary-parser`, we implemented a small
+parser using `binary-parser` (v2.0.1) and three major JavaScript binary parser
+libraries: `binparse` (v1.2.1), `structron` (v0.4.3) and `destruct.js` (v0.2.9).
+We also implemented the same parser using Node.js's Buffer API as a baseline.
+The binary data to be parsed was an array of 1,000 coordinates (each expressed
+as three 16-bit integers) preceded by the number of coordinates (a 32-bit
+integer). The benchmarks were executed on a MacBook Air (Apple M1 CPU, 2020).
+The JavaScript runtime was Node.js (v16.9.1).
 
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
+![Performance comparison of binary-parser, binparse, structron, destruct.js and a hand-written parser.\label{fig:benchmark}](benchmark.pdf){ width=80% }
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
+\autoref{fig:benchmark} shows the measurement results. Evidently,
+`binary-parser` significantly outperforms its alternatives by a factor of
+7.5$\times$ to 180$\times$. The plot also reveals that `binary-parser`
+achieves performance equal to a hand-written parser.
 
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
+# Acknowledgments
 
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
-
-# Acknowledgements
-
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+This work was partly supported by JSPS KAKENHI Grant Number JP20K19808.
 
 # References
