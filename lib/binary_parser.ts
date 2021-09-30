@@ -373,7 +373,7 @@ export class Parser {
 
   private bigIntVersionCheck() {
     if (!DataView.prototype.getBigInt64)
-      throw new Error("BigInt64 is unsupported in this runtime");
+      throw new Error("BigInt64 is unsupported on this runtime");
   }
 
   int64(varName: string, options: ParserOptions = {}): this {
@@ -576,19 +576,22 @@ export class Parser {
   string(varName: string, options: ParserOptions): this {
     if (!options.zeroTerminated && !options.length && !options.greedy) {
       throw new Error(
-        "Neither length, zeroTerminated, nor greedy is defined for string."
+        "One of length, zeroTerminated, or greedy must be defined for string."
       );
     }
+
     if ((options.zeroTerminated || options.length) && options.greedy) {
       throw new Error(
         "greedy is mutually exclusive with length and zeroTerminated for string."
       );
     }
+
     if (options.stripNull && !(options.length || options.greedy)) {
       throw new Error(
-        "Length or greedy must be defined if stripNull is defined."
+        "length or greedy must be defined if stripNull is enabled."
       );
     }
+
     options.encoding = options.encoding || "utf8";
 
     return this.setNextParser("string", varName, options);
@@ -596,7 +599,7 @@ export class Parser {
 
   buffer(varName: string, options: ParserOptions): this {
     if (!options.length && !options.readUntil) {
-      throw new Error("Length nor readUntil is defined in buffer parser");
+      throw new Error("length or readUntil must be defined for buffer.");
     }
 
     return this.setNextParser("buffer", varName, options);
@@ -604,13 +607,11 @@ export class Parser {
 
   wrapped(varName: string, options: ParserOptions): this {
     if (!options.length && !options.readUntil) {
-      throw new Error("Length nor readUntil is defined in buffer parser");
+      throw new Error("length or readUntil must be defined for wrapped.");
     }
 
     if (!options.wrapper || !options.type) {
-      throw new Error(
-        "Both wrapper and type must be defined in wrapper parser"
-      );
+      throw new Error("Both wrapper and type must be defined for wrapped.");
     }
 
     return this.setNextParser("wrapper", varName, options);
@@ -618,19 +619,21 @@ export class Parser {
 
   array(varName: string, options: ParserOptions): this {
     if (!options.readUntil && !options.length && !options.lengthInBytes) {
-      throw new Error("Length option of array is not defined.");
+      throw new Error(
+        "One of readUntil, length and lengthInBytes must be defined for array."
+      );
     }
+
     if (!options.type) {
-      throw new Error("Type option of array is not defined.");
+      throw new Error("type is required for array.");
     }
+
     if (
       typeof options.type === "string" &&
       !aliasRegistry.has(options.type) &&
-      Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0
+      !(options.type in PRIMITIVE_SIZES)
     ) {
-      throw new Error(
-        `Specified primitive type "${options.type}" is not supported.`
-      );
+      throw new Error(`Array element type "${options.type}" is unkown.`);
     }
 
     return this.setNextParser("array", varName, options);
@@ -643,13 +646,15 @@ export class Parser {
     }
 
     if (!options) {
-      throw new Error("Option of choice is not defined.");
+      throw new Error("tag and choices are are required for choice.");
     }
+
     if (!options.tag) {
-      throw new Error("Tag option of choice is not defined.");
+      throw new Error("tag is requird for choice.");
     }
+
     if (!options.choices) {
-      throw new Error("Choices option of choice is not defined.");
+      throw new Error("choices is required for choice.");
     }
 
     for (const keyString in options.choices) {
@@ -657,21 +662,15 @@ export class Parser {
       const value = options.choices[key];
 
       if (isNaN(key)) {
-        throw new Error("Key of choices must be a number.");
-      }
-
-      if (!value) {
-        throw new Error(`Choice Case ${keyString} of ${varName} is not valid.`);
+        throw new Error(`Choice key "${keyString}" is not a number.`);
       }
 
       if (
         typeof value === "string" &&
         !aliasRegistry.has(value) &&
-        Object.keys(PRIMITIVE_SIZES).indexOf(value) < 0
+        !((value as string) in PRIMITIVE_SIZES)
       ) {
-        throw new Error(
-          `Specified primitive type "${value}" is not supported.`
-        );
+        throw new Error(`Choice type "${value}" is unkown.`);
       }
     }
 
@@ -684,18 +683,17 @@ export class Parser {
       varName = "";
     }
 
-    if (!options) {
-      throw new Error("Option of choice is not defined.");
+    if (!options || !options.type) {
+      throw new Error("type is required for nest.");
     }
-    if (!options.type) {
-      throw new Error("Type option of nest is not defined.");
-    }
+
     if (!(options.type instanceof Parser) && !aliasRegistry.has(options.type)) {
-      throw new Error("Type option of nest must be a Parser object.");
+      throw new Error("type must be a known parser name or a Parser object.");
     }
+
     if (!(options.type instanceof Parser) && !varName) {
       throw new Error(
-        "options.type must be a object if variable name is omitted."
+        "type must be a Parser object if the variable name is omitted."
       );
     }
 
@@ -704,8 +702,9 @@ export class Parser {
 
   pointer(varName: string, options: ParserOptions): this {
     if (!options.offset) {
-      throw new Error("Offset option of pointer is not defined.");
+      throw new Error("offset is required for pointer.");
     }
+
     if (!options.type) {
       throw new Error("type is required for pointer.");
     }
@@ -1004,11 +1003,11 @@ export class Parser {
         break;
       default:
         throw new Error(
-          "Assert option supports only strings, numbers and assert functions."
+          "assert option must be a string, number or a function."
         );
     }
     ctx.generateError(
-      `"Assert error: ${varName} is " + ${this.options.assert}`
+      `"Assertion error: ${varName} is " + ${this.options.assert}`
     );
     ctx.pushCode("}");
   }
