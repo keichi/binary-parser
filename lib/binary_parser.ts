@@ -3,30 +3,27 @@ class Context {
   scopes = [["vars"]];
   bitFields: Parser[] = [];
   tmpVariableCount = 0;
-  references: { [key: string]: { resolved: boolean; requested: boolean } } = {};
+  references = new Map<string, { resolved: boolean; requested: boolean }>();
   importPath: string;
   imports: any[] = [];
   reverseImports = new Map<any, number>();
-  useContextVariables: boolean = false;
+  useContextVariables = false;
 
-  constructor(importPath?: string, useContextVariables?: boolean) {
+  constructor(importPath: string, useContextVariables: boolean) {
     this.importPath = importPath;
     this.useContextVariables = useContextVariables;
   }
 
-  generateVariable(name?: string) {
-    const arr = [];
-
-    const scopes = this.scopes[this.scopes.length - 1];
-    arr.push(...scopes);
+  generateVariable(name?: string): string {
+    const scopes = [...this.scopes[this.scopes.length - 1]];
     if (name) {
-      arr.push(name);
+      scopes.push(name);
     }
 
-    return arr.join(".");
+    return scopes.join(".");
   }
 
-  generateOption(val: number | string | Function) {
+  generateOption(val: number | string | Function): string {
     switch (typeof val) {
       case "number":
         return val.toString();
@@ -38,10 +35,10 @@ class Context {
   }
 
   generateError(err: string) {
-    this.pushCode("throw new Error(" + err + ");");
+    this.pushCode(`throw new Error(${err});`);
   }
 
-  generateTmpVariable() {
+  generateTmpVariable(): string {
     return "$tmp" + this.tmpVariableCount++;
   }
 
@@ -69,7 +66,7 @@ class Context {
     this.scopes.pop();
   }
 
-  addImport(im: any) {
+  addImport(im: any): string {
     if (!this.importPath) return `(${im})`;
     let id = this.reverseImports.get(im);
     if (!id) {
@@ -80,29 +77,37 @@ class Context {
   }
 
   addReference(alias: string) {
-    if (this.references[alias]) return;
-    this.references[alias] = { resolved: false, requested: false };
+    if (!this.references.has(alias)) {
+      this.references.set(alias, { resolved: false, requested: false });
+    }
   }
 
   markResolved(alias: string) {
-    this.references[alias].resolved = true;
+    const reference = this.references.get(alias);
+
+    if (reference) {
+      reference.resolved = true;
+    }
   }
 
   markRequested(aliasList: string[]) {
     aliasList.forEach((alias) => {
-      this.references[alias].requested = true;
+      const reference = this.references.get(alias);
+
+      if (reference) {
+        reference.requested = true;
+      }
     });
   }
 
-  getUnresolvedReferences() {
-    const references = this.references;
-    return Object.keys(this.references).filter(
-      (alias) => !references[alias].resolved && !references[alias].requested
-    );
+  getUnresolvedReferences(): string[] {
+    return Array.from(this.references)
+      .filter(([_, reference]) => !reference.resolved && !reference.requested)
+      .map(([alias, _]) => alias);
   }
 }
 
-const aliasRegistry: { [key: string]: Parser } = {};
+const aliasRegistry = new Map<string, Parser>();
 const FUNCTION_PREFIX = "___parser_";
 
 interface ParserOptions {
@@ -120,7 +125,7 @@ interface ParserOptions {
   clone?: boolean;
   stripNull?: boolean;
   key?: string;
-  tag?: string;
+  tag?: string | ((item: any) => number);
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
 }
@@ -273,13 +278,13 @@ export class Parser {
   varName = "";
   type: Types = "";
   options: ParserOptions = {};
-  next: Parser | null = null;
-  head: Parser | null = null;
-  compiled: Function | null = null;
+  next?: Parser;
+  head?: Parser;
+  compiled?: Function;
   endian: Endianess = "be";
-  constructorFn: Function | null = null;
-  alias: string | null = null;
-  useContextVariables: boolean = false;
+  constructorFn?: Function;
+  alias?: string;
+  useContextVariables = false;
 
   constructor() {}
 
@@ -301,8 +306,8 @@ export class Parser {
   private primitiveN(
     type: PrimitiveTypes,
     varName: string,
-    options?: ParserOptions
-  ) {
+    options: ParserOptions
+  ): this {
     return this.setNextParser(type as Types, varName, options);
   }
 
@@ -310,59 +315,59 @@ export class Parser {
     return (type + this.endian.toLowerCase()) as PrimitiveTypes;
   }
 
-  uint8(varName: string, options?: ParserOptions) {
+  uint8(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint8", varName, options);
   }
 
-  uint16(varName: string, options?: ParserOptions) {
+  uint16(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("uint16"), varName, options);
   }
 
-  uint16le(varName: string, options?: ParserOptions) {
+  uint16le(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint16le", varName, options);
   }
 
-  uint16be(varName: string, options?: ParserOptions) {
+  uint16be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint16be", varName, options);
   }
 
-  uint32(varName: string, options?: ParserOptions) {
+  uint32(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("uint32"), varName, options);
   }
 
-  uint32le(varName: string, options?: ParserOptions) {
+  uint32le(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint32le", varName, options);
   }
 
-  uint32be(varName: string, options?: ParserOptions) {
+  uint32be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint32be", varName, options);
   }
 
-  int8(varName: string, options?: ParserOptions) {
+  int8(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int8", varName, options);
   }
 
-  int16(varName: string, options?: ParserOptions) {
+  int16(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("int16"), varName, options);
   }
 
-  int16le(varName: string, options?: ParserOptions) {
+  int16le(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int16le", varName, options);
   }
 
-  int16be(varName: string, options?: ParserOptions) {
+  int16be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int16be", varName, options);
   }
 
-  int32(varName: string, options?: ParserOptions) {
+  int32(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("int32"), varName, options);
   }
 
-  int32le(varName: string, options?: ParserOptions) {
+  int32le(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int32le", varName, options);
   }
 
-  int32be(varName: string, options?: ParserOptions) {
+  int32be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int32be", varName, options);
   }
 
@@ -371,207 +376,204 @@ export class Parser {
       throw new Error("BigInt64 is unsupported in this runtime");
   }
 
-  int64(varName: string, options?: ParserOptions) {
+  int64(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian("int64"), varName, options);
   }
 
-  int64be(varName: string, options?: ParserOptions) {
+  int64be(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN("int64be", varName, options);
   }
 
-  int64le(varName: string, options?: ParserOptions) {
+  int64le(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN("int64le", varName, options);
   }
 
-  uint64(varName: string, options?: ParserOptions) {
+  uint64(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian("uint64"), varName, options);
   }
 
-  uint64be(varName: string, options?: ParserOptions) {
+  uint64be(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN("uint64be", varName, options);
   }
 
-  uint64le(varName: string, options?: ParserOptions) {
+  uint64le(varName: string, options: ParserOptions = {}): this {
     this.bigIntVersionCheck();
     return this.primitiveN("uint64le", varName, options);
   }
 
-  floatle(varName: string, options?: ParserOptions) {
+  floatle(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("floatle", varName, options);
   }
 
-  floatbe(varName: string, options?: ParserOptions) {
+  floatbe(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("floatbe", varName, options);
   }
 
-  doublele(varName: string, options?: ParserOptions) {
+  doublele(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("doublele", varName, options);
   }
 
-  doublebe(varName: string, options?: ParserOptions) {
+  doublebe(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("doublebe", varName, options);
   }
 
-  private bitN(size: BitSizes, varName: string, options?: ParserOptions) {
-    if (!options) {
-      options = {};
-    }
+  private bitN(size: BitSizes, varName: string, options: ParserOptions): this {
     options.length = size;
     return this.setNextParser("bit", varName, options);
   }
 
-  bit1(varName: string, options?: ParserOptions) {
+  bit1(varName: string, options: ParserOptions = {}): this {
     return this.bitN(1, varName, options);
   }
 
-  bit2(varName: string, options?: ParserOptions) {
+  bit2(varName: string, options: ParserOptions = {}): this {
     return this.bitN(2, varName, options);
   }
 
-  bit3(varName: string, options?: ParserOptions) {
+  bit3(varName: string, options: ParserOptions = {}): this {
     return this.bitN(3, varName, options);
   }
 
-  bit4(varName: string, options?: ParserOptions) {
+  bit4(varName: string, options: ParserOptions = {}): this {
     return this.bitN(4, varName, options);
   }
 
-  bit5(varName: string, options?: ParserOptions) {
+  bit5(varName: string, options: ParserOptions = {}): this {
     return this.bitN(5, varName, options);
   }
 
-  bit6(varName: string, options?: ParserOptions) {
+  bit6(varName: string, options: ParserOptions = {}): this {
     return this.bitN(6, varName, options);
   }
 
-  bit7(varName: string, options?: ParserOptions) {
+  bit7(varName: string, options: ParserOptions = {}): this {
     return this.bitN(7, varName, options);
   }
 
-  bit8(varName: string, options?: ParserOptions) {
+  bit8(varName: string, options: ParserOptions = {}): this {
     return this.bitN(8, varName, options);
   }
 
-  bit9(varName: string, options?: ParserOptions) {
+  bit9(varName: string, options: ParserOptions = {}): this {
     return this.bitN(9, varName, options);
   }
 
-  bit10(varName: string, options?: ParserOptions) {
+  bit10(varName: string, options: ParserOptions = {}): this {
     return this.bitN(10, varName, options);
   }
 
-  bit11(varName: string, options?: ParserOptions) {
+  bit11(varName: string, options: ParserOptions = {}): this {
     return this.bitN(11, varName, options);
   }
 
-  bit12(varName: string, options?: ParserOptions) {
+  bit12(varName: string, options: ParserOptions = {}): this {
     return this.bitN(12, varName, options);
   }
 
-  bit13(varName: string, options?: ParserOptions) {
+  bit13(varName: string, options: ParserOptions = {}): this {
     return this.bitN(13, varName, options);
   }
 
-  bit14(varName: string, options?: ParserOptions) {
+  bit14(varName: string, options: ParserOptions = {}): this {
     return this.bitN(14, varName, options);
   }
 
-  bit15(varName: string, options?: ParserOptions) {
+  bit15(varName: string, options: ParserOptions = {}): this {
     return this.bitN(15, varName, options);
   }
 
-  bit16(varName: string, options?: ParserOptions) {
+  bit16(varName: string, options: ParserOptions = {}): this {
     return this.bitN(16, varName, options);
   }
 
-  bit17(varName: string, options?: ParserOptions) {
+  bit17(varName: string, options: ParserOptions = {}): this {
     return this.bitN(17, varName, options);
   }
 
-  bit18(varName: string, options?: ParserOptions) {
+  bit18(varName: string, options: ParserOptions = {}): this {
     return this.bitN(18, varName, options);
   }
 
-  bit19(varName: string, options?: ParserOptions) {
+  bit19(varName: string, options: ParserOptions = {}): this {
     return this.bitN(19, varName, options);
   }
 
-  bit20(varName: string, options?: ParserOptions) {
+  bit20(varName: string, options: ParserOptions = {}): this {
     return this.bitN(20, varName, options);
   }
 
-  bit21(varName: string, options?: ParserOptions) {
+  bit21(varName: string, options: ParserOptions = {}): this {
     return this.bitN(21, varName, options);
   }
 
-  bit22(varName: string, options?: ParserOptions) {
+  bit22(varName: string, options: ParserOptions = {}): this {
     return this.bitN(22, varName, options);
   }
 
-  bit23(varName: string, options?: ParserOptions) {
+  bit23(varName: string, options: ParserOptions = {}): this {
     return this.bitN(23, varName, options);
   }
 
-  bit24(varName: string, options?: ParserOptions) {
+  bit24(varName: string, options: ParserOptions = {}): this {
     return this.bitN(24, varName, options);
   }
 
-  bit25(varName: string, options?: ParserOptions) {
+  bit25(varName: string, options: ParserOptions = {}): this {
     return this.bitN(25, varName, options);
   }
 
-  bit26(varName: string, options?: ParserOptions) {
+  bit26(varName: string, options: ParserOptions = {}): this {
     return this.bitN(26, varName, options);
   }
 
-  bit27(varName: string, options?: ParserOptions) {
+  bit27(varName: string, options: ParserOptions = {}): this {
     return this.bitN(27, varName, options);
   }
 
-  bit28(varName: string, options?: ParserOptions) {
+  bit28(varName: string, options: ParserOptions = {}): this {
     return this.bitN(28, varName, options);
   }
 
-  bit29(varName: string, options?: ParserOptions) {
+  bit29(varName: string, options: ParserOptions = {}): this {
     return this.bitN(29, varName, options);
   }
 
-  bit30(varName: string, options?: ParserOptions) {
+  bit30(varName: string, options: ParserOptions = {}): this {
     return this.bitN(30, varName, options);
   }
 
-  bit31(varName: string, options?: ParserOptions) {
+  bit31(varName: string, options: ParserOptions = {}): this {
     return this.bitN(31, varName, options);
   }
 
-  bit32(varName: string, options?: ParserOptions) {
+  bit32(varName: string, options: ParserOptions = {}): this {
     return this.bitN(32, varName, options);
   }
 
-  namely(alias: string) {
-    aliasRegistry[alias] = this;
+  namely(alias: string): this {
+    aliasRegistry.set(alias, this);
     this.alias = alias;
     return this;
   }
 
-  skip(length: ParserOptions["length"], options?: ParserOptions) {
+  skip(length: ParserOptions["length"], options: ParserOptions = {}): this {
     return this.seek(length, options);
   }
 
-  seek(relOffset: ParserOptions["length"], options?: ParserOptions) {
-    if (options && options.assert) {
+  seek(relOffset: ParserOptions["length"], options: ParserOptions = {}): this {
+    if (options.assert) {
       throw new Error("assert option on seek is not allowed.");
     }
 
     return this.setNextParser("seek", "", { length: relOffset });
   }
 
-  string(varName: string, options: ParserOptions) {
+  string(varName: string, options: ParserOptions): this {
     if (!options.zeroTerminated && !options.length && !options.greedy) {
       throw new Error(
         "Neither length, zeroTerminated, nor greedy is defined for string."
@@ -592,7 +594,7 @@ export class Parser {
     return this.setNextParser("string", varName, options);
   }
 
-  buffer(varName: string, options: ParserOptions) {
+  buffer(varName: string, options: ParserOptions): this {
     if (!options.length && !options.readUntil) {
       throw new Error("Length nor readUntil is defined in buffer parser");
     }
@@ -600,7 +602,7 @@ export class Parser {
     return this.setNextParser("buffer", varName, options);
   }
 
-  wrapped(varName: string, options: ParserOptions) {
+  wrapped(varName: string, options: ParserOptions): this {
     if (!options.length && !options.readUntil) {
       throw new Error("Length nor readUntil is defined in buffer parser");
     }
@@ -614,7 +616,7 @@ export class Parser {
     return this.setNextParser("wrapper", varName, options);
   }
 
-  array(varName: string, options: ParserOptions) {
+  array(varName: string, options: ParserOptions): this {
     if (!options.readUntil && !options.length && !options.lengthInBytes) {
       throw new Error("Length option of array is not defined.");
     }
@@ -623,7 +625,7 @@ export class Parser {
     }
     if (
       typeof options.type === "string" &&
-      !aliasRegistry[options.type] &&
+      !aliasRegistry.has(options.type) &&
       Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0
     ) {
       throw new Error(
@@ -634,20 +636,23 @@ export class Parser {
     return this.setNextParser("array", varName, options);
   }
 
-  choice(varName: string | ParserOptions, options?: ParserOptions) {
+  choice(varName: string | ParserOptions, options?: ParserOptions): this {
     if (typeof options !== "object" && typeof varName === "object") {
       options = varName;
-      varName = null;
+      varName = "";
     }
 
+    if (!options) {
+      throw new Error("Option of choice is not defined.");
+    }
     if (!options.tag) {
-      throw new Error("Tag option of array is not defined.");
+      throw new Error("Tag option of choice is not defined.");
     }
     if (!options.choices) {
-      throw new Error("Choices option of array is not defined.");
+      throw new Error("Choices option of choice is not defined.");
     }
 
-    Object.keys(options.choices).forEach((keyString: string) => {
+    for (const keyString in options.choices) {
       const key = parseInt(keyString, 10);
       const value = options.choices[key];
 
@@ -661,28 +666,31 @@ export class Parser {
 
       if (
         typeof value === "string" &&
-        !aliasRegistry[value] &&
+        !aliasRegistry.has(value) &&
         Object.keys(PRIMITIVE_SIZES).indexOf(value) < 0
       ) {
         throw new Error(
           `Specified primitive type "${value}" is not supported.`
         );
       }
-    });
+    }
 
     return this.setNextParser("choice", varName as string, options);
   }
 
-  nest(varName: string | ParserOptions, options?: ParserOptions) {
+  nest(varName: string | ParserOptions, options?: ParserOptions): this {
     if (typeof options !== "object" && typeof varName === "object") {
       options = varName;
-      varName = null;
+      varName = "";
     }
 
+    if (!options) {
+      throw new Error("Option of choice is not defined.");
+    }
     if (!options.type) {
       throw new Error("Type option of nest is not defined.");
     }
-    if (!(options.type instanceof Parser) && !aliasRegistry[options.type]) {
+    if (!(options.type instanceof Parser) && !aliasRegistry.has(options.type)) {
       throw new Error("Type option of nest must be a Parser object.");
     }
     if (!(options.type instanceof Parser) && !varName) {
@@ -691,40 +699,33 @@ export class Parser {
       );
     }
 
-    return this.setNextParser("nest", varName as string, options);
+    return this.setNextParser("nest", varName as string, options || {});
   }
 
-  pointer(varName: string, options?: ParserOptions) {
+  pointer(varName: string, options: ParserOptions): this {
     if (!options.offset) {
       throw new Error("Offset option of pointer is not defined.");
     }
-
     if (!options.type) {
-      throw new Error("Type option of pointer is not defined.");
-    } else if (typeof options.type === "string") {
-      if (
-        Object.keys(PRIMITIVE_SIZES).indexOf(options.type) < 0 &&
-        !aliasRegistry[options.type]
-      ) {
-        throw new Error(
-          'Specified type "' + options.type + '" is not supported.'
-        );
-      }
-    } else if (options.type instanceof Parser) {
-    } else {
-      throw new Error(
-        "Type option of pointer must be a string or a Parser object."
-      );
+      throw new Error("type is required for pointer.");
+    }
+
+    if (
+      typeof options.type === "string" &&
+      !(options.type in PRIMITIVE_SIZES) &&
+      !aliasRegistry.has(options.type)
+    ) {
+      throw new Error(`Pointer type "${options.type}" is unkown.`);
     }
 
     return this.setNextParser("pointer", varName, options);
   }
 
-  saveOffset(varName: string, options?: ParserOptions) {
+  saveOffset(varName: string, options: ParserOptions = {}): this {
     return this.setNextParser("saveOffset", varName, options);
   }
 
-  endianess(endianess: "little" | "big") {
+  endianess(endianess: "little" | "big"): this {
     switch (endianess.toLowerCase()) {
       case "little":
         this.endian = "le";
@@ -733,19 +734,19 @@ export class Parser {
         this.endian = "be";
         break;
       default:
-        throw new Error(`Invalid endianess: ${endianess}`);
+        throw new Error('endianess must be one of "little" or "big"');
     }
 
     return this;
   }
 
-  useContextVars(useContextVariables: boolean = true) {
+  useContextVars(useContextVariables = true): this {
     this.useContextVariables = useContextVariables;
 
     return this;
   }
 
-  create(constructorFn: Function) {
+  create(constructorFn: Function): this {
     if (!(constructorFn instanceof Function)) {
       throw new Error("Constructor must be a Function object.");
     }
@@ -755,7 +756,7 @@ export class Parser {
     return this;
   }
 
-  private getContext(importPath?: string) {
+  private getContext(importPath: string): Context {
     const ctx = new Context(importPath, this.useContextVariables);
 
     ctx.pushCode(
@@ -772,8 +773,9 @@ export class Parser {
     return ctx;
   }
 
-  getCode() {
-    return this.getContext().code;
+  getCode(): string {
+    const importPath = "imports";
+    return this.getContext(importPath).code;
   }
 
   private addRawCode(ctx: Context) {
@@ -806,7 +808,7 @@ export class Parser {
 
     this.generate(ctx);
 
-    ctx.markResolved(this.alias);
+    ctx.markResolved(this.alias!);
     this.resolveReferences(ctx);
 
     ctx.pushCode(
@@ -822,8 +824,7 @@ export class Parser {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
     references.forEach((alias) => {
-      const parser = aliasRegistry[alias];
-      parser.addAliasedCode(ctx);
+      aliasRegistry.get(alias)?.addAliasedCode(ctx);
     });
   }
 
@@ -894,15 +895,15 @@ export class Parser {
       this.compile();
     }
 
-    return this.compiled(buffer, this.constructorFn);
+    return this.compiled!(buffer, this.constructorFn);
   }
 
-  private setNextParser(type: Types, varName: string, options: ParserOptions) {
+  private setNextParser(type: Types, varName: string, options: ParserOptions): this {
     const parser = new Parser();
 
     parser.type = type;
     parser.varName = varName;
-    parser.options = options || parser.options;
+    parser.options = options;
     parser.endian = this.endian;
 
     if (this.head) {
@@ -990,8 +991,10 @@ export class Parser {
 
     switch (typeof this.options.assert) {
       case "function":
-        const func = ctx.addImport(this.options.assert);
-        ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
+        {
+          const func = ctx.addImport(this.options.assert);
+          ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
+        }
         break;
       case "number":
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
@@ -1011,7 +1014,7 @@ export class Parser {
   }
 
   // Recursively call code generators and append results
-  private generateNext(ctx: Context) {
+  private generateNext(ctx: Context): Context {
     if (this.next) {
       ctx = this.next.generate(ctx);
     }
@@ -1076,14 +1079,14 @@ export class Parser {
   }
 
   private generateSeek(ctx: Context) {
-    const length = ctx.generateOption(this.options.length);
+    const length = ctx.generateOption(this.options.length!);
     ctx.pushCode(`offset += ${length};`);
   }
 
   private generateString(ctx: Context) {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
-    const encoding = this.options.encoding;
+    const encoding = this.options.encoding!;
     const isHex = encoding.toLowerCase() === "hex";
     const toHex = 'b => b.toString(16).padStart(2, "0")';
 
@@ -1151,7 +1154,7 @@ export class Parser {
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${varName} = buffer.subarray(offset);`);
     } else {
-      const len = ctx.generateOption(this.options.length);
+      const len = ctx.generateOption(this.options.length!);
 
       ctx.pushCode(`${varName} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
@@ -1163,8 +1166,8 @@ export class Parser {
   }
 
   private generateArray(ctx: Context) {
-    const length = ctx.generateOption(this.options.length);
-    const lengthInBytes = ctx.generateOption(this.options.lengthInBytes);
+    const length = ctx.generateOption(this.options.length!);
+    const lengthInBytes = ctx.generateOption(this.options.lengthInBytes!);
     const type = this.options.type;
     const counter = ctx.generateTmpVariable();
     const lhs = ctx.generateVariable(this.varName);
@@ -1194,7 +1197,7 @@ export class Parser {
     }
 
     if (typeof type === "string") {
-      if (!aliasRegistry[type]) {
+      if (!aliasRegistry.get(type)) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
@@ -1265,7 +1268,7 @@ export class Parser {
   ) {
     if (typeof type === "string") {
       const varName = ctx.generateVariable(this.varName);
-      if (!aliasRegistry[type]) {
+      if (!aliasRegistry.has(type)) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
@@ -1293,7 +1296,7 @@ export class Parser {
   }
 
   private generateChoice(ctx: Context) {
-    const tag = ctx.generateOption(this.options.tag);
+    const tag = ctx.generateOption(this.options.tag!);
     const nestVar = ctx.generateVariable(this.varName);
 
     if (this.varName) {
@@ -1306,13 +1309,14 @@ export class Parser {
       }
     }
     ctx.pushCode(`switch(${tag}) {`);
-    Object.keys(this.options.choices).forEach((tag) => {
-      const type = this.options.choices[parseInt(tag, 10)];
+    for (const tagString in this.options.choices) {
+      const tag = parseInt(tagString, 10);
+      const type = this.options.choices[tag];
 
       ctx.pushCode(`case ${tag}:`);
       this.generateChoiceCase(ctx, this.varName, type);
       ctx.pushCode("break;");
-    });
+    }
     ctx.pushCode("default:");
     if (this.options.defaultChoice) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);
@@ -1351,7 +1355,7 @@ export class Parser {
           ctx.pushCode(`delete ${nestVar}.$root;`);
         }
       }
-    } else if (aliasRegistry[this.options.type]) {
+    } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
@@ -1365,7 +1369,9 @@ export class Parser {
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
       );
-      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
+      if (this.options.type !== this.alias) {
+        ctx.addReference(this.options.type!);
+      }
     }
   }
 
@@ -1391,7 +1397,7 @@ export class Parser {
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset);`);
     } else {
-      const len = ctx.generateOption(this.options.length);
+      const len = ctx.generateOption(this.options.length!);
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
     }
@@ -1422,13 +1428,15 @@ export class Parser {
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
-    } else if (aliasRegistry[this.options.type]) {
+    } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`
       );
       ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
-      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
+      if (this.options.type !== this.alias) {
+        ctx.addReference(this.options.type!);
+      }
     }
     ctx.pushCode(`buffer = ${tempBuf};`);
     ctx.pushCode(`dataView = ${tempView};`);
@@ -1450,7 +1458,7 @@ export class Parser {
 
   private generatePointer(ctx: Context) {
     const type = this.options.type;
-    const offset = ctx.generateOption(this.options.offset);
+    const offset = ctx.generateOption(this.options.offset!);
     const tempVar = ctx.generateTmpVariable();
     const nestVar = ctx.generateVariable(this.varName);
 
@@ -1477,7 +1485,7 @@ export class Parser {
         ctx.pushCode(`delete ${nestVar}.$parent;`);
         ctx.pushCode(`delete ${nestVar}.$root;`);
       }
-    } else if (aliasRegistry[this.options.type]) {
+    } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
         `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
@@ -1491,8 +1499,10 @@ export class Parser {
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
       );
-      if (this.options.type !== this.alias) ctx.addReference(this.options.type);
-    } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type) >= 0) {
+      if (this.options.type !== this.alias) {
+        ctx.addReference(this.options.type!);
+      }
+    } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type!) >= 0) {
       const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
       const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
       ctx.pushCode(
