@@ -1215,6 +1215,10 @@ function compositeParserTests(
           34,
         ]);
 
+        // Skip if we are testing with Uint8Array since the zlib polyfill does
+        // not support Uint8Array
+        if (bufferBefore instanceof Uint8Array) return;
+
         const compressedData = factory(deflateRawSync(bufferBefore));
 
         const buffer = factory([

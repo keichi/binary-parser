@@ -1,4 +1,4 @@
-import { deepStrictEqual, notDeepStrictEqual, throws, ok } from "assert";
+import { deepStrictEqual, notDeepStrictEqual, ok } from "assert";
 import { Parser } from "../lib/binary_parser";
 
 function primitiveParserTests(
@@ -28,45 +28,38 @@ function primitiveParserTests(
         });
       });
       describe("BigInt64 parsers", () => {
-        const [major] = process.version.replace("v", "").split(".");
-        if (Number(major) >= 12) {
-          it("should parse biguints64", () => {
-            const parser = Parser.start().uint64be("a").uint64le("b");
-            // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
-            const buf = factory([
-              0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
-              0x00, 0xff, 0xff, 0xff, 0xff,
-            ]);
-            deepStrictEqual(parser.parse(buf), {
-              a: BigInt("4294967295"),
-              b: BigInt("18446744069414584320"),
-            });
+        it("should parse uint64", () => {
+          const parser = Parser.start().uint64be("a").uint64le("b");
+          // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
+          const buf = factory([
+            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
+            0x00, 0xff, 0xff, 0xff, 0xff,
+          ]);
+          deepStrictEqual(parser.parse(buf), {
+            a: BigInt("4294967295"),
+            b: BigInt("18446744069414584320"),
           });
+        });
 
-          it("should parse bigints64", () => {
-            const parser = Parser.start()
-              .int64be("a")
-              .int64le("b")
-              .int64be("c")
-              .int64le("d");
-            // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
-            const buf = factory([
-              0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00,
-              0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
-              0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-            ]);
-            deepStrictEqual(parser.parse(buf), {
-              a: BigInt("4294967295"),
-              b: BigInt("-4294967295"),
-              c: BigInt("4294967295"),
-              d: BigInt("-4294967295"),
-            });
+        it("should parse int64", () => {
+          const parser = Parser.start()
+            .int64be("a")
+            .int64le("b")
+            .int64be("c")
+            .int64le("d");
+          // from https://nodejs.org/api/buffer.html#buffer_buf_readbiguint64le_offset
+          const buf = factory([
+            0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00,
+            0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+            0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+          ]);
+          deepStrictEqual(parser.parse(buf), {
+            a: BigInt("4294967295"),
+            b: BigInt("-4294967295"),
+            c: BigInt("4294967295"),
+            d: BigInt("-4294967295"),
           });
-        } else {
-          it("should throw when run under not v12", () => {
-            throws(() => Parser.start().int64("a"));
-          });
-        }
+        });
       });
       it("should use formatter to transform parsed integer", () => {
         const parser = Parser.start()
