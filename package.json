@@ -5,10 +5,12 @@
   "main": "dist/binary_parser.js",
   "module": "dist/esm/binary_parser.mjs",
   "devDependencies": {
+    "@types/mocha": "^9.0.0",
     "@types/node": "^16.10.1",
     "mocha": "^9.1.2",
     "nyc": "^15.1.0",
     "prettier": "^2.4.1",
+    "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
   },
   "exports": {
@@ -24,8 +26,7 @@
     "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
-    "test": "mocha",
-    "cover": "nyc --reporter html mocha",
+    "test": "mocha --require ts-node/register test/*.ts",
     "prepare": "npm run build"
   },
   "files": [
