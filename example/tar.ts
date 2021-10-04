@@ -1,5 +1,7 @@
-import { Parser } from "../lib/binary_parser";
+import { join } from "path";
 import { readFile } from "fs";
+
+import { Parser } from "../lib/binary_parser";
 
 function oct2int(s: string): number {
   return parseInt(s, 8);
@@ -37,8 +39,6 @@ const tarArchive = new Parser().array("files", {
   readUntil: "eof",
 });
 
-console.log(tarArchive.getCode());
-
-readFile("test.tar", function (_, data) {
+readFile(join(__dirname, "test.tar"), (_, data) => {
   console.dir(tarArchive.parse(data), { depth: null, colors: true });
 });
