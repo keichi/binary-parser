@@ -1,6 +1,8 @@
-import { Parser } from "../lib/binary_parser";
 import { readFile } from "fs";
+import { join } from "path";
 import { inspect } from "util";
+
+import { Parser } from "../lib/binary_parser";
 
 const ConstantClassInfo = Parser.start().uint16be("name_index");
 
@@ -83,6 +85,6 @@ const ClassFile = Parser.start()
     },
   });
 
-readFile("Hello.class", function (_, data) {
+readFile(join(__dirname, "Hello.class"), (_, data) => {
   console.log(inspect(ClassFile.parse(data), { depth: null, colors: true }));
 });
