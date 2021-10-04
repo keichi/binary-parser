@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --module commonjs",
+    "build:cjs": "tsc --module commonjs --outDir dist",
     "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
@@ -49,7 +49,7 @@
   ],
   "author": {
     "name": "Keichi Takahashi",
-    "email": "keichi.t@me.com",
+    "email": "hello@keichi.dev",
     "url": "https://keichi.dev/"
   },
   "contributors": [
