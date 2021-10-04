@@ -8,7 +8,6 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.10.1",
     "mocha": "^9.1.2",
-    "nyc": "^15.1.0",
     "prettier": "^2.4.1",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
