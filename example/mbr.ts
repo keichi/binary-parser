@@ -1,12 +1,8 @@
-const Parser = require("../dist/binary_parser").Parser;
-const fs = require("fs");
+import { Parser } from "../lib/binary_parser";
+import { readFile } from "fs";
+import { inspect } from "util";
 
-const chs = new Parser({
-  formatter: function (val) {
-    val.cylinder |= val.cylinderHigh << 8;
-    return val;
-  },
-})
+const chs = new Parser()
   .uint8("head")
   .bit2("cylinderHigh")
   .bit6("sector")
@@ -25,6 +21,7 @@ const partitionTable = new Parser()
   .nest("endCHS", {
     type: chs,
     formatter: function (val) {
+      val.cylinder |= val.cylinderHigh << 8;
       delete val.cylinderHigh;
       return val;
     },
@@ -42,6 +39,6 @@ const mbrParser = new Parser()
     assert: 0x55aa,
   });
 
-fs.readFile("raspbian.img", function (err, data) {
-  console.dir(mbrParser.parse(data), { depth: null, colors: true });
+readFile("raspbian.img", function (_, data) {
+  console.log(inspect(mbrParser.parse(data), { depth: null, colors: true }));
 });

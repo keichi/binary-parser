@@ -1,4 +1,6 @@
-const Parser = require("../dist/binary_parser").Parser;
+import { Parser } from "../lib/binary_parser";
+import { readFile } from "fs";
+import { inspect } from "util";
 
 const ConstantClassInfo = Parser.start().uint16be("name_index");
 
@@ -36,6 +38,7 @@ const ConstantUtf8Info = Parser.start()
   .uint16be("len")
   .string("bytes", { length: "len" });
 
+// @ts-ignore
 const ConstantMethodHandleInfo = Parser.start()
   .uint8("reference_kind")
   .uint16be("reference_index");
@@ -75,11 +78,11 @@ const ClassFile = Parser.start()
   .uint16("constant_pool_count")
   .array("cp_info", {
     type: CpInfo,
-    length: function () {
+    length: function (this: any) {
       return this.constant_pool_count - 1;
     },
   });
 
-require("fs").readFile("Hello.class", function (err, data) {
-  console.log(require("util").inspect(ClassFile.parse(data), { depth: null }));
+readFile("Hello.class", function (_, data) {
+  console.log(inspect(ClassFile.parse(data), { depth: null, colors: true }));
 });

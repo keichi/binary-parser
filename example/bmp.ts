@@ -1,4 +1,5 @@
-const Parser = require("../dist/binary_parser").Parser;
+import { Parser } from "../lib/binary_parser";
+import { readFile } from "fs";
 
 // C structure BITMAPFILEHEADER
 // typedef struct tagBITMAPFILEHEADER {
@@ -55,6 +56,6 @@ const bmpFile = new Parser()
     type: bmpInfoHeader,
   });
 
-require("fs").readFile("test.bmp", function (err, data) {
+readFile("test.bmp", (_, data) => {
   console.log(bmpFile.parse(data));
 });
