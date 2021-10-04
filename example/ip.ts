@@ -1,4 +1,4 @@
-const Parser = require("../dist/binary_parser").Parser;
+import { Parser } from "../lib/binary_parser";
 
 const ipHeader = new Parser()
   .endianess("big")

@@ -1,4 +1,8 @@
-const Parser = require("../dist/binary_parser").Parser;
+import { readFile } from "fs";
+import { join } from "path";
+import { inspect } from "util";
+
+import { Parser } from "../lib/binary_parser";
 
 const SOI = Parser.start();
 
@@ -20,17 +24,18 @@ const APP0 = Parser.start()
   .uint8("thumbHeight")
   .array("thumbData", {
     type: "uint8",
-    length: function () {
+    length: function (this: any) {
       return this.Xt * this.Yt * 3;
     },
   });
 
+// @ts-ignore
 const COM = Parser.start()
   .endianess("big")
   .uint16("length")
   .string("comment", {
     encoding: "ascii",
-    length: function () {
+    length: function (this: any) {
       return this.length - 2;
     },
   });
@@ -55,7 +60,7 @@ const DQT = Parser.start()
       type: "uint8",
       length: 64,
     }),
-    length: function () {
+    length: function (this: any) {
       return (this.length - 2) / 65;
     },
   });
@@ -78,7 +83,7 @@ const SOF0 = Parser.start()
 const Ignore = Parser.start()
   .endianess("big")
   .uint16("length")
-  .seek(function () {
+  .seek(function (this: any) {
     return this.length - 2;
   });
 
@@ -103,6 +108,6 @@ const JPEG = Parser.start().array("segments", {
   readUntil: "eof",
 });
 
-require("fs").readFile("test.jpg", function (err, data) {
-  console.log(require("util").inspect(JPEG.parse(data), { depth: null }));
+readFile(join(__dirname, "test.jpg"), (_, data) => {
+  console.log(inspect(JPEG.parse(data), { depth: null, colors: true }));
 });

@@ -1,4 +1,8 @@
-const Parser = require("../dist/binary_parser").Parser;
+import { readFile } from "fs";
+import { join } from "path";
+import { inspect } from "util";
+
+import { Parser } from "../lib/binary_parser";
 
 const ELF32ProgramHeader = new Parser()
   .endianess("little")
@@ -78,7 +82,7 @@ const ELF32Header = new Parser()
     },
   });
 
-require("fs").readFile("hello", function (err, data) {
+readFile(join(__dirname, "hello"), (_, data) => {
   const result = ELF32Header.parse(data);
-  console.log(require("util").inspect(result, { depth: null }));
+  console.log(inspect(result, { depth: null, colors: true }));
 });
