@@ -27,10 +27,10 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --module commonjs --outDir dist",
     "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
-    "fmt": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
-    "check-fmt": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
+    "format": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
+    "format:fix": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "mocha --require ts-node/register test/*.ts",
-    "test-browser": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
+    "test:browser": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
     "prepare": "npm run build"
   },
   "files": [

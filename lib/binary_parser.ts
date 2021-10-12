@@ -897,7 +897,11 @@ export class Parser {
     return this.compiled!(buffer, this.constructorFn);
   }
 
-  private setNextParser(type: Types, varName: string, options: ParserOptions): this {
+  private setNextParser(
+    type: Types,
+    varName: string,
+    options: ParserOptions
+  ): this {
     const parser = new Parser();
 
     parser.type = type;
