@@ -1047,11 +1047,15 @@ export class Parser {
     if (!this.compiledEncode) {
       this.compileEncode();
     }
-    
+
     return this.compiledEncode(obj);
   }
-  
-  private setNextParser(type: Types, varName: string, options: ParserOptions): this {
+
+  private setNextParser(
+    type: Types,
+    varName: string,
+    options: ParserOptions
+  ): this {
     const parser = new Parser();
 
     parser.type = type;
