@@ -2,6 +2,7 @@
 
 [![build](https://github.com/keichi/binary-parser/workflows/build/badge.svg)](https://github.com/keichi/binary-parser/actions?query=workflow%3Abuild)
 [![npm](https://img.shields.io/npm/v/binary-parser)](https://www.npmjs.com/package/binary-parser)
+[![status](https://joss.theoj.org/papers/ec35c0e3ccc750a5cdab9771e5a6bf21/status.svg)](https://joss.theoj.org/papers/ec35c0e3ccc750a5cdab9771e5a6bf21)
 
 Binary-parser is a parser builder for JavaScript that enables you to write
 efficient binary parsers in a simple and declarative manner.
