@@ -546,6 +546,9 @@ const mainParser = Parser.start()
 mainParser.parse(buffer);
 ```
 
+### sizeOf()
+Returns how many bytes this parser consumes. If the size of the parser cannot
+be statically determined, a `NaN` is returned.
 
 ### compile() and compileEncode()
 Compile this parser on-the-fly and cache its result. Usually, there is no need
