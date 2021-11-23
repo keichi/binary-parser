@@ -1238,7 +1238,9 @@ export class Parser {
         );
     }
     ctx.generateError(
-      `"Assertion error: ${varName} is " + ${this.options.assert}`
+      `"Assertion error: ${varName} is " + ${JSON.stringify(
+        this.options.assert.toString()
+      )}`
     );
     ctx.pushCode("}");
   }
