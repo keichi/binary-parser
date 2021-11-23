@@ -1156,6 +1156,25 @@ function compositeParserTests(
         throws(() => {
           parser2.parse(buffer4);
         });
+
+        const parser3 = new Parser()
+          .int16le("a")
+          .int16le("b")
+          .int16le("c", {
+            assert(this: { a: number; b: number }, x: number | string) {
+              return this.a + this.b === x;
+            },
+          });
+
+        const buffer5 = hexToBuf("d2042e16001b");
+        doesNotThrow(() => {
+          parser3.parse(buffer5);
+        });
+
+        const buffer6 = hexToBuf("2e16001bd204");
+        throws(() => {
+          parser3.parse(buffer6);
+        });
       });
     });
 
