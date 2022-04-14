@@ -1230,7 +1230,9 @@ export class Parser {
         ctx.pushCode(`if (${this.options.assert} !== ${varName}) {`);
         break;
       case "string":
-        ctx.pushCode(`if (${JSON.stringify(this.options.assert)} !== ${varName}) {`);
+        ctx.pushCode(
+          `if (${JSON.stringify(this.options.assert)} !== ${varName}) {`
+        );
         break;
       default:
         throw new Error(
