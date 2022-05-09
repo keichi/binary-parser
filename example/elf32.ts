@@ -5,7 +5,7 @@ import { inspect } from "util";
 import { Parser } from "../lib/binary_parser";
 
 const ELF32ProgramHeader = new Parser()
-  .endianess("little")
+  .endianness("little")
   .uint32("type")
   .uint32("offset")
   .uint32("vaddr")
@@ -23,7 +23,7 @@ const ELF32ProgramHeaderTable = new Parser().array("items", {
 });
 
 const ELF32SectionHeader = new Parser()
-  .endianess("little")
+  .endianness("little")
   .uint32("name")
   .uint32("type")
   .uint32("flags")
@@ -51,7 +51,7 @@ const ELF32SectionHeaderStringTable = new Parser().seek(1).array("items", {
 });
 
 const ELF32Header = new Parser()
-  .endianess("little")
+  .endianness("little")
   .buffer("ident", { length: 16 })
   .uint16("type")
   .uint16("machine")

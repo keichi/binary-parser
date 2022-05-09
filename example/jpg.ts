@@ -9,7 +9,7 @@ const SOI = Parser.start();
 const EOI = Parser.start();
 
 const APP0 = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .string("id", {
     encoding: "ascii",
@@ -31,7 +31,7 @@ const APP0 = Parser.start()
 
 // @ts-ignore
 const COM = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .string("comment", {
     encoding: "ascii",
@@ -41,7 +41,7 @@ const COM = Parser.start()
   });
 
 const SOS = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .uint8("componentCount")
   .array("components", {
@@ -53,7 +53,7 @@ const SOS = Parser.start()
   .uint8("spectrumSelect");
 
 const DQT = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .array("tables", {
     type: Parser.start().uint8("precisionAndTableId").array("table", {
@@ -66,7 +66,7 @@ const DQT = Parser.start()
   });
 
 const SOF0 = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .uint8("precision")
   .uint16("width")
@@ -81,14 +81,14 @@ const SOF0 = Parser.start()
   });
 
 const Ignore = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("length")
   .seek(function (this: any) {
     return this.length - 2;
   });
 
 const Segment = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint16("marker")
   .choice("segment", {
     tag: "marker",

@@ -1,7 +1,7 @@
 import { Parser } from "../lib/binary_parser";
 
 const ipHeader = new Parser()
-  .endianess("big")
+  .endianness("big")
   .bit4("version")
   .bit4("headerLength")
   .uint8("tos")
