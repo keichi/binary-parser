@@ -1,7 +1,7 @@
 import { Parser } from "../lib/binary_parser";
 
 const tcpHeader = new Parser()
-  .endianess("big")
+  .endianness("big")
   .uint16("srcPort")
   .uint16("dstPort")
   .uint32("seq")

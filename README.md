@@ -44,7 +44,7 @@ const Parser = require("binary-parser").Parser;
 
 // Build an IP packet header Parser
 const ipHeader = new Parser()
-  .endianess("big")
+  .endianness("big")
   .bit4("version")
   .bit4("headerLength")
   .uint8("tos")
@@ -329,17 +329,17 @@ Move the buffer offset for `relOffset` bytes from the current position. Use a
 negative `relOffset` value to rewind the offset. This method was previously
 named `skip(length)`.
 
-### endianess(endianess)
-Define what endianess to use in this parser. `endianess` can be either
-`"little"` or `"big"`. The default endianess of `Parser` is set to big-endian.
+### endianness(endianness)
+Define what endianness to use in this parser. `endianness` can be either
+`"little"` or `"big"`. The default endianness of `Parser` is set to big-endian.
 
 ```javascript
 const parser = new Parser()
-  .endianess("little")
-  // You can specify endianess explicitly
+  .endianness("little")
+  // You can specify endianness explicitly
   .uint16be("a")
   .uint32le("a")
-  // Or you can omit endianess (in this case, little-endian is used)
+  // Or you can omit endianness (in this case, little-endian is used)
   .uint16("b")
   .int32("c");
 ```
@@ -518,7 +518,7 @@ These options can be used in all parsers.
     ```javascript
     // simple maginc number validation
     const ClassFile = Parser.start()
-      .endianess("big")
+      .endianness("big")
       .uint32("magic", { assert: 0xcafebabe });
 
     // Doing more complex assertion with a predicate function

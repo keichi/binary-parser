@@ -73,7 +73,7 @@ const CpInfo = Parser.start()
   });
 
 const ClassFile = Parser.start()
-  .endianess("big")
+  .endianness("big")
   .uint32("magic", { assert: 0xcafebabe })
   .uint16("minor_version")
   .uint16("major_version")

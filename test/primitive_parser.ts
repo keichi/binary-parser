@@ -86,7 +86,7 @@ function primitiveParserTests(
         ok(Math.abs(result.a - 12.345) < FLT_EPSILON);
         ok(Math.abs(result.b - -0.0678) < FLT_EPSILON);
       });
-      it("should handle endianess", () => {
+      it("should handle endianness", () => {
         const parser = Parser.start().int32le("little").int32be("big");
 
         const buffer = factory([
@@ -147,7 +147,7 @@ function primitiveParserTests(
         });
 
         const parser2 = new Parser()
-          .endianess("little")
+          .endianness("little")
           .bit1("a")
           .bit2("b")
           .bit4("c")
@@ -171,7 +171,7 @@ function primitiveParserTests(
         });
 
         const parser2 = new Parser()
-          .endianess("little")
+          .endianness("little")
           .bit3("a")
           .bit9("b")
           .bit4("c");
@@ -198,7 +198,7 @@ function primitiveParserTests(
         });
 
         const parser2 = new Parser()
-          .endianess("little")
+          .endianness("little")
           .bit1("a")
           .bit24("b")
           .bit4("c")
@@ -345,7 +345,7 @@ function primitiveParserTests(
 
       it("should parse until function returns true when readUntil is function", () => {
         const parser = new Parser()
-          .endianess("big")
+          .endianness("big")
           .uint8("cmd")
           .buffer("data", {
             readUntil: (item: number) => item === 2,
