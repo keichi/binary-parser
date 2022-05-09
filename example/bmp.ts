@@ -12,7 +12,7 @@ import { Parser } from "../lib/binary_parser";
 //   DWORD bfOffBits;
 // } BITMAPFILEHEADER, *PBITMAPFILEHEADER;
 const bmpFileHeader = new Parser()
-  .endianess("little")
+  .endianness("little")
   .string("type", {
     length: 2,
     assert: "BM",
@@ -37,7 +37,7 @@ const bmpFileHeader = new Parser()
 //     DWORD  biClrImportant;
 // } BITMAPINFOHEADER;
 const bmpInfoHeader = new Parser()
-  .endianess("little")
+  .endianness("little")
   .uint32("size")
   .int32("width")
   .int32("height")

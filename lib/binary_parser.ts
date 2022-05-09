@@ -145,7 +145,7 @@ type ComplexTypes =
   | "wrapper"
   | "";
 
-type Endianess = "be" | "le";
+type Endianness = "be" | "le";
 
 type PrimitiveTypes =
   | "uint8"
@@ -281,7 +281,7 @@ export class Parser {
   next?: Parser;
   head?: Parser;
   compiled?: Function;
-  endian: Endianess = "be";
+  endian: Endianness = "be";
   constructorFn?: Function;
   alias?: string;
   useContextVariables = false;
@@ -724,8 +724,8 @@ export class Parser {
     return this.setNextParser("saveOffset", varName, options);
   }
 
-  endianess(endianess: "little" | "big"): this {
-    switch (endianess.toLowerCase()) {
+  endianness(endianness: "little" | "big"): this {
+    switch (endianness.toLowerCase()) {
       case "little":
         this.endian = "le";
         break;
@@ -733,10 +733,14 @@ export class Parser {
         this.endian = "be";
         break;
       default:
-        throw new Error('endianess must be one of "little" or "big"');
+        throw new Error('endianness must be one of "little" or "big"');
     }
 
     return this;
+  }
+
+  endianess(endianess: "little" | "big"): this {
+    return this.endianness(endianess);
   }
 
   useContextVars(useContextVariables = true): this {
