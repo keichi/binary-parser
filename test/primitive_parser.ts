@@ -120,6 +120,7 @@ function primitiveParserTests(
         const bytes = [];
 
         s = s.replace(/\s/g, "");
+        deepStrictEqual(s.length % 8, 0);
         for (let i = 0; i < s.length; i += 8) {
           bytes.push(parseInt(s.slice(i, i + 8), 2));
         }
@@ -212,6 +213,49 @@ function primitiveParserTests(
           e: 1,
         });
       });
+      it("should parse 32-bit fields", () => {
+        const parser1 = new Parser().bit32("a");
+        const buf1 = binaryLiteral("10110101011101010111001010011101");
+        deepStrictEqual(parser1.parse(buf1), { a: 3044373149 });
+        const parser2 = new Parser().bit6("a").bit32("b").bit2("c");
+        const buf2 = binaryLiteral(
+          "101101 10110101011101010111001010011101 11"
+        );
+        deepStrictEqual(parser2.parse(buf2), { a: 45, b: 3044373149, c: 3 });
+      });
+      it("should parse arbitrarily large bit field sequence", () => {
+        const parser1 = new Parser()
+          .bit1("a")
+          .bit24("b")
+          .bit4("c")
+          .bit2("d")
+          .bit9("e");
+        const buf = binaryLiteral(
+          "1 101010101010101010101010 1111 01 110100110"
+        );
+        deepStrictEqual(parser1.parse(buf), {
+          a: 1,
+          b: 11184810,
+          c: 15,
+          d: 1,
+          e: 422,
+        });
+
+        const parser2 = new Parser()
+          .endianness("little")
+          .bit1("a")
+          .bit24("b")
+          .bit4("c")
+          .bit2("d")
+          .bit9("e");
+        deepStrictEqual(parser2.parse(buf), {
+          a: 1,
+          b: 11184829,
+          c: 10,
+          d: 2,
+          e: 422,
+        });
+      });
       it("should parse nested bit fields", () => {
         const parser = new Parser().bit1("a").nest("x", {
           type: new Parser().bit2("b").bit4("c").bit1("d"),
@@ -227,6 +271,24 @@ function primitiveParserTests(
             d: 0,
           },
         });
+      });
+
+      it("should assert bit fields", () => {
+        const parser = new Parser()
+          .bit4("a", { assert: (v) => v === 10 })
+          .bit3("b", { assert: (v) => v === 7 })
+          .bit1("c", { assert: (v) => v === 1 });
+        const buf = binaryLiteral("1010 111 1");
+        deepStrictEqual(parser.parse(buf), { a: 10, b: 7, c: 1 });
+      });
+
+      it("should format bit fields", () => {
+        const parser = new Parser()
+          .bit4("a", { formatter: (v) => v * 2 })
+          .bit3("b", { formatter: (v) => v * 3 })
+          .bit1("c", { formatter: (v) => v * 4 });
+        const buf = binaryLiteral("1010 111 1");
+        deepStrictEqual(parser.parse(buf), { a: 20, b: 21, c: 4 });
       });
     });
 

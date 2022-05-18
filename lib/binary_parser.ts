@@ -1133,11 +1133,11 @@ export class Parser {
           this.generateWrapper(ctx);
           break;
       }
-      this.generateAssert(ctx);
+      if (this.type !== "bit") this.generateAssert(ctx);
     }
 
     const varName = ctx.generateVariable(this.varName);
-    if (this.options.formatter) {
+    if (this.options.formatter && this.type !== "bit") {
       this.generateFormatter(ctx, varName, this.options.formatter);
     }
 
@@ -1272,6 +1272,9 @@ export class Parser {
   private generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
     const parser = JSON.parse(JSON.stringify(this));
+    parser.options = this.options;
+    parser.generateAssert = this.generateAssert.bind(this);
+    parser.generateFormatter = this.generateFormatter.bind(this);
     parser.varName = ctx.generateVariable(parser.varName);
     ctx.bitFields.push(parser);
 
@@ -1279,46 +1282,89 @@ export class Parser {
       !this.next ||
       (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
     ) {
-      let sum = 0;
-      ctx.bitFields.forEach(
-        (parser) => (sum += parser.options.length as number)
-      );
-
       const val = ctx.generateTmpVariable();
 
-      if (sum <= 8) {
-        ctx.pushCode(`var ${val} = dataView.getUint8(offset);`);
-        sum = 8;
-      } else if (sum <= 16) {
-        ctx.pushCode(`var ${val} = dataView.getUint16(offset);`);
-        sum = 16;
-      } else if (sum <= 24) {
-        const val1 = ctx.generateTmpVariable();
-        const val2 = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${val1} = dataView.getUint16(offset);`);
-        ctx.pushCode(`var ${val2} = dataView.getUint8(offset + 2);`);
-        ctx.pushCode(`var ${val} = (${val1} << 8) | ${val2};`);
-        sum = 24;
-      } else if (sum <= 32) {
-        ctx.pushCode(`var ${val} = dataView.getUint32(offset);`);
-        sum = 32;
-      } else {
-        throw new Error(
-          "Currently, bit field sequence longer than 4-bytes is not supported."
-        );
-      }
-      ctx.pushCode(`offset += ${sum / 8};`);
+      ctx.pushCode(`var ${val} = 0;`);
+
+      const getMaxBits = (from = 0) => {
+        let sum = 0;
+        for (let i = from; i < ctx.bitFields.length; i++) {
+          const length = ctx.bitFields[i].options.length as number;
+          if (sum + length > 32) break;
+          sum += length;
+        }
+        return sum;
+      };
+
+      const getBytes = (sum: number) => {
+        if (sum <= 8) {
+          ctx.pushCode(`${val} = dataView.getUint8(offset);`);
+          sum = 8;
+        } else if (sum <= 16) {
+          ctx.pushCode(`${val} = dataView.getUint16(offset);`);
+          sum = 16;
+        } else if (sum <= 24) {
+          ctx.pushCode(
+            `${val} = (dataView.getUint16(offset) << 8) | dataView.getUint8(offset + 2);`
+          );
+          sum = 24;
+        } else {
+          ctx.pushCode(`${val} = dataView.getUint32(offset);`);
+          sum = 32;
+        }
+        ctx.pushCode(`offset += ${sum / 8};`);
+        return sum;
+      };
 
       let bitOffset = 0;
       const isBigEndian = this.endian === "be";
 
-      ctx.bitFields.forEach((parser) => {
-        const length = parser.options.length as number;
-        const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
-        const mask = (1 << length) - 1;
+      let sum = 0;
+      let rem = 0;
 
-        ctx.pushCode(`${parser.varName} = ${val} >> ${offset} & ${mask};`);
+      ctx.bitFields.forEach((parser, i) => {
+        let length = parser.options.length as number;
+        if (length > rem) {
+          if (rem) {
+            const mask = -1 >>> (32 - rem);
+            ctx.pushCode(
+              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
+                length - rem
+              };`
+            );
+            length -= rem;
+          }
+          bitOffset = 0;
+          rem = sum = getBytes(getMaxBits(i) - rem);
+        }
+        const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
+        const mask = -1 >>> (32 - length);
+
+        ctx.pushCode(
+          `${parser.varName} ${
+            length < (parser.options.length as number) ? "|=" : "="
+          } ${val} >> ${offset} & 0x${mask.toString(16)};`
+        );
+
+        // Ensure value is unsigned
+        if ((parser.options.length as number) === 32) {
+          ctx.pushCode(`${parser.varName} >>>= 0`);
+        }
+
+        if (parser.options.assert) {
+          parser.generateAssert(ctx);
+        }
+
+        if (parser.options.formatter) {
+          parser.generateFormatter(
+            ctx,
+            parser.varName,
+            parser.options.formatter
+          );
+        }
+
         bitOffset += length;
+        rem -= length;
       });
 
       ctx.bitFields = [];
