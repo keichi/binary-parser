@@ -605,16 +605,21 @@ export class Parser {
     return this.setNextParser("buffer", varName, options);
   }
 
-  wrapped(varName: string, options: ParserOptions): this {
+  wrapped(varName: string | ParserOptions, options?: ParserOptions): this {
+    if (typeof options !== "object" && typeof varName === "object") {
+      options = varName;
+      varName = "";
+    }
+
+    if (!options || !options.wrapper || !options.type) {
+      throw new Error("Both wrapper and type must be defined for wrapped.");
+    }
+
     if (!options.length && !options.readUntil) {
       throw new Error("length or readUntil must be defined for wrapped.");
     }
 
-    if (!options.wrapper || !options.type) {
-      throw new Error("Both wrapper and type must be defined for wrapped.");
-    }
-
-    return this.setNextParser("wrapper", varName, options);
+    return this.setNextParser("wrapper", varName as string, options);
   }
 
   array(varName: string, options: ParserOptions): this {
