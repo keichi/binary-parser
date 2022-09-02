@@ -103,13 +103,13 @@ returned from the `parse` method.
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
-`l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number. The runtime type
+`le` for little endian or `be` for big endian. With no prefix, it parses as a
+signed number, with `u` prefix as an unsigned number. The runtime type
 returned by the 8, 16, 32 bit methods is `number` while the type
 returned by the 64 bit is `bigint`.
 
 **Note:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
-greater. Lower version will throw a runtime error.
+greater. Lower versions will throw a runtime error.
 
 ```javascript
 const parser = new Parser()
@@ -156,7 +156,7 @@ the following keys:
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads
   until it reaches the end of the buffer. Will consume zero-bytes.
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
-  null characters from end of the string
+  null characters from end of the string.
 
 ### buffer(name[, options])
 Parse bytes as a buffer. Its type will be the same as the input to
@@ -182,8 +182,8 @@ keys:
 Parse bytes as an array. `options` is an object which can have the following
 keys:
 
-- `type` - (Required) Type of the array element. Can be a string or an user
-  defined Parser object. If it's a string, you have to choose from [u]int{8,
+- `type` - (Required) Type of the array element. Can be a string or a user
+  defined `Parser` object. If it's a string, you have to choose from [u]int{8,
   16, 32}{le, be}.
 - `length` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   Length of the array. Can be a number, string or a function. Use number for
@@ -261,7 +261,7 @@ the chosen parser is directly embedded into the current object. `options` is
 an object which can have the following keys:
 
 - `tag` - (Required) The value used to determine which parser to use from the
-  `choices` Can be a string pointing to another field or a function.
+  `choices`. Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the
   parser which is executed when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case if the tag value doesn't match any of
@@ -298,7 +298,7 @@ Useful for parsing binary formats such as ELF where the offset of a field is
 pointed by another field.
 
 - `type` - (Required) Can be a string `[u]int{8, 16, 32, 64}{le, be}`
-   or an user defined Parser object.
+   or a user defined `Parser` object.
 - `offset` - (Required) Indicates absolute offset from the beginning of the
   input buffer. Can be a number, string or a function.
 
@@ -516,8 +516,8 @@ These options can be used in all parsers.
   numbers and so on). If `assert` is a `string` or `number`, the actual parsed
   result will be compared with it with `===` (strict equality check), and an
   exception is thrown if they mismatch. On the other hand, if `assert` is a
-  function, that function is executed with one argument (parsed result) and if
-  it returns false, an exception is thrown.
+  function, that function is executed with one argument (the parsed result)
+  and if it returns false, an exception is thrown.
 
     ```javascript
     // simple maginc number validation
