@@ -702,7 +702,7 @@ export class Parser {
       );
     }
 
-    return this.setNextParser("nest", varName as string, options || {});
+    return this.setNextParser("nest", varName as string, options);
   }
 
   pointer(varName: string, options: ParserOptions): this {
