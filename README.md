@@ -349,9 +349,9 @@ const parser = new Parser()
 ```
 
 ### namely(alias)
-Set an alias to this parser, so there will be an opportunity to refer to it by
-name in methods like `.array`, `.nest` and `.choice`, instead of requirement
-to have an instance of it.
+Set an alias to this parser, so that it can be referred to by name in methods
+like `.array`, `.nest` and `.choice`, without the requirement to have an
+instance of this parser.
 
 Especially, the parser may reference itself:
 
@@ -414,7 +414,7 @@ to avoid this, ensure that every possible path has its end. Also, this
 recursion is not tail-optimized, so could lead to memory leaks when it goes
 too deep.
 
-An example of referencing other patches:
+An example of referencing other parsers:
 
 ```javascript
 // the line below registers the name "self", so we will be able to use it in
