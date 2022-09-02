@@ -118,7 +118,7 @@ const parser = new Parser()
   // Unsigned 8-bit integer
   .uint8("b")
   // Signed 16-bit integer (big endian)
-  .int16be("c");
+  .int16be("c")
   // signed 64-bit integer (big endian)
   .int64be("d")
 ```
@@ -554,7 +554,7 @@ you need to call `.useContextVars()` to enable it.
     .array("data", {
       type: "int32",
       length: function() {
-        return this.$parent.header.length
+        return this.$parent.header.length;
       }
     });
   ```
@@ -573,7 +573,7 @@ you need to call `.useContextVars()` to enable it.
         .array("data", {
           type: "int32",
           length: function() {
-            return this.$root.header.length
+            return this.$root.header.length;
           }
         }),
     });
