@@ -31,17 +31,20 @@ and [binary](https://github.com/substack/node-binary).
 
 ## Quick Start
 
-1. Create an empty Parser object with `new Parser()` or `Parser.start()`.
-2. Chain methods to build your desired parser. (See
-   [API](https://github.com/keichi/binary-parser#api) for detailed document of
-   each method)
+1. Create an empty `Parser` object with `new Parser()` or `Parser.start()`.
+2. Chain methods to build your desired parser. (See [API](#api) for detailed
+   documentation of each method)
 3. Call `Parser.prototype.parse` with a `Buffer`/`Uint8Array` object passed as
-   an argument.
+   its only argument.
 4. The parsed result will be returned as an object.
+   - If parsing failed, an exception will be thrown.
 
 ```javascript
 // Module import
 const Parser = require("binary-parser").Parser;
+
+// Alternative way to import the module
+// import { Parser } from "binary-parser";
 
 // Build an IP packet header Parser
 const ipHeader = new Parser()
