@@ -504,21 +504,27 @@ const buffer = Buffer.from([2, /* left */ 1, 1, 0, /* right */ 0]);
 parser.parse(buffer);
 ```
 
-### wrapped(name[, options])
-Read data then wrap it by transforming it by a function for further parsing.
-It works similarly to a buffer where it reads a block of data. But instead of returning the buffer it
-will pass it on to a parser for further processing.
-- `wrapper` - (Required) A function taking a buffer and returning a buffer (`(x: Buffer | Uint8Array ) => Buffer | Uint8Array`)
-  transforming the buffer into a buffer expected by `type`.
-- `type` - (Required) A `Parser` object to parse the result of wrapper.
+### wrapped([name,] options)
+Read data, then wrap it by transforming it by a function for further parsing.
+It works similarly to a buffer where it reads a block of data. But instead of
+returning the buffer it will pass the buffer on to a parser for further processing.
+
+The result will be stored in the key `name`. If `name` is an empty string or
+`null`, or if it is omitted, the parsed result is directly embedded into the
+current object.
+
+- `wrapper` - (Required) A function taking a buffer and returning a buffer
+  (`(x: Buffer | Uint8Array ) => Buffer | Uint8Array`) transforming the buffer
+  into a buffer expected by `type`.
+- `type` - (Required) A `Parser` object to parse the buffer returned by `wrapper`.
 - `length ` - (either `length` or `readUntil` is required) Length of the
-  buffer. Can be a number, string or a function. Use number for statically
-  sized buffers, string to reference another variable and function to do some
+  buffer. Can be a number, string or a function. Use a number for statically
+  sized buffers, a string to reference another variable and a function to do some
   calculation.
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
   this parser will read till it reaches the end of the `Buffer`/`Uint8Array`
   object. If it is a function, this parser will read the buffer until the
-  function returns true.
+  function returns `true`.
 
 ```javascript
 const zlib = require("zlib");
@@ -540,9 +546,10 @@ const mainParser = Parser.start()
       // E.g. decompress data and return it for further parsing
       return zlib.inflateRawSync(buffer);
     },
-    // The parser to run the dec
+    // The parser to run on the decompressed data
     type: textParser,
   });
+
 mainParser.parse(buffer);
 ```
 
