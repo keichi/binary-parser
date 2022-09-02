@@ -1273,6 +1273,136 @@ function compositeParserTests(
           answer: 42,
         });
       });
+      it("should embed parsed object in current object", () => {
+        const parserEmptyName = Parser.start()
+          .uint8("messageId")
+          .uint8("reportCount")
+          .array("reports", {
+            length: "reportCount",
+            type: Parser.start()
+              .uint8("reportId")
+              .uint8("reportLength")
+              .wrapped("", {
+                length: "reportLength",
+                wrapper: (buffer) => buffer,
+                type: Parser.start()
+                  .nest("basicReport", {
+                    type: Parser.start()
+                      .uint8("dataPoint1")
+                      .uint8("dataPoint2")
+                      .uint8("dataPoint3")
+                      .uint8("dataPoint4"),
+                  })
+                  .array("extendedReport", {
+                    readUntil: "eof",
+                    type: Parser.start()
+                      .uint8("dataType")
+                      .uint8("dataLength")
+                      .buffer("data", { length: "dataLength" }),
+                  }),
+              }),
+          });
+
+        const parserWithoutName = Parser.start()
+          .uint8("messageId")
+          .uint8("reportCount")
+          .array("reports", {
+            length: "reportCount",
+            type: Parser.start()
+              .uint8("reportId")
+              .uint8("reportLength")
+              .wrapped({
+                length: "reportLength",
+                wrapper: (buffer) => buffer,
+                type: Parser.start()
+                  .nest("basicReport", {
+                    type: Parser.start()
+                      .uint8("dataPoint1")
+                      .uint8("dataPoint2")
+                      .uint8("dataPoint3")
+                      .uint8("dataPoint4"),
+                  })
+                  .array("extendedReport", {
+                    readUntil: "eof",
+                    type: Parser.start()
+                      .uint8("dataType")
+                      .uint8("dataLength")
+                      .buffer("data", { length: "dataLength" }),
+                  }),
+              }),
+          });
+
+        const buffer = Buffer.from(
+          "1002f11012345678a003303132a101dfa20255aaf21201020304a003343536a202aa55a101eb",
+          "hex"
+        );
+
+        deepStrictEqual(parserEmptyName.parse(buffer), {
+          messageId: 16,
+          reportCount: 2,
+          reports: [
+            {
+              reportId: 241,
+              reportLength: 16,
+              basicReport: {
+                dataPoint1: 18,
+                dataPoint2: 52,
+                dataPoint3: 86,
+                dataPoint4: 120,
+              },
+              extendedReport: [
+                {
+                  dataType: 160,
+                  dataLength: 3,
+                  data: Buffer.from([48, 49, 50]),
+                },
+                {
+                  dataType: 161,
+                  dataLength: 1,
+                  data: Buffer.from([223]),
+                },
+                {
+                  dataType: 162,
+                  dataLength: 2,
+                  data: Buffer.from([85, 170]),
+                },
+              ],
+            },
+            {
+              reportId: 242,
+              reportLength: 18,
+              basicReport: {
+                dataPoint1: 1,
+                dataPoint2: 2,
+                dataPoint3: 3,
+                dataPoint4: 4,
+              },
+              extendedReport: [
+                {
+                  dataType: 160,
+                  dataLength: 3,
+                  data: Buffer.from([52, 53, 54]),
+                },
+                {
+                  dataType: 162,
+                  dataLength: 2,
+                  data: Buffer.from([170, 85]),
+                },
+                {
+                  dataType: 161,
+                  dataLength: 1,
+                  data: Buffer.from([235]),
+                },
+              ],
+            },
+          ],
+        });
+
+        deepStrictEqual(
+          parserEmptyName.parse(buffer),
+          parserWithoutName.parse(buffer)
+        );
+      });
     });
   });
 }
