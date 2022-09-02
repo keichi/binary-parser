@@ -616,5 +616,22 @@ and destruct.js is available under `benchmark/`.
 
 Please report issues to the
 [issue tracker](https://github.com/keichi/binary-parser/issues) if you have
-any difficulties using this module, found a bug, or request a new feature.
-Pull requests are welcomed.
+any difficulties using this module, found a bug, or would like to request a
+new feature. Pull requests are welcome.
+
+To contribute code, first clone this repo, then install the dependencies:
+
+```bash
+git clone https://github.com/keichi/binary-parser.git
+cd binary-parser
+npm install
+```
+
+If you added a feature or fixed a bug, update the test suite under `test/` and
+then run it like this:
+
+```bash
+npm run test
+```
+
+Make sure all the tests pass before submitting a pull request.
