@@ -1,6 +1,6 @@
 {
   "name": "binary-parser",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
   "types": "dist/binary_parser.d.ts",
