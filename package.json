@@ -38,7 +38,8 @@
     "prepare": "npm run build"
   },
   "files": [
-    "dist/**/*.{js,mjs,d.ts}"
+    "dist/**/*.{js,mjs,d.ts}",
+    "lib"
   ],
   "keywords": [
     "binary",
