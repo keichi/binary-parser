@@ -547,7 +547,8 @@ These options can be used in all parsers.
 You can use some special fields while parsing to traverse your structure.
 These context variables will be removed after the parsing process.
 Note that this feature is turned off by default for performance reasons, and
-you need to call `.useContextVars()` to enable it.
+you need to call `.useContextVars()` at the top level `Parser` to enable it.
+Otherwise, the context variables will not be present.
 
 - `$parent` - This field references the parent structure. This variable will be
   `null` while parsing the root structure.
