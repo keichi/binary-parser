@@ -700,7 +700,7 @@ export class Parser {
       !aliasRegistry.has(options.type) &&
       !(options.type in PRIMITIVE_SIZES)
     ) {
-      throw new Error(`Array element type "${options.type}" is unkown.`);
+      throw new Error(`Array element type "${options.type}" is unknown.`);
     }
 
     return this.setNextParser("array", varName, options);
@@ -737,7 +737,7 @@ export class Parser {
         !aliasRegistry.has(value) &&
         !((value as string) in PRIMITIVE_SIZES)
       ) {
-        throw new Error(`Choice type "${value}" is unkown.`);
+        throw new Error(`Choice type "${value}" is unknown.`);
       }
     }
 
@@ -781,7 +781,7 @@ export class Parser {
       !(options.type in PRIMITIVE_SIZES) &&
       !aliasRegistry.has(options.type)
     ) {
-      throw new Error(`Pointer type "${options.type}" is unkown.`);
+      throw new Error(`Pointer type "${options.type}" is unknown.`);
     }
 
     return this.setNextParser("pointer", varName, options);
