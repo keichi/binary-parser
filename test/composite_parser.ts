@@ -154,7 +154,7 @@ function compositeParserTests(
         const parser = Parser.start()
           .uint16le("length")
           .array("message", {
-            lengthInBytes: function (this: any) {
+            lengthInBytes: function () {
               return this.length;
             },
             type: elementParser,
@@ -229,7 +229,7 @@ function compositeParserTests(
       });
       it("should parse until function returns true when readUntil is function", () => {
         const parser = Parser.start().array("data", {
-          readUntil: (item: number, _: Buffer) => item === 0,
+          readUntil: (item) => item === 0,
           type: "uint8",
         });
 
@@ -242,7 +242,7 @@ function compositeParserTests(
       });
       it("should parse until function returns true when readUntil is function (using read-ahead)", () => {
         const parser = Parser.start().array("data", {
-          readUntil: (_: number, buf: Buffer) => buf.length > 0 && buf[0] === 0,
+          readUntil: (_, buf) => buf.length > 0 && buf[0] === 0,
           type: "uint8",
         });
 
@@ -290,7 +290,7 @@ function compositeParserTests(
         const parser = Parser.start().array("data", {
           type: "uint8",
           length: 4,
-          formatter: (arr: number[]) => arr.join("."),
+          formatter: (arr) => arr.join("."),
         });
 
         const buffer = factory([0x0a, 0x0a, 0x01, 0x6e]);
@@ -408,7 +408,7 @@ function compositeParserTests(
       it("should be able to access to index context variable when using length", () => {
         const elementParser = new Parser()
           .uint8("key", {
-            formatter: function (this: any, item: number) {
+            formatter: function (this: any, item) {
               return this.$index % 2 === 0 ? item : String.fromCharCode(item);
             },
           })
@@ -444,7 +444,7 @@ function compositeParserTests(
         // @ts-ignore
         const elementParser = new Parser()
           .uint8("key", {
-            formatter: function (this: any, item: number) {
+            formatter: function (this: any, item) {
               return this.$index % 2 === 0 ? item : String.fromCharCode(item);
             },
           })
@@ -808,7 +808,7 @@ function compositeParserTests(
         const parser = Parser.start()
           .string("selector", { length: 4 })
           .choice({
-            tag: function (this: { selector: string }) {
+            tag: function () {
               return parseInt(this.selector, 2); // string base 2 to integer decimal
             },
             choices: {
@@ -921,8 +921,7 @@ function compositeParserTests(
           });
         const personParser = new Parser().nest("name", {
           type: nameParser,
-          formatter: (name: { firstName: string; lastName: string }) =>
-            name.firstName + " " + name.lastName,
+          formatter: (name) => name.firstName + " " + name.lastName,
         });
 
         const buffer = factory(new TextEncoder().encode("John\0Doe\0"));
@@ -1139,10 +1138,7 @@ function compositeParserTests(
           .int16le("a")
           .int16le("b")
           .int16le("c", {
-            assert: function (
-              this: { a: number; b: number },
-              x: number | string
-            ) {
+            assert: function (x) {
               return this.a + this.b === x;
             },
           });
@@ -1161,7 +1157,7 @@ function compositeParserTests(
           .int16le("a")
           .int16le("b")
           .int16le("c", {
-            assert(this: { a: number; b: number }, x: number | string) {
+            assert(x) {
               return this.a + this.b === x;
             },
           });
@@ -1259,7 +1255,7 @@ function compositeParserTests(
           .uint32le("length")
           .wrapped("compressedData", {
             length: "length",
-            wrapper: (x: Uint8Array) => inflateRawSync(x),
+            wrapper: (x) => inflateRawSync(x),
             type: bufferParser,
           })
           .uint8("answer");
