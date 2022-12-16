@@ -317,7 +317,7 @@ export class Parser<O = {}> {
     varName: N,
     options: ParserOptions<O, number, F>
   ): Next<O, N, F> {
-    return this.setNextParser(type as Type, varName, options);
+    return this.setNextParser(type, varName, options);
   }
 
   private useThisEndian(type: PrimitiveTypeWithoutEndian): PrimitiveType {
