@@ -1,6 +1,6 @@
 import { expectTypeOf } from "expect-type";
 
-import { Parser as Parser_, PrimitiveTypes } from "../lib/binary_parser";
+import { Parser as Parser_, PrimitiveType } from "../lib/binary_parser";
 
 type Endianness = "be" | "le";
 type N = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -139,7 +139,7 @@ describe("Parser", () => {
   it("should have correct array types", () => {
     const arr = Parser.start()
       .array("a", {
-        type: "uint8" as PrimitiveTypes,
+        type: "uint8" as PrimitiveType,
         length: 1,
       })
       .parse(buf);

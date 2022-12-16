@@ -128,9 +128,9 @@ interface ArrayParserOptions<O, T, F = T[]>
   type?: string | Parser<T>;
 }
 
-type Types = PrimitiveTypes | ComplexTypes;
+type Type = PrimitiveType | ComplexType;
 
-type ComplexTypes =
+type ComplexType =
   | "bit"
   | "string"
   | "buffer"
@@ -145,7 +145,7 @@ type ComplexTypes =
 
 type Endianness = "be" | "le";
 
-export type PrimitiveTypes =
+export type PrimitiveType =
   | "uint8"
   | "uint16le"
   | "uint16be"
@@ -165,7 +165,7 @@ export type PrimitiveTypes =
   | "doublele"
   | "doublebe";
 
-type PrimitiveTypesWithoutEndian =
+type PrimitiveTypeWithoutEndian =
   | "uint8"
   | "uint16"
   | "uint32"
@@ -175,7 +175,7 @@ type PrimitiveTypesWithoutEndian =
   | "int64"
   | "uint64";
 
-type BitSizes =
+type BitSize =
   | 1
   | 2
   | 3
@@ -209,7 +209,7 @@ type BitSizes =
   | 31
   | 32;
 
-const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
+const PRIMITIVE_SIZES: { [key in PrimitiveType]: number } = {
   uint8: 1,
   uint16le: 2,
   uint16be: 2,
@@ -230,7 +230,7 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   doublebe: 8,
 };
 
-const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
+const PRIMITIVE_NAMES: { [key in PrimitiveType]: string } = {
   uint8: "Uint8",
   uint16le: "Uint16",
   uint16be: "Uint16",
@@ -251,7 +251,7 @@ const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
   doublebe: "Float64",
 };
 
-const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
+const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveType]: boolean } = {
   uint8: false,
   uint16le: true,
   uint16be: false,
@@ -280,13 +280,13 @@ type Next<O, N, T> = N extends string
 
 type ChoiceType<P> = P extends Parser<infer O>
   ? O
-  : P extends PrimitiveTypes
+  : P extends PrimitiveType
   ? number
   : any;
 
 export class Parser<O = {}> {
   varName = "";
-  type: Types = "";
+  type: Type = "";
   options: ParserOptions = {};
   next?: Parser;
   head?: Parser;
@@ -302,7 +302,7 @@ export class Parser<O = {}> {
     return new Parser();
   }
 
-  private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
+  private primitiveGenerateN(type: PrimitiveType, ctx: Context) {
     const typeName = PRIMITIVE_NAMES[type];
     const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
@@ -314,15 +314,15 @@ export class Parser<O = {}> {
   }
 
   private primitiveN<N extends string, F = number>(
-    type: PrimitiveTypes,
+    type: PrimitiveType,
     varName: N,
     options: ParserOptions<O, number, F>
   ): Next<O, N, F> {
-    return this.setNextParser(type as Types, varName, options);
+    return this.setNextParser(type as Type, varName, options);
   }
 
-  private useThisEndian(type: PrimitiveTypesWithoutEndian): PrimitiveTypes {
-    return (type + this.endian.toLowerCase()) as PrimitiveTypes;
+  private useThisEndian(type: PrimitiveTypeWithoutEndian): PrimitiveType {
+    return (type + this.endian.toLowerCase()) as PrimitiveType;
   }
 
   uint8<N extends string, F = number>(
@@ -505,7 +505,7 @@ export class Parser<O = {}> {
   }
 
   private bitN<N extends string, F = number>(
-    size: BitSizes,
+    size: BitSize,
     varName: N,
     options: ParserOptions<O, number, F>
   ): Next<O, N, F> {
@@ -823,7 +823,7 @@ export class Parser<O = {}> {
   array<N extends string, F = number[]>(
     varName: N,
     options: Omit<ArrayParserOptions<O, number, F>, "type"> & {
-      type: PrimitiveTypes;
+      type: PrimitiveType;
     }
   ): Next<O, N, F>;
   array<N extends string, T, F = T[]>(
@@ -1094,7 +1094,7 @@ export class Parser<O = {}> {
     let size = NaN;
 
     if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
-      size = PRIMITIVE_SIZES[this.type as PrimitiveTypes];
+      size = PRIMITIVE_SIZES[this.type as PrimitiveType];
 
       // if this is a fixed length string
     } else if (
@@ -1117,7 +1117,7 @@ export class Parser<O = {}> {
     ) {
       let elementSize = NaN;
       if (typeof this.options.type === "string") {
-        elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
+        elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveType];
       } else if (this.options.type instanceof Parser) {
         elementSize = this.options.type.sizeOf();
       }
@@ -1151,7 +1151,7 @@ export class Parser<O = {}> {
   }
 
   private setNextParser<N extends string, T, F>(
-    type: Types,
+    type: Type,
     varName: N,
     options: ParserOptions<O, T, F>
   ): Next<O, N, F> {
@@ -1504,12 +1504,12 @@ export class Parser<O = {}> {
 
     if (typeof type === "string") {
       if (!aliasRegistry.get(type)) {
-        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveType];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveType];
         ctx.pushCode(
           `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`
         );
-        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
+        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveType]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
@@ -1575,12 +1575,12 @@ export class Parser<O = {}> {
     if (typeof type === "string") {
       const varName = ctx.generateVariable(this.varName);
       if (!aliasRegistry.has(type)) {
-        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+        const typeName = PRIMITIVE_NAMES[type as PrimitiveType];
+        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveType];
         ctx.pushCode(
           `${varName} = dataView.get${typeName}(offset, ${littleEndian});`
         );
-        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
+        ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveType]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
@@ -1809,12 +1809,12 @@ export class Parser<O = {}> {
         ctx.addReference(this.options.type!);
       }
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type!) >= 0) {
-      const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-      const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
+      const typeName = PRIMITIVE_NAMES[type as PrimitiveType];
+      const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveType];
       ctx.pushCode(
         `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`
       );
-      ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
+      ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveType]};`);
     }
 
     // Restore offset
