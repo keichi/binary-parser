@@ -262,7 +262,6 @@ function compositeParserTests(
               .int32le("size")
               .string("name", { length: 8, encoding: "utf8" }),
             length: "numlumps",
-            key: "name",
           });
 
         const buffer = factory([
@@ -272,18 +271,18 @@ function compositeParserTests(
         ]);
         deepStrictEqual(parser.parse(buffer), {
           numlumps: 2,
-          lumps: {
-            AAAAAAAA: {
+          lumps: [
+            {
               filepos: 1234,
               size: 5678,
               name: "AAAAAAAA",
             },
-            bbbbbbbb: {
+            {
               filepos: 5678,
               size: 1234,
               name: "bbbbbbbb",
             },
-          },
+          ],
         });
       });
       it("should use formatter to transform parsed array", () => {
@@ -303,6 +302,7 @@ function compositeParserTests(
           .namely("self")
           .uint8("length")
           .array("data", {
+            // @ts-expect-error: undocumented behavior
             type: "self",
             length: "length",
           });
@@ -328,6 +328,7 @@ function compositeParserTests(
           .namely("self")
           .uint8("length")
           .array("data", {
+            // @ts-expect-error: undocumented behavior
             type: "self",
             length: "length",
           });
@@ -462,6 +463,7 @@ function compositeParserTests(
           .uint16le("valueLength")
           .array("message", {
             length: "length",
+            // @ts-expect-error: undocumented behavior
             type: "ArrayLengthIndexTest",
           });
 
@@ -598,6 +600,7 @@ function compositeParserTests(
               0: stop,
               1: "self",
               2: Parser.start()
+                // @ts-expect-error: undocumented behavior
                 .nest("left", { type: "self" })
                 .nest("right", { type: stop }),
             },
@@ -624,7 +627,9 @@ function compositeParserTests(
         // @ts-ignore
         const twoCells = Parser.start()
           .namely("twoCells")
+          // @ts-expect-error: undocumented behavior
           .nest("left", { type: "self" })
+          // @ts-expect-error: undocumented behavior
           .nest("right", { type: "stop" });
 
         parser.uint8("type").choice("data", {
@@ -654,6 +659,7 @@ function compositeParserTests(
         const stop = Parser.start();
 
         const twoCells = Parser.start()
+          // @ts-expect-error: undocumented behavior
           .nest("left", { type: "self" })
           .nest("right", { type: stop });
 
@@ -690,11 +696,16 @@ function compositeParserTests(
               0: stop,
               1: "self",
               2: Parser.start()
+                // @ts-expect-error: undocumented behavior
                 .nest("left", { type: "self" })
+                // @ts-expect-error: undocumented behavior
                 .nest("right", { type: "self" }),
               3: Parser.start()
+                // @ts-expect-error: undocumented behavior
                 .nest("one", { type: "self" })
+                // @ts-expect-error: undocumented behavior
                 .nest("two", { type: "self" })
+                // @ts-expect-error: undocumented behavior
                 .nest("three", { type: "self" }),
             },
           });

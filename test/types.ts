@@ -1,6 +1,6 @@
 import { expectTypeOf } from "expect-type";
 
-import { Parser as Parser_, PrimitiveType } from "../lib/binary_parser";
+import { Parser as Parser_ } from "../lib/binary_parser";
 
 type Endianness = "be" | "le";
 type N = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -121,7 +121,7 @@ describe("Parser", () => {
           type: Parser.start().string("s", { length: 1 }),
           length: 1,
           wrapper(b) {
-            expectTypeOf(b).toEqualTypeOf<Buffer>();
+            expectTypeOf(b).toEqualTypeOf<Buffer | Uint8Array>();
             return b;
           },
           assert: (w) => {
@@ -139,7 +139,7 @@ describe("Parser", () => {
   it("should have correct array types", () => {
     const arr = Parser.start()
       .array("a", {
-        type: "uint8" as PrimitiveType,
+        type: "uint8" as const,
         length: 1,
       })
       .parse(buf);
@@ -182,9 +182,13 @@ describe("Parser", () => {
             1: Parser.start().uint8("num"),
             2: Parser.start().string("str", { zeroTerminated: true }),
           },
+          defaultChoice: Parser.start().uint8("def"),
         })
         .parse(buf)
-    ).toEqualTypeOf<{ tag: number; val: { num: number } | { str: string } }>();
+    ).toEqualTypeOf<{
+      tag: number;
+      val: { num: number } | { str: string } | { def: number };
+    }>();
     expectTypeOf(
       Parser.start()
         .uint8("tag")
@@ -201,24 +205,18 @@ describe("Parser", () => {
   it("should have correct nest types", () => {
     expectTypeOf(
       Parser.start()
-        .nest("n", {
-          type: Parser.start().string("s", { length: 1 }),
-        })
+        .nest("n", { type: Parser.start().string("s", { length: 1 }) })
         .parse(buf)
     ).toEqualTypeOf<{ n: { s: string } }>();
     expectTypeOf(
       Parser.start()
-        .nest({
-          type: Parser.start().string("s", { length: 1 }),
-          length: 1,
-        })
+        .nest({ type: Parser.start().string("s", { length: 1 }) })
         .parse(buf)
     ).toEqualTypeOf<{ s: string }>();
     expectTypeOf(
       Parser.start()
         .nest("n", {
           type: Parser.start().string("s", { length: 1 }),
-          length: 1,
           assert: (n) => {
             expectTypeOf(n).toEqualTypeOf<{ s: string }>();
             return n.s.length == 1;
