@@ -273,8 +273,10 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
 };
 
 type Next<O, N, T> = N extends string
-  ? Parser<O & { [name in N]: T }>
-  : Parser<O & T>;
+  ? Parser<
+      O & { [name in N]: T } extends infer O ? { [K in keyof O]: O[K] } : never
+    >
+  : Parser<O & T extends infer O ? { [K in keyof O]: O[K] } : never>;
 
 type ChoiceType<P> = P extends Parser<infer O>
   ? O
