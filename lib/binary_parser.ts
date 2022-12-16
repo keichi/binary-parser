@@ -758,7 +758,7 @@ export class Parser<O = {}> {
 
   string<N extends string, F = string>(
     varName: N,
-    options: ParserOptions<O, string, F>
+    options: ParserOptions<O, string, F> = {}
   ): Next<O, N, F> {
     if (!options.zeroTerminated && !options.length && !options.greedy) {
       throw new Error(
@@ -785,7 +785,7 @@ export class Parser<O = {}> {
 
   buffer<N extends string, F = Buffer>(
     varName: N,
-    options: ParserOptions<O, Buffer, F>
+    options: ParserOptions<O, Buffer, F> = {}
   ): Next<O, N, F> {
     if (!options.length && !options.readUntil) {
       throw new Error("length or readUntil must be defined for buffer.");
@@ -944,7 +944,7 @@ export class Parser<O = {}> {
 
   pointer<N extends string, T, F = T>(
     varName: N,
-    options: ParserOptions<O, T, F>
+    options: ParserOptions<O, T, F> = {}
   ): Next<O, N, F> {
     if (!options.offset) {
       throw new Error("offset is required for pointer.");
