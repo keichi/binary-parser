@@ -140,8 +140,7 @@ type ComplexType =
   | "seek"
   | "pointer"
   | "saveOffset"
-  | "wrapper"
-  | "";
+  | "wrapper";
 
 type Endianness = "be" | "le";
 
@@ -286,7 +285,7 @@ type ChoiceType<P> = P extends Parser<infer O>
 
 export class Parser<O = {}> {
   varName = "";
-  type: Type = "";
+  type: Type | undefined;
   options: ParserOptions = {};
   next?: Parser;
   head?: Parser;
@@ -1093,7 +1092,10 @@ export class Parser<O = {}> {
   sizeOf(): number {
     let size = NaN;
 
-    if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
+    if (
+      this.type !== undefined &&
+      Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0
+    ) {
       size = PRIMITIVE_SIZES[this.type as PrimitiveType];
 
       // if this is a fixed length string
@@ -1293,7 +1295,9 @@ export class Parser<O = {}> {
 
     if (
       !this.next ||
-      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
+      (this.next &&
+        this.next.type !== undefined &&
+        ["bit", "nest"].indexOf(this.next.type) < 0)
     ) {
       const val = ctx.generateTmpVariable();
 
