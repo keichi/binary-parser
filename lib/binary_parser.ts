@@ -208,7 +208,12 @@ type BitSize =
   | 31
   | 32;
 
-const PRIMITIVE_SIZES: { [key in PrimitiveType]: number } = {
+const conforms =
+  <T>() =>
+  <U extends T>(value: U): U =>
+    value;
+
+const PRIMITIVE_SIZES = conforms<{ [key in PrimitiveType]: 1 | 2 | 4 | 8 }>()({
   uint8: 1,
   uint16le: 2,
   uint16be: 2,
@@ -227,9 +232,14 @@ const PRIMITIVE_SIZES: { [key in PrimitiveType]: number } = {
   floatbe: 4,
   doublele: 8,
   doublebe: 8,
-};
+} as const);
 
-const PRIMITIVE_NAMES: { [key in PrimitiveType]: string } = {
+const PRIMITIVE_NAMES = conforms<{
+  [key in PrimitiveType]:
+    | `${"Int" | "Uint"}${8 | 16 | 32}`
+    | `Big${"Int" | "Uint"}64`
+    | `Float${32 | 64}`;
+}>()({
   uint8: "Uint8",
   uint16le: "Uint16",
   uint16be: "Uint16",
@@ -248,9 +258,11 @@ const PRIMITIVE_NAMES: { [key in PrimitiveType]: string } = {
   floatbe: "Float32",
   doublele: "Float64",
   doublebe: "Float64",
-};
+} as const);
 
-const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveType]: boolean } = {
+const PRIMITIVE_LITTLE_ENDIANS = conforms<{
+  [key in PrimitiveType]: boolean;
+}>()({
   uint8: false,
   uint16le: true,
   uint16be: false,
@@ -269,7 +281,7 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveType]: boolean } = {
   floatbe: false,
   doublele: true,
   doublebe: false,
-};
+} as const);
 
 type Next<O, N, T> = N extends string
   ? Parser<
