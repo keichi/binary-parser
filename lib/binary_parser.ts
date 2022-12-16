@@ -315,7 +315,7 @@ export class Parser<O = {}> {
 
   private primitiveN<N extends string, F = number>(
     type: PrimitiveTypes,
-    varName: N | undefined,
+    varName: N,
     options: ParserOptions<O, number, F>
   ): Next<O, N, F> {
     return this.setNextParser(type as Types, varName, options);
@@ -325,25 +325,15 @@ export class Parser<O = {}> {
     return (type + this.endian.toLowerCase()) as PrimitiveTypes;
   }
 
-  uint8(): Next<O, unknown, number>;
   uint8<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  uint8<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN("uint8", varName, options);
   }
 
-  uint16(): Next<O, unknown, number>;
   uint16<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  uint16<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN(this.useThisEndian("uint16"), varName, options);
@@ -363,13 +353,8 @@ export class Parser<O = {}> {
     return this.primitiveN("uint16be", varName, options);
   }
 
-  uint32(): Next<O, unknown, number>;
   uint32<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  uint32<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN(this.useThisEndian("uint32"), varName, options);
@@ -389,25 +374,15 @@ export class Parser<O = {}> {
     return this.primitiveN("uint32be", varName, options);
   }
 
-  int8(): Next<O, unknown, number>;
   int8<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  int8<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN("int8", varName, options);
   }
 
-  int16(): Next<O, unknown, number>;
   int16<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  int16<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN(this.useThisEndian("int16"), varName, options);
@@ -427,13 +402,8 @@ export class Parser<O = {}> {
     return this.primitiveN("int16be", varName, options);
   }
 
-  int32(): Next<O, unknown, number>;
   int32<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  int32<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     return this.primitiveN(this.useThisEndian("int32"), varName, options);
@@ -458,13 +428,8 @@ export class Parser<O = {}> {
       throw new Error("BigInt64 is unsupported on this runtime");
   }
 
-  int64(): Next<O, unknown, number>;
   int64<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  int64<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     this.bigIntVersionCheck();
@@ -487,13 +452,8 @@ export class Parser<O = {}> {
     return this.primitiveN("int64le", varName, options);
   }
 
-  uint64(): Next<O, unknown, number>;
   uint64<N extends string, F = number>(
     varName: N,
-    options?: ParserOptions<O, number, F>
-  ): Next<O, N, F>;
-  uint64<N extends string, F = number>(
-    varName?: N,
     options: ParserOptions<O, number, F> = {}
   ): Next<O, N, F> {
     this.bigIntVersionCheck();
@@ -1192,13 +1152,13 @@ export class Parser<O = {}> {
 
   private setNextParser<N extends string, T, F>(
     type: Types,
-    varName: N | undefined,
+    varName: N,
     options: ParserOptions<O, T, F>
   ): Next<O, N, F> {
     const parser = new Parser();
 
     parser.type = type;
-    parser.varName = varName as string;
+    parser.varName = varName;
     parser.options = options as ParserOptions;
     parser.endian = this.endian;
 
