@@ -162,11 +162,11 @@ describe("Parser", () => {
           length: 1,
           assert(a) {
             expectTypeOf(a).toEqualTypeOf<{ s: string }[]>();
-            return a[0].s.length == 1;
+            return a[0]?.s.length === 1;
           },
           formatter(a) {
             expectTypeOf(a).toEqualTypeOf<{ s: string }[]>();
-            return Number(a[0].s);
+            return Number(a[0]?.s);
           },
         })
         .parse(buf)

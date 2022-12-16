@@ -15,11 +15,8 @@ class Context {
   }
 
   generateVariable(name?: string): string {
-    const scopes = [...this.scopes[this.scopes.length - 1]];
-    if (name) {
-      scopes.push(name);
-    }
-
+    const scopes = [...(this.scopes[this.scopes.length - 1] ?? [])];
+    if (name) scopes.push(name);
     return scopes.join(".");
   }
 
@@ -47,15 +44,11 @@ class Context {
   }
 
   pushPath(name: string) {
-    if (name) {
-      this.scopes[this.scopes.length - 1].push(name);
-    }
+    if (name) this.scopes[this.scopes.length - 1]?.push(name);
   }
 
   popPath(name: string) {
-    if (name) {
-      this.scopes[this.scopes.length - 1].pop();
-    }
+    if (name) this.scopes[this.scopes.length - 1]?.pop();
   }
 
   pushScope(name: string) {
@@ -1347,7 +1340,7 @@ export class Parser<O = {}> {
       const getMaxBits = (from = 0) => {
         let sum = 0;
         for (let i = from; i < ctx.bitFields.length; i++) {
-          const length = ctx.bitFields[i].options.length as number;
+          const length = ctx.bitFields[i]!.options.length as number;
           if (sum + length > 32) break;
           sum += length;
         }
@@ -1662,7 +1655,7 @@ export class Parser<O = {}> {
     ctx.pushCode(`switch(${tag}) {`);
     for (const tagString in this.options.choices) {
       const tag = parseInt(tagString, 10);
-      const type = this.options.choices[tag];
+      const type = this.options.choices[tag]!;
 
       ctx.pushCode(`case ${tag}:`);
       this.generateChoiceCase(ctx, this.varName, type);

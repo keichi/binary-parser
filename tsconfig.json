@@ -9,10 +9,11 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+    "exactOptionalPropertyTypes": true,
     "types": ["node", "mocha"],
     "esModuleInterop": true
   },
-  "files": [
-    "lib/binary_parser.ts"
-  ]
+  "files": ["lib/binary_parser.ts"]
 }
