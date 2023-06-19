@@ -982,6 +982,35 @@ function compositeParserTests(
           },
         });
       });
+
+      it("bit before nest should work", () => {
+        const parser = Parser.start()
+          .useContextVars()
+          .bit8("items")
+          .nest("data", {
+            type: Parser.start()
+              .uint8("length")
+              .string("message", { length: "length" })
+              .array("value", {
+                type: "uint8",
+                length: "$parent.items",
+              }),
+          });
+
+        const buffer = factory([
+          0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
+          0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
+        ]);
+        deepStrictEqual(parser.parse(buffer), {
+          items: 2,
+          data: {
+            length: 12,
+            message: "hello, world",
+            value: [0x01, 0x02],
+          },
+        });
+      });
+
     });
 
     describe("Constructors", () => {
@@ -1044,7 +1073,7 @@ function compositeParserTests(
         });
       });
 
-      it("should pass variable context to child parser", () => {});
+      it("should pass variable context to child parser", () => { });
       const parser = Parser.start()
         .uint16be("len")
         .pointer("child", {
