@@ -1273,6 +1273,36 @@ export class Parser {
 
     return ctx;
   }
+  
+  private nextNotBit() {
+    // Used to test if next type is a bitN or not
+    if (this.next) {
+      if (this.next.type === "nest") {
+        // For now consider a nest as a bit
+        if (this.next.options && this.next.options.type instanceof Parser) {
+          // Something in the nest
+          if (this.next.options.type.next) {
+            if (this.next.options.type.next.type === "bit") {
+              // Next is a bit field
+              return false;
+            } else {
+              // Next is something elses
+              return true;
+            }
+          }
+          return false;
+        } else {
+          // Nest is empty. For now assume this means bit is not next. However what if something comes after the nest?
+          return true;
+        }
+      } else {
+        return this.next.type !== "bit";
+      }
+    } else {
+      // Nothing else so next can't be bits
+      return true;
+    }
+  }
 
   private generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
@@ -1285,7 +1315,7 @@ export class Parser {
 
     if (
       !this.next ||
-      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
+      this.nextNotBit()
     ) {
       const val = ctx.generateTmpVariable();
 
@@ -1333,8 +1363,7 @@ export class Parser {
           if (rem) {
             const mask = -1 >>> (32 - rem);
             ctx.pushCode(
-              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
-                length - rem
+              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${length - rem
               };`
             );
             length -= rem;
@@ -1346,8 +1375,7 @@ export class Parser {
         const mask = -1 >>> (32 - length);
 
         ctx.pushCode(
-          `${parser.varName} ${
-            length < (parser.options.length as number) ? "|=" : "="
+          `${parser.varName} ${length < (parser.options.length as number) ? "|=" : "="
           } ${val} >> ${offset} & 0x${mask.toString(16)};`
         );
 
