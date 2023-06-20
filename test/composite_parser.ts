@@ -983,6 +983,28 @@ function compositeParserTests(
         });
       });
 
+      it("standalone bit fields should work", () => {
+        const parser = Parser.start().bit6("one").bit8("two");
+        const buffer = factory([0xa8, 0x78]);
+        const result = parser.parse(buffer);
+        deepStrictEqual(result.one, 0xa8 >> 2);
+        deepStrictEqual(result.two, 0x78 >> 2);
+      });
+
+      it("bit to nested bit should work", () => {
+        const parser = Parser.start()
+          .bit6("one")
+          .nest("nested", {
+            type: new Parser().bit8("two").uint8("three"),
+          });
+        const buffer = factory([0xa8, 0x78, 0x45]);
+        const result = parser.parse(buffer);
+        deepStrictEqual(result.one, 0xa8 >> 2);
+        deepStrictEqual(result.nested.two, 0x78 >> 2);
+        // switching to uint8 should start at next byte (skipping two bits here)
+        deepStrictEqual(result.nested.three, 0x45);
+      });
+
       it("bit before nest should work", () => {
         const parser = Parser.start()
           .useContextVars()
@@ -1010,7 +1032,6 @@ function compositeParserTests(
           },
         });
       });
-
     });
 
     describe("Constructors", () => {
@@ -1073,7 +1094,7 @@ function compositeParserTests(
         });
       });
 
-      it("should pass variable context to child parser", () => { });
+      it("should pass variable context to child parser", () => {});
       const parser = Parser.start()
         .uint16be("len")
         .pointer("child", {
