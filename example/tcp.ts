@@ -23,7 +23,7 @@ const tcpHeader = new Parser()
 
 const buf = Buffer.from(
   "e8a203e108e177e13d20756b801829d3004100000101080a2ea486ba793310bc",
-  "hex"
+  "hex",
 );
 
 console.log(tcpHeader.parse(buf));
