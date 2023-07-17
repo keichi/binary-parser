@@ -3,7 +3,7 @@ import { Parser } from "../lib/binary_parser";
 
 function primitiveParserTests(
   name: string,
-  factory: (array: Uint8Array | number[]) => Uint8Array
+  factory: (array: Uint8Array | number[]) => Uint8Array,
 ) {
   describe(`Primitive parser (${name})`, () => {
     function hexToBuf(hex: string): Uint8Array {
@@ -132,7 +132,7 @@ function primitiveParserTests(
         deepStrictEqual(binaryLiteral("11110000"), factory([0xf0]));
         deepStrictEqual(
           binaryLiteral("11110000 10100101"),
-          factory([0xf0, 0xa5])
+          factory([0xf0, 0xa5]),
         );
       });
 
@@ -219,7 +219,7 @@ function primitiveParserTests(
         deepStrictEqual(parser1.parse(buf1), { a: 3044373149 });
         const parser2 = new Parser().bit6("a").bit32("b").bit2("c");
         const buf2 = binaryLiteral(
-          "101101 10110101011101010111001010011101 11"
+          "101101 10110101011101010111001010011101 11",
         );
         deepStrictEqual(parser2.parse(buf2), { a: 45, b: 3044373149, c: 3 });
       });
@@ -231,7 +231,7 @@ function primitiveParserTests(
           .bit2("d")
           .bit9("e");
         const buf = binaryLiteral(
-          "1 101010101010101010101010 1111 01 110100110"
+          "1 101010101010101010101010 1111 01 110100110",
         );
         deepStrictEqual(parser1.parse(buf), {
           a: 1,
@@ -342,7 +342,7 @@ function primitiveParserTests(
       });
       it("should parser zero terminated fixed-length string", () => {
         const buffer = factory(
-          new TextEncoder().encode("abc\u0000defghij\u0000")
+          new TextEncoder().encode("abc\u0000defghij\u0000"),
         );
         const parser = Parser.start()
           .string("a", { length: 5, zeroTerminated: true })
@@ -371,7 +371,7 @@ function primitiveParserTests(
       });
       it("should parse string greedily with zero-bytes internally", () => {
         const buffer = factory(
-          new TextEncoder().encode("abc\u0000defghij\u0000")
+          new TextEncoder().encode("abc\u0000defghij\u0000"),
         );
         const parser = Parser.start().string("a", { greedy: true });
 

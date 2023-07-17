@@ -297,8 +297,8 @@ export class Parser {
     const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
       `${ctx.generateVariable(
-        this.varName
-      )} = dataView.get${typeName}(offset, ${littleEndian});`
+        this.varName,
+      )} = dataView.get${typeName}(offset, ${littleEndian});`,
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
@@ -306,7 +306,7 @@ export class Parser {
   private primitiveN(
     type: PrimitiveTypes,
     varName: string,
-    options: ParserOptions
+    options: ParserOptions,
   ): this {
     return this.setNextParser(type as Types, varName, options);
   }
@@ -576,19 +576,19 @@ export class Parser {
   string(varName: string, options: ParserOptions): this {
     if (!options.zeroTerminated && !options.length && !options.greedy) {
       throw new Error(
-        "One of length, zeroTerminated, or greedy must be defined for string."
+        "One of length, zeroTerminated, or greedy must be defined for string.",
       );
     }
 
     if ((options.zeroTerminated || options.length) && options.greedy) {
       throw new Error(
-        "greedy is mutually exclusive with length and zeroTerminated for string."
+        "greedy is mutually exclusive with length and zeroTerminated for string.",
       );
     }
 
     if (options.stripNull && !(options.length || options.greedy)) {
       throw new Error(
-        "length or greedy must be defined if stripNull is enabled."
+        "length or greedy must be defined if stripNull is enabled.",
       );
     }
 
@@ -625,7 +625,7 @@ export class Parser {
   array(varName: string, options: ParserOptions): this {
     if (!options.readUntil && !options.length && !options.lengthInBytes) {
       throw new Error(
-        "One of readUntil, length and lengthInBytes must be defined for array."
+        "One of readUntil, length and lengthInBytes must be defined for array.",
       );
     }
 
@@ -698,7 +698,7 @@ export class Parser {
 
     if (!(options.type instanceof Parser) && !varName) {
       throw new Error(
-        "type must be a Parser object if the variable name is omitted."
+        "type must be a Parser object if the variable name is omitted.",
       );
     }
 
@@ -768,7 +768,7 @@ export class Parser {
     const ctx = new Context(importPath, this.useContextVariables);
 
     ctx.pushCode(
-      "var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);"
+      "var dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);",
     );
 
     if (!this.alias) {
@@ -789,7 +789,7 @@ export class Parser {
   private addRawCode(ctx: Context) {
     ctx.pushCode("var offset = 0;");
     ctx.pushCode(
-      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`
+      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
     );
 
     ctx.pushCode("vars.$parent = null;");
@@ -807,10 +807,10 @@ export class Parser {
   private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
     ctx.pushCode(
-      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`
+      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
     );
     ctx.pushCode(
-      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});"
+      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
     );
     ctx.pushCode(`vars = Object.assign(vars, ctx);`);
 
@@ -820,7 +820,7 @@ export class Parser {
     this.resolveReferences(ctx);
 
     ctx.pushCode(
-      "Object.keys(ctx).forEach(function (item) { delete vars[item]; });"
+      "Object.keys(ctx).forEach(function (item) { delete vars[item]; });",
     );
     ctx.pushCode("return { offset: offset, result: vars };");
     ctx.pushCode("}");
@@ -842,7 +842,7 @@ export class Parser {
     this.compiled = new Function(
       importPath,
       "TextDecoder",
-      `return function (buffer, constructorFn) { ${ctx.code} };`
+      `return function (buffer, constructorFn) { ${ctx.code} };`,
     )(ctx.imports, TextDecoder);
   }
 
@@ -909,7 +909,7 @@ export class Parser {
   private setNextParser(
     type: Types,
     varName: string,
-    options: ParserOptions
+    options: ParserOptions,
   ): this {
     const parser = new Parser();
 
@@ -1013,18 +1013,18 @@ export class Parser {
         break;
       case "string":
         ctx.pushCode(
-          `if (${JSON.stringify(this.options.assert)} !== ${varName}) {`
+          `if (${JSON.stringify(this.options.assert)} !== ${varName}) {`,
         );
         break;
       default:
         throw new Error(
-          "assert option must be a string, number or a function."
+          "assert option must be a string, number or a function.",
         );
     }
     ctx.generateError(
       `"Assertion error: ${varName} is " + ${JSON.stringify(
-        this.options.assert.toString()
-      )}`
+        this.options.assert.toString(),
+      )}`,
     );
     ctx.pushCode("}");
   }
@@ -1095,7 +1095,7 @@ export class Parser {
           sum = 16;
         } else if (sum <= 24) {
           ctx.pushCode(
-            `${val} = (dataView.getUint16(offset) << 8) | dataView.getUint8(offset + 2);`
+            `${val} = (dataView.getUint16(offset) << 8) | dataView.getUint8(offset + 2);`,
           );
           sum = 24;
         } else {
@@ -1120,7 +1120,7 @@ export class Parser {
             ctx.pushCode(
               `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
                 length - rem
-              };`
+              };`,
             );
             length -= rem;
           }
@@ -1133,7 +1133,7 @@ export class Parser {
         ctx.pushCode(
           `${parser.varName} ${
             length < (parser.options.length as number) ? "|=" : "="
-          } ${val} >> ${offset} & 0x${mask.toString(16)};`
+          } ${val} >> ${offset} & 0x${mask.toString(16)};`,
         );
 
         // Ensure value is unsigned
@@ -1149,7 +1149,7 @@ export class Parser {
           parser.generateFormatter(
             ctx,
             parser.varName,
-            parser.options.formatter
+            parser.options.formatter,
           );
         }
 
@@ -1177,20 +1177,20 @@ export class Parser {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`
+        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`,
       );
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`,
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
@@ -1199,7 +1199,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`,
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
@@ -1207,7 +1207,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`
+          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
       );
     }
     if (this.options.stripNull) {
@@ -1229,7 +1229,7 @@ export class Parser {
       ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`
+        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`,
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
@@ -1267,15 +1267,15 @@ export class Parser {
       ctx.pushCode("do {");
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(
-        `for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`
+        `for (var ${counter} = 0; offset < buffer.length; ${counter}++) {`,
       );
     } else if (lengthInBytes !== undefined) {
       ctx.pushCode(
-        `for (var ${counter} = offset + ${lengthInBytes}; offset < ${counter}; ) {`
+        `for (var ${counter} = offset + ${lengthInBytes}; offset < ${counter}; ) {`,
       );
     } else {
       ctx.pushCode(
-        `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`
+        `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`,
       );
     }
 
@@ -1284,7 +1284,7 @@ export class Parser {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
-          `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`
+          `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`,
         );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
@@ -1300,7 +1300,7 @@ export class Parser {
         }
         ctx.pushCode(`});`);
         ctx.pushCode(
-          `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`
+          `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`,
         );
         if (type !== this.alias) ctx.addReference(type);
       }
@@ -1339,7 +1339,7 @@ export class Parser {
       const pred = this.options.readUntil;
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `while (!${func}.call(${ctx.generateVariable()}, ${item}, buffer.subarray(offset)));`
+        `while (!${func}.call(${ctx.generateVariable()}, ${item}, buffer.subarray(offset)));`,
       );
     }
   }
@@ -1347,7 +1347,7 @@ export class Parser {
   private generateChoiceCase(
     ctx: Context,
     varName: string,
-    type: string | Parser
+    type: string | Parser,
   ) {
     if (typeof type === "string") {
       const varName = ctx.generateVariable(this.varName);
@@ -1355,7 +1355,7 @@ export class Parser {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
-          `${varName} = dataView.get${typeName}(offset, ${littleEndian});`
+          `${varName} = dataView.get${typeName}(offset, ${littleEndian});`,
         );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
@@ -1367,7 +1367,7 @@ export class Parser {
         }
         ctx.pushCode(`});`);
         ctx.pushCode(
-          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`
+          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`,
         );
         if (type !== this.alias) ctx.addReference(type);
       }
@@ -1441,7 +1441,7 @@ export class Parser {
     } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -1450,7 +1450,7 @@ export class Parser {
       }
       ctx.pushCode(`});`);
       ctx.pushCode(
-        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
+        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
       );
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
@@ -1472,7 +1472,7 @@ export class Parser {
       ctx.pushCode(`${cur} = dataView.getUint8(offset);`);
       const func = ctx.addImport(pred);
       ctx.pushCode(
-        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`
+        `if (${func}.call(${ctx.generateVariable()}, ${cur}, buffer.subarray(offset))) break;`,
       );
       ctx.pushCode(`offset += 1;`);
       ctx.pushCode(`}`);
@@ -1494,7 +1494,7 @@ export class Parser {
     const tempView = ctx.generateTmpVariable();
     const func = ctx.addImport(this.options.wrapper);
     ctx.pushCode(
-      `${wrappedBuf} = ${func}.call(this, ${wrappedBuf}).subarray(0);`
+      `${wrappedBuf} = ${func}.call(this, ${wrappedBuf}).subarray(0);`,
     );
     ctx.pushCode(`var ${tempBuf} = buffer;`);
     ctx.pushCode(`var ${tempOff} = offset;`);
@@ -1502,7 +1502,7 @@ export class Parser {
     ctx.pushCode(`buffer = ${wrappedBuf};`);
     ctx.pushCode(`offset = 0;`);
     ctx.pushCode(
-      `dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);`
+      `dataView = new DataView(buffer.buffer, buffer.byteOffset, buffer.length);`,
     );
     if (this.options.type instanceof Parser) {
       if (this.varName) {
@@ -1514,7 +1514,7 @@ export class Parser {
     } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`,
       );
       ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
       if (this.options.type !== this.alias) {
@@ -1529,12 +1529,12 @@ export class Parser {
   private generateFormatter(
     ctx: Context,
     varName: string,
-    formatter: Function
+    formatter: Function,
   ) {
     if (typeof formatter === "function") {
       const func = ctx.addImport(formatter);
       ctx.pushCode(
-        `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`
+        `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`,
       );
     }
   }
@@ -1571,7 +1571,7 @@ export class Parser {
     } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -1580,7 +1580,7 @@ export class Parser {
       }
       ctx.pushCode(`});`);
       ctx.pushCode(
-        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`
+        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
       );
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
@@ -1589,7 +1589,7 @@ export class Parser {
       const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
       const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
       ctx.pushCode(
-        `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`
+        `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`,
       );
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
     }
