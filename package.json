@@ -5,16 +5,16 @@
   "main": "dist/binary_parser.js",
   "module": "dist/esm/binary_parser.mjs",
   "devDependencies": {
-    "@types/mocha": "^9.1.1",
-    "@types/node": "^18.7.18",
-    "karma": "^6.4.1",
-    "karma-chrome-launcher": "^3.1.1",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.4.2",
+    "karma": "^6.4.2",
+    "karma-chrome-launcher": "^3.2.0",
     "karma-mocha": "^2.0.1",
-    "karma-typescript": "^5.5.3",
-    "mocha": "^10.0.0",
-    "prettier": "^2.7.1",
+    "karma-typescript": "^5.5.4",
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.0",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.3"
+    "typescript": "^5.1.6"
   },
   "exports": {
     ".": {
