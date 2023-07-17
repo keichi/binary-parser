@@ -34,7 +34,7 @@ spec
     new Destruct.Spec({ mode: Destruct.Mode.LE })
       .field("x", Destruct.UInt16)
       .field("y", Destruct.UInt16)
-      .field("z", Destruct.UInt16)
+      .field("z", Destruct.UInt16),
   );
 
 // structron
@@ -47,7 +47,7 @@ const PointsStruct = new Struct()
       .addMember(Struct.TYPES.USHORT_LE, "z"),
     "points",
     0,
-    "len"
+    "len",
   );
 
 // Prepare input

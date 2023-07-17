@@ -4,7 +4,7 @@ import { Parser } from "../lib/binary_parser";
 
 function compositeParserTests(
   name: string,
-  factory: (array: Uint8Array | number[]) => Uint8Array
+  factory: (array: Uint8Array | number[]) => Uint8Array,
 ) {
   describe(`Composite parser (${name})`, () => {
     function hexToBuf(hex: string): Uint8Array {
@@ -1191,7 +1191,7 @@ function compositeParserTests(
           .int16le("c", {
             assert: function (
               this: { a: number; b: number },
-              x: number | string
+              x: number | string,
             ) {
               return this.a + this.b === x;
             },
@@ -1292,7 +1292,7 @@ function compositeParserTests(
 
         const buffer = factory([
           ...Array.from(
-            new Uint8Array(new Uint32Array([compressedData.length]).buffer)
+            new Uint8Array(new Uint32Array([compressedData.length]).buffer),
           ),
           ...Array.from(compressedData),
           42,
@@ -1384,7 +1384,7 @@ function compositeParserTests(
 
         const buffer = Buffer.from(
           "1002f11012345678a003303132a101dfa20255aaf21201020304a003343536a202aa55a101eb",
-          "hex"
+          "hex",
         );
 
         deepStrictEqual(parserEmptyName.parse(buffer), {
@@ -1450,7 +1450,7 @@ function compositeParserTests(
 
         deepStrictEqual(
           parserEmptyName.parse(buffer),
-          parserWithoutName.parse(buffer)
+          parserWithoutName.parse(buffer),
         );
       });
     });
