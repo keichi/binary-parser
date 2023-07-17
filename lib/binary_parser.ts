@@ -1038,6 +1038,30 @@ export class Parser {
     return ctx;
   }
 
+  private nextNotBit() {
+    // Used to test if next type is a bitN or not
+    if (this.next) {
+      if (this.next.type === "nest") {
+        // For now consider a nest as a bit
+        if (this.next.options && this.next.options.type instanceof Parser) {
+          // Something in the nest
+          if (this.next.options.type.next) {
+            return this.next.options.type.next.type !== "bit";
+          }
+          return false;
+        } else {
+          // Nest is empty. For now assume this means bit is not next. However what if something comes after the nest?
+          return true;
+        }
+      } else {
+        return this.next.type !== "bit";
+      }
+    } else {
+      // Nothing else so next can't be bits
+      return true;
+    }
+  }
+
   private generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
     const parser = JSON.parse(JSON.stringify(this));
@@ -1047,10 +1071,7 @@ export class Parser {
     parser.varName = ctx.generateVariable(parser.varName);
     ctx.bitFields.push(parser);
 
-    if (
-      !this.next ||
-      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
-    ) {
+    if (!this.next || this.nextNotBit()) {
       const val = ctx.generateTmpVariable();
 
       ctx.pushCode(`var ${val} = 0;`);

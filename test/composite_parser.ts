@@ -982,6 +982,56 @@ function compositeParserTests(
           },
         });
       });
+
+      it("standalone bit fields should work", () => {
+        const parser = Parser.start().bit6("one").bit8("two");
+        const buffer = factory([0xa8, 0x78]);
+        const result = parser.parse(buffer);
+        deepStrictEqual(result.one, 0xa8 >> 2);
+        deepStrictEqual(result.two, 0x78 >> 2);
+      });
+
+      it("bit to nested bit should work", () => {
+        const parser = Parser.start()
+          .bit6("one")
+          .nest("nested", {
+            type: new Parser().bit8("two").uint8("three"),
+          });
+        const buffer = factory([0xa8, 0x78, 0x45]);
+        const result = parser.parse(buffer);
+        deepStrictEqual(result.one, 0xa8 >> 2);
+        deepStrictEqual(result.nested.two, 0x78 >> 2);
+        // switching to uint8 should start at next byte (skipping two bits here)
+        deepStrictEqual(result.nested.three, 0x45);
+      });
+
+      it("bit before nest should work", () => {
+        const parser = Parser.start()
+          .useContextVars()
+          .bit8("items")
+          .nest("data", {
+            type: Parser.start()
+              .uint8("length")
+              .string("message", { length: "length" })
+              .array("value", {
+                type: "uint8",
+                length: "$parent.items",
+              }),
+          });
+
+        const buffer = factory([
+          0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
+          0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
+        ]);
+        deepStrictEqual(parser.parse(buffer), {
+          items: 2,
+          data: {
+            length: 12,
+            message: "hello, world",
+            value: [0x01, 0x02],
+          },
+        });
+      });
     });
 
     describe("Constructors", () => {
