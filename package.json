@@ -70,6 +70,6 @@
   },
   "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   }
 }
