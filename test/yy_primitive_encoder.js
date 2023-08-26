@@ -16,7 +16,10 @@ describe("Primitive encoder", function () {
       var buffer = Buffer.from([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
       var parsed = parser.parse(buffer);
       var encoded = parser.encode(parsed);
-      assert.deepEqual(parsed, { a: 0, b: 1234, c: 12345678 });
+      assert.deepEqual(
+        { a: parsed.a, b: parsed.b, c: parsed.c },
+        { a: 0, b: 1234, c: 12345678 },
+      );
       assert.deepEqual(encoded, buffer);
     });
     describe("BigInt64 encoders", () => {

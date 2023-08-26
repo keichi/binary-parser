@@ -895,12 +895,20 @@ export class Parser {
   }
 
   private addRawCodeEncode(ctx: Context) {
-    ctx.pushCode("var vars = obj;");
+    ctx.pushCode("var vars = obj || {};");
+    ctx.pushCode(
+      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
+    );
+    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
+
     ctx.pushCode(
       `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
     );
 
     this.generateEncode(ctx);
+
+    ctx.pushCode("delete vars.$parent;");
+    ctx.pushCode("delete vars.$root;");
 
     this.resolveReferences(ctx, "encode");
 
@@ -932,9 +940,15 @@ export class Parser {
   }
 
   private addAliasedCodeEncode(ctx: Context) {
-    ctx.pushCode(`function ${FUNCTION_ENCODE_PREFIX + this.alias}(obj) {`);
+    ctx.pushCode(
+      `function ${FUNCTION_ENCODE_PREFIX + this.alias}(obj, context) {`,
+    );
 
-    ctx.pushCode("var vars = obj;");
+    ctx.pushCode("var vars = obj || {};");
+    ctx.pushCode(
+      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
+    );
+    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
     ctx.pushCode(
       `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
     );
@@ -944,7 +958,7 @@ export class Parser {
     ctx.markResolved(this.alias!);
     this.resolveReferences(ctx, "encode");
 
-    ctx.pushCode("return smartBuffer.toBuffer();");
+    ctx.pushCode("return { result: smartBuffer.toBuffer() };");
     ctx.pushCode("}");
 
     return ctx;
@@ -1058,7 +1072,11 @@ export class Parser {
       this.compileEncode();
     }
 
-    return this.compiledEncode!(obj);
+    const encoded = this.compiledEncode!(obj);
+    if (encoded.result) {
+      return encoded.result;
+    }
+    return encoded;
   }
 
   private setNextParser(
@@ -1779,7 +1797,9 @@ export class Parser {
         );
       } else {
         ctx.pushCode(
-          `smartBuffer.writeBuffer(${FUNCTION_ENCODE_PREFIX + type}(${item}));`,
+          `smartBuffer.writeBuffer(${
+            FUNCTION_ENCODE_PREFIX + type
+          }(${item}).result);`,
         );
         if (type !== this.alias) {
           ctx.addReference(type);
@@ -1865,7 +1885,9 @@ export class Parser {
       } else {
         var tempVar = ctx.generateTmpVariable();
         ctx.pushCode(
-          `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX + type}(offset, {`,
+          `var ${tempVar} = ${
+            FUNCTION_ENCODE_PREFIX + type
+          }(${ctx.generateVariable(this.varName)}, {`,
         );
         if (ctx.useContextVariables) {
           const parentVar = ctx.generateVariable();
@@ -1873,14 +1895,9 @@ export class Parser {
           ctx.pushCode(`$root: ${parentVar}.$root,`);
         }
         ctx.pushCode(`});`);
-        ctx.pushCode(
-          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`,
-        );
 
-        ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
-        if (type !== this.alias) {
-          ctx.addReference(type);
-        }
+        ctx.pushCode(`smartBuffer.writeBuffer(${tempVar}.result);`);
+        if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
       ctx.pushPath(varName);
@@ -1929,14 +1946,10 @@ export class Parser {
     const tag = ctx.generateOption(this.options.tag!);
     const nestVar = ctx.generateVariable(this.varName);
 
-    if (this.varName) {
-      ctx.pushCode(`${nestVar} = {};`);
-
-      if (ctx.useContextVariables) {
-        const parentVar = ctx.generateVariable();
-        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
-        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
-      }
+    if (this.varName && ctx.useContextVariables) {
+      const parentVar = ctx.generateVariable();
+      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
     }
     ctx.pushCode(`switch(${tag}) {`);
     for (const tagString in this.options.choices) {
@@ -2013,14 +2026,10 @@ export class Parser {
     const nestVar = ctx.generateVariable(this.varName);
 
     if (this.options.type instanceof Parser) {
-      if (this.varName) {
-        ctx.pushCode(`${nestVar} = {};`);
-
-        if (ctx.useContextVariables) {
-          const parentVar = ctx.generateVariable();
-          ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
-          ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
-        }
+      if (this.varName && ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
       }
 
       ctx.pushPath(this.varName);
@@ -2038,7 +2047,7 @@ export class Parser {
       ctx.pushCode(
         `var ${tempVar} = ${
           FUNCTION_ENCODE_PREFIX + this.options.type
-        }(offset, {`,
+        }(${nestVar}, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -2046,11 +2055,8 @@ export class Parser {
         ctx.pushCode(`$root: ${parentVar}.$root,`);
       }
       ctx.pushCode(`});`);
-      ctx.pushCode(
-        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
-      );
 
-      ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
+      ctx.pushCode(`smartBuffer.writeBuffer(${tempVar}.result);`);
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
       }
