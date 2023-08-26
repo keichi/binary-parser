@@ -1,7 +1,8 @@
-# Binary-parser-encoder
+# Binary-parser
 
-<u>Note</u>: This is a fork of [binary-parser](https://github.com/keichi/binary-parser)
-library. It is currently being proposed as a Pull-Request in that project.
+[![build](https://github.com/keichi/binary-parser/workflows/build/badge.svg)](https://github.com/keichi/binary-parser/actions?query=workflow%3Abuild)
+[![npm](https://img.shields.io/npm/v/binary-parser)](https://www.npmjs.com/package/binary-parser)
+[![license](https://img.shields.io/github/license/keichi/binary-parser)](https://github.com/keichi/binary-parser/blob/master/LICENSE)
 
 Until the *encoding* feature is merged in baseline of original project,
 this branch is published under the name: **binary-parser-encoder** in [npm](https://npmjs.org/).
@@ -36,19 +37,22 @@ and [binary](https://github.com/substack/node-binary).
 
 ## Quick Start
 
-1. Create an empty Parser object with `new Parser()` or `Parser.start()`.
-2. Chain methods to build your desired parser and/or encoder. (See
-   [API](https://github.com/keichi/binary-parser#api) for detailed document of
-   each method)
+1. Create an empty `Parser` object with `new Parser()` or `Parser.start()`.
+2. Chain methods to build your desired parser and/or encoder. (See [API](#api) for detailed
+   documentation of each method)
 3. Call `Parser.prototype.parse` with a `Buffer`/`Uint8Array` object passed as
-   an argument.
+   its only argument.
 4. The parsed result will be returned as an object.
+   - If parsing failed, an exception will be thrown.
 5. Or call `Parser.prototype.encode` with an object passed as argument.
 6. Encoded result will be returned as a `Buffer` object.
 
 ```javascript
 // Module import
 const Parser = require("binary-parser").Parser;
+
+// Alternative way to import the module
+// import { Parser } from "binary-parser";
 
 // Build an IP packet header Parser
 const ipHeader = new Parser()
@@ -132,13 +136,13 @@ returned from the `parse` method.
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
 Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
-`l` for little endian or `b` for big endian. With no prefix, it parses as a
-signed number, with `u` prefixed as an unsigned number. The runtime type
+`le` for little endian or `be` for big endian. With no prefix, it parses as a
+signed number, with `u` prefix as an unsigned number. The runtime type
 returned by the 8, 16, 32 bit methods is `number` while the type
 returned by the 64 bit is `bigint`.
 
 **Note:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
-greater. Lower version will throw a runtime error.
+greater. Lower versions will throw a runtime error.
 
 ```javascript
 const parser = new Parser()
@@ -147,7 +151,7 @@ const parser = new Parser()
   // Unsigned 8-bit integer
   .uint8("b")
   // Signed 16-bit integer (big endian)
-  .int16be("c");
+  .int16be("c")
   // signed 64-bit integer (big endian)
   .int64be("d")
 ```
@@ -223,8 +227,8 @@ keys:
 Parse bytes as an array. `options` is an object which can have the following
 keys:
 
-- `type` - (Required) Type of the array element. Can be a string or an user
-  defined Parser object. If it's a string, you have to choose from [u]int{8,
+- `type` - (Required) Type of the array element. Can be a string or a user
+  defined `Parser` object. If it's a string, you have to choose from [u]int{8,
   16, 32}{le, be}.
 - `length` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   Length of the array. Can be a number, string or a function. Use number for
@@ -308,7 +312,7 @@ the chosen parser is directly embedded into the current object. `options` is
 an object which can have the following keys:
 
 - `tag` - (Required) The value used to determine which parser to use from the
-  `choices` Can be a string pointing to another field or a function.
+  `choices`. Can be a string pointing to another field or a function.
 - `choices` - (Required) An object which key is an integer and value is the
   parser which is executed when `tag` equals the key value.
 - `defaultChoice` - (Optional) In case if the tag value doesn't match any of
@@ -345,7 +349,7 @@ Useful for parsing binary formats such as ELF where the offset of a field is
 pointed by another field.
 
 - `type` - (Required) Can be a string `[u]int{8, 16, 32, 64}{le, be}`
-   or an user defined Parser object.
+   or a user defined `Parser` object.
 - `offset` - (Required) Indicates absolute offset from the beginning of the
   input buffer. Can be a number, string or a function.
 
@@ -411,9 +415,9 @@ var parser = new Parser()
 ```
 
 ### namely(alias)
-Set an alias to this parser, so there will be an opportunity to refer to it by
-name in methods like `.array`, `.nest` and `.choice`, instead of requirement
-to have an instance of it.
+Set an alias to this parser, so that it can be referred to by name in methods
+like `.array`, `.nest` and `.choice`, without the requirement to have an
+instance of this parser.
 
 Especially, the parser may reference itself:
 
@@ -476,7 +480,7 @@ to avoid this, ensure that every possible path has its end. Also, this
 recursion is not tail-optimized, so could lead to memory leaks when it goes
 too deep.
 
-An example of referencing other patches:
+An example of referencing other parsers:
 
 ```javascript
 // the line below registers the name "self", so we will be able to use it in
@@ -573,7 +577,7 @@ These options can be used in all parsers.
   form. *formatter*(value, obj, buffer, offset) &rarr; *new value* \
   where `value` is the value to be formatted, `obj` is the current object being generated, `buffer` is the buffer currently beeing parsed and `offset` is the current offset in that buffer.
     ```javascript
-    var parser = new Parser().array("ipv4", {
+    const parser = new Parser().array("ipv4", {
       type: uint8,
       length: "4",
       formatter: function(arr, obj, buffer, offset) {
@@ -603,8 +607,8 @@ These options can be used in all parsers.
   numbers and so on). If `assert` is a `string` or `number`, the actual parsed
   result will be compared with it with `===` (strict equality check), and an
   exception is thrown if they mismatch. On the other hand, if `assert` is a
-  function, that function is executed with one argument (parsed result) and if
-  it returns false, an exception is thrown.
+  function, that function is executed with one argument (the parsed result)
+  and if it returns false, an exception is thrown.
 
     ```javascript
     // simple maginc number validation
@@ -642,7 +646,7 @@ Otherwise, the context variables will not be present.
     .array("data", {
       type: "int32",
       length: function() {
-        return this.$parent.header.length
+        return this.$parent.header.length;
       }
     });
   ```
@@ -661,7 +665,7 @@ Otherwise, the context variables will not be present.
         .array("data", {
           type: "int32",
           length: function() {
-            return this.$root.header.length
+            return this.$root.header.length;
           }
         }),
     });
@@ -704,5 +708,22 @@ and destruct.js is available under `benchmark/`.
 
 Please report issues to the
 [issue tracker](https://github.com/keichi/binary-parser/issues) if you have
-any difficulties using this module, found a bug, or request a new feature.
-Pull requests are welcomed.
+any difficulties using this module, found a bug, or would like to request a
+new feature. Pull requests are welcome.
+
+To contribute code, first clone this repo, then install the dependencies:
+
+```bash
+git clone https://github.com/keichi/binary-parser.git
+cd binary-parser
+npm install
+```
+
+If you added a feature or fixed a bug, update the test suite under `test/` and
+then run it like this:
+
+```bash
+npm run test
+```
+
+Make sure all the tests pass before submitting a pull request.

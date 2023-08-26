@@ -117,7 +117,7 @@ function primitiveParserTests(
 
     describe("Bit field parsers", () => {
       function binaryLiteral(s: string): Uint8Array {
-        const bytes = [];
+        const bytes = Array<number>();
 
         s = s.replace(/\s/g, "");
         deepStrictEqual(s.length % 8, 0);

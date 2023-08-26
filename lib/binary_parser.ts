@@ -1273,7 +1273,7 @@ export class Parser {
 
     return ctx;
   }
-  
+
   private nextNotBit() {
     // Used to test if next type is a bitN or not
     if (this.next) {
@@ -1855,21 +1855,32 @@ export class Parser {
     type: string | Parser
   ) {
     if (typeof type === 'string') {
-      if (!aliasRegistry[type]) {
+      if (!aliasRegistry.has(type)) {
         ctx.pushCode(
           `smartBuffer.write${
             CAPITILIZED_TYPE_NAMES[type as Types]
           }(${ctx.generateVariable(this.varName)});`
         );
       } else {
-        const tempVar = ctx.generateTmpVariable();
+        var tempVar = ctx.generateTmpVariable();
         ctx.pushCode(
-          `var ${tempVar} = ${
-            FUNCTION_ENCODE_PREFIX + type
-          }(${ctx.generateVariable(this.varName)});`
+          `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX + type}(offset, {`,
         );
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`$parent: ${parentVar},`);
+          ctx.pushCode(`$root: ${parentVar}.$root,`);
+        }
+        ctx.pushCode(`});`);
+        ctx.pushCode(
+          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`,
+        );
+
         ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
-        if (type !== this.alias) ctx.addReference(type);
+        if (type !== this.alias) {
+          ctx.addReference(type);
+        }
+
       }
     } else if (type instanceof Parser) {
       ctx.pushPath(varName);
@@ -1916,14 +1927,26 @@ export class Parser {
 
   private generate_encodeChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag);
+    const nestVar = ctx.generateVariable(this.varName);
+
+    if (this.varName) {
+      ctx.pushCode(`${nestVar} = {};`);
+
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+      }
+    }
     ctx.pushCode(`switch(${tag}) {`);
-    Object.keys(this.options.choices).forEach((tag) => {
-      const type = this.options.choices[parseInt(tag, 10)];
+    for (const tagString in this.options.choices) {
+      const tag = parseInt(tagString, 10);
+      const type = this.options.choices[tag];
 
       ctx.pushCode(`case ${tag}:`);
       this.generate_encodeChoiceCase(ctx, this.varName, type);
-      ctx.pushCode('break;');
-    }, this);
+      ctx.pushCode("break;");
+    }
     ctx.pushCode('default:');
     if (this.options.defaultChoice) {
       this.generate_encodeChoiceCase(
@@ -1934,7 +1957,12 @@ export class Parser {
     } else {
       ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
     }
-    ctx.pushCode('}');
+    ctx.pushCode("}");
+
+    if (this.varName && ctx.useContextVariables) {
+      ctx.pushCode(`delete ${nestVar}.$parent;`);
+      ctx.pushCode(`delete ${nestVar}.$root;`);
+    }
   }
 
   private generateNest(ctx: Context) {
@@ -1985,16 +2013,41 @@ export class Parser {
     const nestVar = ctx.generateVariable(this.varName);
 
     if (this.options.type instanceof Parser) {
+      if (this.varName) {
+        ctx.pushCode(`${nestVar} = {};`);
+
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+          ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+        }
+      }
+
       ctx.pushPath(this.varName);
       this.options.type.generateEncode(ctx);
       ctx.popPath(this.varName);
-    } else if (aliasRegistry[this.options.type]) {
+
+      if (this.varName && ctx.useContextVariables) {
+        if (ctx.useContextVariables) {
+          ctx.pushCode(`delete ${nestVar}.$parent;`);
+          ctx.pushCode(`delete ${nestVar}.$root;`);
+        }
+      }
+    } else if (aliasRegistry.has(this.options.type!)) {
       var tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${
-          FUNCTION_ENCODE_PREFIX + this.options.type
-        }(${nestVar});`
+        `var ${tempVar} = ${FUNCTION_ENCODE_PREFIX + this.options.type}(offset, {`,
       );
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+      }
+      ctx.pushCode(`});`);
+      ctx.pushCode(
+        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
+      );
+
       ctx.pushCode(`smartBuffer.writeBuffer(${tempVar});`);
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type);
