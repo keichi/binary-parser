@@ -5,9 +5,6 @@
   "main": "dist/binary_parser.js",
   "types": "dist/binary_parser.d.ts",
   "module": "dist/esm/binary_parser.mjs",
-  "dependencies": {
-    "smart-buffer": "^4.1.0"
-  },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.2",
@@ -71,5 +68,8 @@
   "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "engines": {
     "node": ">=14"
+  },
+  "dependencies": {
+    "smart-buffer": "~4.2.0"
   }
 }
