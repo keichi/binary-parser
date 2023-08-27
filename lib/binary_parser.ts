@@ -896,10 +896,8 @@ export class Parser {
 
   private addRawCodeEncode(ctx: Context) {
     ctx.pushCode("var vars = obj || {};");
-    ctx.pushCode(
-      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
-    );
-    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
+    ctx.pushCode("vars.$parent = null;");
+    ctx.pushCode("vars.$root = vars;");
 
     ctx.pushCode(
       `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
