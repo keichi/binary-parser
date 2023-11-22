@@ -1,8 +1,8 @@
-const Benchmark = require("benchmark");
-const bp = require("binparse").bp;
-const Parser = require("../dist/binary_parser").Parser;
-const Destruct = require("destruct-js");
-const Struct = require("structron");
+import Benchmark from "benchmark";
+import { bp } from "binparse";
+import { Parser } from "../dist/binary_parser.js";
+import Destruct from "destruct-js";
+import Struct from "structron";
 
 const suite = new Benchmark.Suite();
 
@@ -14,8 +14,8 @@ const PointParser = bp.object("Point", {
 });
 
 const PointsParser = bp.object("SimpleObject", {
-  length: bp.variable("len", bp.lu32),
-  points: bp.array("Points", PointParser, "len"),
+  length: bp.lu32,
+  points: bp.array("Points", PointParser, "length"),
 });
 
 // binary-parser
@@ -64,13 +64,14 @@ for (let i = 0; i < n; i++) {
 // Run benchmarks
 suite
   .add("hand-written", function () {
-    const n = buf.readUInt32LE(0);
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    const n = view.getUint32(0, true);
     const points = [];
     for (let i = 0; i < n; i++) {
       points.push({
-        x: buf.readUInt16LE(i * 6 + 0 + 4),
-        y: buf.readUInt16LE(i * 6 + 2 + 4),
-        z: buf.readUInt16LE(i * 6 + 4 + 4),
+        x: view.getUint16(i * 6 + 0 + 4, true),
+        y: view.getUint16(i * 6 + 2 + 4, true),
+        z: view.getUint16(i * 6 + 4 + 4, true),
       });
     }
   })
