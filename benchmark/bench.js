@@ -1,8 +1,8 @@
-const Benchmark = require("benchmark");
-const bp = require("binparse").bp;
-const Parser = require("../dist/binary_parser").Parser;
-const Destruct = require("destruct-js");
-const Struct = require("structron");
+import Benchmark from "benchmark";
+import { bp } from "binparse";
+import { Parser } from "../dist/binary_parser.js";
+import Destruct from "destruct-js";
+import Struct from "structron";
 
 const suite = new Benchmark.Suite();
 
@@ -14,8 +14,8 @@ const PointParser = bp.object("Point", {
 });
 
 const PointsParser = bp.object("SimpleObject", {
-  length: bp.variable("len", bp.lu32),
-  points: bp.array("Points", PointParser, "len"),
+  length: bp.lu32,
+  points: bp.array("Points", PointParser, "length"),
 });
 
 // binary-parser
