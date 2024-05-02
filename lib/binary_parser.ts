@@ -286,7 +286,7 @@ export class Parser {
   alias?: string;
   useContextVariables = false;
 
-  constructor() { }
+  constructor() {}
 
   static start() {
     return new Parser();
@@ -1118,7 +1118,8 @@ export class Parser {
           if (rem) {
             const mask = -1 >>> (32 - rem);
             ctx.pushCode(
-              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${length - rem
+              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
+                length - rem
               };`,
             );
             length -= rem;
@@ -1130,7 +1131,8 @@ export class Parser {
         const mask = -1 >>> (32 - length);
 
         ctx.pushCode(
-          `${parser.varName} ${length < (parser.options.length as number) ? "|=" : "="
+          `${parser.varName} ${
+            length < (parser.options.length as number) ? "|=" : "="
           } ${val} >> ${offset} & 0x${mask.toString(16)};`,
         );
 
