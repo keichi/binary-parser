@@ -706,7 +706,7 @@ export class Parser {
   }
 
   pointer(varName: string, options: ParserOptions): this {
-    if (!options.offset) {
+    if (options.offset == null) {
       throw new Error("offset is required for pointer.");
     }
 
