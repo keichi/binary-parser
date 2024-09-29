@@ -2,9 +2,9 @@ name: test-nodejs
 
 on:
   push:
-    branches: [ master ]
+    branches: [ encoder]
   pull_request:
-    branches: [ master ]
+    branches: [ encoder ]
 
 jobs:
   build:

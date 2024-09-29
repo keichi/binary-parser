@@ -1,3 +1,5 @@
+import { SmartBuffer } from "smart-buffer";
+
 class Context {
   code = "";
   scopes = [["vars"]];
@@ -109,6 +111,7 @@ class Context {
 
 const aliasRegistry = new Map<string, Parser>();
 const FUNCTION_PREFIX = "___parser_";
+const FUNCTION_ENCODE_PREFIX = "___encoder_";
 
 interface ParserOptions {
   length?: number | string | ((item: any) => number);
@@ -116,7 +119,9 @@ interface ParserOptions {
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
   formatter?: (item: any) => any;
+  encoder?: (item: any) => any;
   encoding?: string;
+  encodeUntil?: "eof" | ((item: any, buffer: Buffer) => number);
   readUntil?: "eof" | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
   choices?: { [key: number]: string | Parser };
@@ -125,9 +130,16 @@ interface ParserOptions {
   clone?: boolean;
   stripNull?: boolean;
   key?: string;
+  trim?: boolean;
+  padding?: string;
+  padd?: string;
   tag?: string | ((item: any) => number);
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
+}
+
+interface EncoderOptions {
+  bitEndianess?: boolean;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -274,6 +286,38 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   doublebe: false,
 };
 
+const CAPITILIZED_TYPE_NAMES: { [key in Types]: string } = {
+  uint8: "UInt8",
+  uint16le: "UInt16LE",
+  uint16be: "UInt16BE",
+  uint32le: "UInt32LE",
+  uint32be: "UInt32BE",
+  int8: "Int8",
+  int16le: "Int16LE",
+  int16be: "Int16BE",
+  int32le: "Int32LE",
+  int32be: "Int32BE",
+  int64be: "BigInt64BE",
+  int64le: "BigInt64LE",
+  uint64be: "BigUInt64BE",
+  uint64le: "BigUInt64LE",
+  floatle: "FloatLE",
+  floatbe: "FloatBE",
+  doublele: "DoubleLE",
+  doublebe: "DoubleBE",
+  bit: "Bit",
+  string: "String",
+  buffer: "Buffer",
+  array: "Array",
+  choice: "Choice",
+  nest: "Nest",
+  seek: "Seek",
+  pointer: "Pointer",
+  saveOffset: "SaveOffset",
+  "": "",
+  wrapper: "Wrapper",
+};
+
 export class Parser {
   varName = "";
   type: Types = "";
@@ -285,11 +329,22 @@ export class Parser {
   constructorFn?: Function;
   alias?: string;
   useContextVariables = false;
+  compiledEncode: Function | null = null;
+  smartBufferSize: number;
+  encoderOpts: EncoderOptions;
 
-  constructor() {}
+  constructor(opts?: any) {
+    this.smartBufferSize =
+      opts && typeof opts === "object" && opts.smartBufferSize
+        ? opts.smartBufferSize
+        : 256;
+    this.encoderOpts = {
+      bitEndianess: false,
+    };
+  }
 
-  static start() {
-    return new Parser();
+  static start(opts?: any) {
+    return new Parser(opts);
   }
 
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
@@ -301,6 +356,14 @@ export class Parser {
       )} = dataView.get${typeName}(offset, ${littleEndian});`,
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
+  }
+
+  private primitiveGenerate_encodeN(type: PrimitiveTypes, ctx: Context) {
+    const typeName = CAPITILIZED_TYPE_NAMES[type];
+
+    ctx.pushCode(
+      `smartBuffer.write${typeName}(${ctx.generateVariable(this.varName)});`,
+    );
   }
 
   private primitiveN(
@@ -744,6 +807,12 @@ export class Parser {
     return this;
   }
 
+  encoderSetOptions(opts: EncoderOptions) {
+    Object.assign(this.encoderOpts, opts);
+
+    return this;
+  }
+
   endianess(endianess: "little" | "big"): this {
     return this.endianness(endianess);
   }
@@ -786,6 +855,27 @@ export class Parser {
     return this.getContext(importPath).code;
   }
 
+  private getContextEncode(importPath: string) {
+    const ctx = new Context(importPath, this.useContextVariables);
+
+    ctx.pushCode('if (!obj || typeof obj !== "object") {');
+    ctx.generateError('"argument obj is not an object"');
+    ctx.pushCode("}");
+
+    if (!this.alias) {
+      this.addRawCodeEncode(ctx);
+    } else {
+      this.addAliasedCodeEncode(ctx);
+      ctx.pushCode(`return ${FUNCTION_ENCODE_PREFIX + this.alias}(obj);`);
+    }
+
+    return ctx;
+  }
+
+  getCodeEncode() {
+    return this.getContextEncode("").code; // TODO: Not sure "" is a valid input here
+  }
+
   private addRawCode(ctx: Context) {
     ctx.pushCode("var offset = 0;");
     ctx.pushCode(
@@ -802,6 +892,25 @@ export class Parser {
     ctx.pushCode("delete vars.$root;");
 
     ctx.pushCode("return vars;");
+  }
+
+  private addRawCodeEncode(ctx: Context) {
+    ctx.pushCode("var vars = obj || {};");
+    ctx.pushCode("vars.$parent = null;");
+    ctx.pushCode("vars.$root = vars;");
+
+    ctx.pushCode(
+      `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
+    );
+
+    this.generateEncode(ctx);
+
+    ctx.pushCode("delete vars.$parent;");
+    ctx.pushCode("delete vars.$root;");
+
+    this.resolveReferences(ctx, "encode");
+
+    ctx.pushCode("return smartBuffer.toBuffer();");
   }
 
   private addAliasedCode(ctx: Context) {
@@ -828,11 +937,41 @@ export class Parser {
     return ctx;
   }
 
-  private resolveReferences(ctx: Context) {
+  private addAliasedCodeEncode(ctx: Context) {
+    ctx.pushCode(
+      `function ${FUNCTION_ENCODE_PREFIX + this.alias}(obj, context) {`,
+    );
+
+    ctx.pushCode("var vars = obj || {};");
+    ctx.pushCode(
+      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
+    );
+    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
+    ctx.pushCode(
+      `var smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
+    );
+
+    this.generateEncode(ctx);
+
+    ctx.markResolved(this.alias!);
+    this.resolveReferences(ctx, "encode");
+
+    ctx.pushCode("return { result: smartBuffer.toBuffer() };");
+    ctx.pushCode("}");
+
+    return ctx;
+  }
+
+  private resolveReferences(ctx: Context, encode?: string) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
     references.forEach((alias) => {
-      aliasRegistry.get(alias)?.addAliasedCode(ctx);
+      const parser = aliasRegistry.get(alias);
+      if (encode) {
+        parser?.addAliasedCodeEncode(ctx);
+      } else {
+        parser?.addAliasedCode(ctx);
+      }
     });
   }
 
@@ -844,6 +983,25 @@ export class Parser {
       "TextDecoder",
       `return function (buffer, constructorFn) { ${ctx.code} };`,
     )(ctx.imports, TextDecoder);
+  }
+
+  compileEncode() {
+    const importPath = "imports";
+    const ctx = this.getContextEncode(importPath);
+    this.compiledEncode = new Function(
+      importPath,
+      "TextDecoder",
+      "SmartBuffer",
+      `return function (obj) { ${ctx.code} };`,
+    )(
+      ctx.imports,
+      typeof TextDecoder === "undefined"
+        ? require("util").TextDecoder
+        : TextDecoder,
+      typeof SmartBuffer === "undefined"
+        ? require("smart-buffer").SmartBuffer
+        : SmartBuffer,
+    );
   }
 
   sizeOf(): number {
@@ -906,6 +1064,19 @@ export class Parser {
     return this.compiled!(buffer, this.constructorFn);
   }
 
+  // Follow the parser chain till the root and start encoding from there
+  encode(obj: any) {
+    if (!this.compiledEncode) {
+      this.compileEncode();
+    }
+
+    const encoded = this.compiledEncode!(obj);
+    if (encoded.result) {
+      return encoded.result;
+    }
+    return encoded;
+  }
+
   private setNextParser(
     type: Types,
     varName: string,
@@ -917,6 +1088,7 @@ export class Parser {
     parser.varName = varName;
     parser.options = options;
     parser.endian = this.endian;
+    parser.encoderOpts = this.encoderOpts;
 
     if (this.head) {
       this.head.next = parser;
@@ -994,6 +1166,78 @@ export class Parser {
     return this.generateNext(ctx);
   }
 
+  generateEncode(ctx: Context) {
+    var savVarName = ctx.generateTmpVariable();
+    const varName = ctx.generateVariable(this.varName);
+
+    // Transform with the possibly provided encoder before encoding
+    if (this.options.encoder) {
+      ctx.pushCode(`var ${savVarName} = ${varName}`);
+      this.generateEncoder(ctx, varName, this.options.encoder);
+    }
+
+    if (this.type) {
+      switch (this.type) {
+        case "uint8":
+        case "uint16le":
+        case "uint16be":
+        case "uint32le":
+        case "uint32be":
+        case "int8":
+        case "int16le":
+        case "int16be":
+        case "int32le":
+        case "int32be":
+        case "int64be":
+        case "int64le":
+        case "uint64be":
+        case "uint64le":
+        case "floatle":
+        case "floatbe":
+        case "doublele":
+        case "doublebe":
+          this.primitiveGenerate_encodeN(this.type, ctx);
+          break;
+        case "bit":
+          this.generate_encodeBit(ctx);
+          break;
+        case "string":
+          this.generate_encodeString(ctx);
+          break;
+        case "buffer":
+          this.generate_encodeBuffer(ctx);
+          break;
+        case "seek":
+          this.generate_encodeSeek(ctx);
+          break;
+        case "nest":
+          this.generate_encodeNest(ctx);
+          break;
+        case "array":
+          this.generate_encodeArray(ctx);
+          break;
+        case "choice":
+          this.generate_encodeChoice(ctx);
+          break;
+        case "pointer":
+          this.generate_encodePointer(ctx);
+          break;
+        case "saveOffset":
+          this.generate_encodeSaveOffset(ctx);
+          break;
+      }
+      this.generateAssert(ctx);
+    }
+
+    if (this.options.encoder) {
+      // Restore varName after encoder transformation so that next parsers will
+      // have access to original field value (but not nested ones)
+      ctx.pushCode(`${varName} = ${savVarName};`);
+    }
+
+    return this.generateEncodeNext(ctx);
+  }
+
   private generateAssert(ctx: Context) {
     if (!this.options.assert) {
       return;
@@ -1033,6 +1277,15 @@ export class Parser {
   private generateNext(ctx: Context): Context {
     if (this.next) {
       ctx = this.next.generate(ctx);
+    }
+
+    return ctx;
+  }
+
+  // Recursively call code generators and append results
+  private generateEncodeNext(ctx: Context) {
+    if (this.next) {
+      ctx = this.next.generateEncode(ctx);
     }
 
     return ctx;
@@ -1161,9 +1414,85 @@ export class Parser {
     }
   }
 
+  private generate_encodeBit(ctx: Context) {
+    // TODO find better method to handle nested bit fields
+    const parser = JSON.parse(JSON.stringify(this));
+    parser.varName = ctx.generateVariable(parser.varName);
+    ctx.bitFields.push(parser);
+
+    if (
+      !this.next ||
+      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
+    ) {
+      let sum = 0;
+      ctx.bitFields.forEach((parser) => {
+        sum += parser.options.length as number;
+      });
+
+      if (sum <= 8) {
+        sum = 8;
+      } else if (sum <= 16) {
+        sum = 16;
+      } else if (sum <= 24) {
+        sum = 24;
+      } else if (sum <= 32) {
+        sum = 32;
+      } else {
+        throw new Error(
+          "Currently, bit field sequences longer than 4-bytes is not supported.",
+        );
+      }
+
+      const isBitLittleEndian =
+        this.endian === "le" && this.encoderOpts.bitEndianess;
+      const tmpVal = ctx.generateTmpVariable();
+      const boundVal = ctx.generateTmpVariable();
+      ctx.pushCode(`var ${tmpVal} = 0;`);
+      ctx.pushCode(`var ${boundVal} = 0;`);
+      let bitOffset = 0;
+      ctx.bitFields.forEach((parser) => {
+        ctx.pushCode(
+          `${boundVal} = (${parser.varName} & ${
+            (1 << (parser.options.length as number)) - 1
+          });`,
+        );
+        ctx.pushCode(
+          `${tmpVal} |= (${boundVal} << ${
+            isBitLittleEndian
+              ? bitOffset
+              : sum - (parser.options.length as number) - bitOffset
+          });`,
+        );
+        ctx.pushCode(`${tmpVal} = ${tmpVal} >>> 0;`);
+        bitOffset += parser.options.length as number;
+      });
+      if (sum == 8) {
+        ctx.pushCode(`smartBuffer.writeUInt8(${tmpVal});`);
+      } else if (sum == 16) {
+        ctx.pushCode(`smartBuffer.writeUInt16BE(${tmpVal});`);
+      } else if (sum == 24) {
+        const val1 = ctx.generateTmpVariable();
+        const val2 = ctx.generateTmpVariable();
+        ctx.pushCode(`var ${val1} = (${tmpVal} >>> 8);`);
+        ctx.pushCode(`var ${val2} = (${tmpVal} & 0x0ff);`);
+        ctx.pushCode(`smartBuffer.writeUInt16BE(${val1});`);
+        ctx.pushCode(`smartBuffer.writeUInt8(${val2});`);
+      } else if (sum == 32) {
+        ctx.pushCode(`smartBuffer.writeUInt32BE(${tmpVal});`);
+      }
+
+      ctx.bitFields = [];
+    }
+  }
+
   private generateSeek(ctx: Context) {
     const length = ctx.generateOption(this.options.length!);
     ctx.pushCode(`offset += ${length};`);
+  }
+
+  private generate_encodeSeek(ctx: Context) {
+    const length = ctx.generateOption(this.options.length!);
+    ctx.pushCode(`smartBuffer.writeBuffer(Buffer.alloc(${length}));`);
   }
 
   private generateString(ctx: Context) {
@@ -1179,7 +1508,8 @@ export class Parser {
       ctx.pushCode(
         `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
       );
-      const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
+      //const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
+      const end = "dataView.getUint8(offset -1) == 0 ? offset - 1 : offset";
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
@@ -1212,6 +1542,63 @@ export class Parser {
     }
     if (this.options.stripNull) {
       ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);
+    }
+    if (this.options.trim) {
+      ctx.pushCode(`${name} = ${name}.trim()`);
+    }
+  }
+
+  private generate_encodeString(ctx: Context) {
+    const name = ctx.generateVariable(this.varName);
+
+    // Get the length of string to encode
+    if (this.options.length) {
+      const optLength = ctx.generateOption(this.options.length);
+      // Encode the string to a temporary buffer
+      const tmpBuf = ctx.generateTmpVariable();
+      ctx.pushCode(
+        `var ${tmpBuf} = Buffer.from(${name}, "${this.options.encoding}");`,
+      );
+      // Truncate the buffer to specified (Bytes) length
+      ctx.pushCode(`${tmpBuf} = ${tmpBuf}.slice(0, ${optLength});`);
+      // Compute padding length
+      const padLen = ctx.generateTmpVariable();
+      ctx.pushCode(`${padLen} = ${optLength} - ${tmpBuf}.length;`);
+      if (this.options.zeroTerminated) {
+        ctx.pushCode(`smartBuffer.writeBuffer(${tmpBuf});`);
+        ctx.pushCode(`if (${padLen} > 0) { smartBuffer.writeUInt8(0x00); }`);
+      } else {
+        const padCharVar = ctx.generateTmpVariable();
+        let padChar = this.options.stripNull ? "\u0000" : " ";
+        if (this.options.padd && typeof this.options.padd === "string") {
+          const code = this.options.padd.charCodeAt(0);
+          if (code < 0x80) {
+            padChar = String.fromCharCode(code);
+          }
+        }
+        ctx.pushCode(`${padCharVar} = "${padChar}";`);
+        if (this.options.padding === "left") {
+          // Add heading padding spaces
+          ctx.pushCode(
+            `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`,
+          );
+        }
+        // Copy the temporary string buffer to current smartBuffer
+        ctx.pushCode(`smartBuffer.writeBuffer(${tmpBuf});`);
+        if (this.options.padding !== "left") {
+          // Add trailing padding spaces
+          ctx.pushCode(
+            `if (${padLen} > 0) {smartBuffer.writeString(${padCharVar}.repeat(${padLen}));}`,
+          );
+        }
+      }
+    } else {
+      ctx.pushCode(
+        `smartBuffer.writeString(${name}, "${this.options.encoding}");`,
+      );
+      if (this.options.zeroTerminated) {
+        ctx.pushCode("smartBuffer.writeUInt8(0x00);");
+      }
     }
   }
 
@@ -1246,6 +1633,12 @@ export class Parser {
     if (this.options.clone) {
       ctx.pushCode(`${varName} = buffer.constructor.from(${varName});`);
     }
+  }
+
+  private generate_encodeBuffer(ctx: Context) {
+    ctx.pushCode(
+      `smartBuffer.writeBuffer(${ctx.generateVariable(this.varName)});`,
+    );
   }
 
   private generateArray(ctx: Context) {
@@ -1344,6 +1737,103 @@ export class Parser {
     }
   }
 
+  private generate_encodeArray(ctx: Context) {
+    const length = ctx.generateOption(this.options.length!);
+    const lengthInBytes = ctx.generateOption(this.options.lengthInBytes!);
+    const type = this.options.type;
+    const name = ctx.generateVariable(this.varName);
+    const item = ctx.generateTmpVariable();
+    const itemCounter = ctx.generateTmpVariable();
+    const maxItems = ctx.generateTmpVariable();
+    const isHash = typeof this.options.key === "string";
+
+    if (isHash) {
+      ctx.generateError('"Encoding associative array not supported"');
+    }
+
+    ctx.pushCode(`var ${maxItems} = 0;`);
+
+    // Get default array length (if defined)
+    ctx.pushCode(`if(${name}) {${maxItems} = ${name}.length;}`);
+
+    // Compute the desired count of array items to encode (min of array size
+    // and length option)
+    if (length !== undefined) {
+      ctx.pushCode(
+        `${maxItems} = ${maxItems} > ${length} ? ${length} : ${maxItems}`,
+      );
+    }
+
+    // Save current encoding smartBuffer and allocate a new one
+    const savSmartBuffer = ctx.generateTmpVariable();
+    ctx.pushCode(
+      `var ${savSmartBuffer} = smartBuffer; ` +
+        `smartBuffer = SmartBuffer.fromOptions({size: ${this.smartBufferSize}, encoding: "utf8"});`,
+    );
+
+    ctx.pushCode(`if(${maxItems} > 0) {`);
+
+    ctx.pushCode(`var ${itemCounter} = 0;`);
+    if (
+      typeof this.options.encodeUntil === "function" ||
+      typeof this.options.readUntil === "function"
+    ) {
+      ctx.pushCode("do {");
+    } else {
+      ctx.pushCode(`for ( ; ${itemCounter} < ${maxItems}; ) {`);
+    }
+
+    ctx.pushCode(`var ${item} = ${name}[${itemCounter}];`);
+    ctx.pushCode(`${itemCounter}++;`);
+
+    if (typeof type === "string") {
+      if (!aliasRegistry.get(type)) {
+        ctx.pushCode(
+          `smartBuffer.write${
+            CAPITILIZED_TYPE_NAMES[type as PrimitiveTypes]
+          }(${item});`,
+        );
+      } else {
+        ctx.pushCode(
+          `smartBuffer.writeBuffer(${
+            FUNCTION_ENCODE_PREFIX + type
+          }(${item}).result);`,
+        );
+        if (type !== this.alias) {
+          ctx.addReference(type);
+        }
+      }
+    } else if (type instanceof Parser) {
+      ctx.pushScope(item);
+      type.generateEncode(ctx);
+      ctx.popScope();
+    }
+
+    ctx.pushCode("}"); // End of 'do {' or 'for (...) {'
+
+    if (typeof this.options.encodeUntil === "function") {
+      ctx.pushCode(
+        ` while (${itemCounter} < ${maxItems} && !(${this.options.encodeUntil}).call(this, ${item}, vars));`,
+      );
+    } else if (typeof this.options.readUntil === "function") {
+      ctx.pushCode(
+        ` while (${itemCounter} < ${maxItems} && !(${this.options.readUntil}).call(this, ${item}, ${savSmartBuffer}.toBuffer()));`,
+      );
+    }
+    ctx.pushCode("}"); // End of 'if(...) {'
+
+    const tmpBuffer = ctx.generateTmpVariable();
+    ctx.pushCode(`var ${tmpBuffer} = smartBuffer.toBuffer()`);
+    if (lengthInBytes !== undefined) {
+      // Truncate the tmpBuffer so that it will respect the lengthInBytes option
+      ctx.pushCode(`${tmpBuffer} = ${tmpBuffer}.slice(0, ${lengthInBytes});`);
+    }
+    // Copy tmp Buffer to saved smartBuffer
+    ctx.pushCode(`${savSmartBuffer}.writeBuffer(${tmpBuffer});`);
+    // Restore current smartBuffer
+    ctx.pushCode(`smartBuffer = ${savSmartBuffer};`);
+  }
+
   private generateChoiceCase(
     ctx: Context,
     varName: string,
@@ -1378,6 +1868,42 @@ export class Parser {
     }
   }
 
+  private generate_encodeChoiceCase(
+    ctx: Context,
+    varName: string,
+    type: string | Parser,
+  ) {
+    if (typeof type === "string") {
+      if (!aliasRegistry.has(type)) {
+        ctx.pushCode(
+          `smartBuffer.write${
+            CAPITILIZED_TYPE_NAMES[type as Types]
+          }(${ctx.generateVariable(this.varName)});`,
+        );
+      } else {
+        var tempVar = ctx.generateTmpVariable();
+        ctx.pushCode(
+          `var ${tempVar} = ${
+            FUNCTION_ENCODE_PREFIX + type
+          }(${ctx.generateVariable(this.varName)}, {`,
+        );
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`$parent: ${parentVar},`);
+          ctx.pushCode(`$root: ${parentVar}.$root,`);
+        }
+        ctx.pushCode(`});`);
+
+        ctx.pushCode(`smartBuffer.writeBuffer(${tempVar}.result);`);
+        if (type !== this.alias) ctx.addReference(type);
+      }
+    } else if (type instanceof Parser) {
+      ctx.pushPath(varName);
+      type.generateEncode(ctx);
+      ctx.popPath(varName);
+    }
+  }
+
   private generateChoice(ctx: Context) {
     const tag = ctx.generateOption(this.options.tag!);
     const nestVar = ctx.generateVariable(this.varName);
@@ -1403,6 +1929,42 @@ export class Parser {
     ctx.pushCode("default:");
     if (this.options.defaultChoice) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);
+    } else {
+      ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
+    }
+    ctx.pushCode("}");
+
+    if (this.varName && ctx.useContextVariables) {
+      ctx.pushCode(`delete ${nestVar}.$parent;`);
+      ctx.pushCode(`delete ${nestVar}.$root;`);
+    }
+  }
+
+  private generate_encodeChoice(ctx: Context) {
+    const tag = ctx.generateOption(this.options.tag!);
+    const nestVar = ctx.generateVariable(this.varName);
+
+    if (this.varName && ctx.useContextVariables) {
+      const parentVar = ctx.generateVariable();
+      ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+      ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+    }
+    ctx.pushCode(`switch(${tag}) {`);
+    for (const tagString in this.options.choices) {
+      const tag = parseInt(tagString, 10);
+      const type = this.options.choices[tag];
+
+      ctx.pushCode(`case ${tag}:`);
+      this.generate_encodeChoiceCase(ctx, this.varName, type);
+      ctx.pushCode("break;");
+    }
+    ctx.pushCode("default:");
+    if (this.options.defaultChoice) {
+      this.generate_encodeChoiceCase(
+        ctx,
+        this.varName,
+        this.options.defaultChoice,
+      );
     } else {
       ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
     }
@@ -1452,6 +2014,47 @@ export class Parser {
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
       );
+      if (this.options.type !== this.alias) {
+        ctx.addReference(this.options.type!);
+      }
+    }
+  }
+
+  private generate_encodeNest(ctx: Context) {
+    const nestVar = ctx.generateVariable(this.varName);
+
+    if (this.options.type instanceof Parser) {
+      if (this.varName && ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`${nestVar}.$parent = ${parentVar};`);
+        ctx.pushCode(`${nestVar}.$root = ${parentVar}.$root;`);
+      }
+
+      ctx.pushPath(this.varName);
+      this.options.type.generateEncode(ctx);
+      ctx.popPath(this.varName);
+
+      if (this.varName && ctx.useContextVariables) {
+        if (ctx.useContextVariables) {
+          ctx.pushCode(`delete ${nestVar}.$parent;`);
+          ctx.pushCode(`delete ${nestVar}.$root;`);
+        }
+      }
+    } else if (aliasRegistry.has(this.options.type!)) {
+      var tempVar = ctx.generateTmpVariable();
+      ctx.pushCode(
+        `var ${tempVar} = ${
+          FUNCTION_ENCODE_PREFIX + this.options.type
+        }(${nestVar}, {`,
+      );
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+      }
+      ctx.pushCode(`});`);
+
+      ctx.pushCode(`smartBuffer.writeBuffer(${tempVar}.result);`);
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
       }
@@ -1539,6 +2142,14 @@ export class Parser {
     }
   }
 
+  private generateEncoder(ctx: Context, varName: string, encoder?: Function) {
+    if (typeof encoder === "function") {
+      ctx.pushCode(
+        `${varName} = (${encoder}).call(${ctx.generateVariable()}, ${varName}, vars);`,
+      );
+    }
+  }
+
   private generatePointer(ctx: Context) {
     const type = this.options.type;
     const offset = ctx.generateOption(this.options.offset!);
@@ -1598,8 +2209,18 @@ export class Parser {
     ctx.pushCode(`offset = ${tempVar};`);
   }
 
+  // @ts-ignore TS6133
+  private generate_encodePointer(ctx: Context) {
+    // TODO
+  }
+
   private generateSaveOffset(ctx: Context) {
     const varName = ctx.generateVariable(this.varName);
     ctx.pushCode(`${varName} = offset`);
+  }
+
+  // @ts-ignore TS6133
+  private generate_encodeSaveOffset(ctx: Context) {
+    // TODO
   }
 }

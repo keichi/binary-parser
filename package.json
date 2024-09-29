@@ -3,6 +3,7 @@
   "version": "2.2.1",
   "description": "Blazing-fast binary parser builder",
   "main": "dist/binary_parser.js",
+  "types": "dist/binary_parser.d.ts",
   "module": "dist/esm/binary_parser.mjs",
   "devDependencies": {
     "@types/mocha": "^10.0.1",
@@ -29,7 +30,7 @@
     "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "format": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "format:fix": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
-    "test": "mocha --require ts-node/register test/*.ts",
+    "test": "mocha --require ts-node/register test/*.{js,ts}",
     "test:browser": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
     "prepare": "npm run build"
   },
@@ -41,6 +42,8 @@
     "binary",
     "parser",
     "decode",
+    "encoder",
+    "encode",
     "unpack",
     "struct",
     "buffer",
@@ -51,13 +54,22 @@
     "email": "hello@keichi.dev",
     "url": "https://keichi.dev/"
   },
+  "contributors": [
+    {
+      "name": "Eric Blanchard",
+      "email": "ericbla@gmail.com"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/keichi/binary-parser.git"
+    "url": "http://github.com/Ericbla/binary-parser.git"
   },
-  "bugs": "http://github.com/keichi/binary-parser/issues",
+  "bugs": "http://github.com/Ericbla/binary-parser/issues",
   "engines": {
     "node": ">=14"
+  },
+  "dependencies": {
+    "smart-buffer": "~4.2.0"
   }
 }

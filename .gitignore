@@ -18,5 +18,5 @@ node_modules
 coverage/
 .nyc_output/
 dist/
-
+.vscode/
 .cache/

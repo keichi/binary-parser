@@ -10,9 +10,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "types": ["node", "mocha"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "moduleResolution": "NodeNext"
   },
-  "files": [
-    "lib/binary_parser.ts"
-  ]
+  "files": ["lib/binary_parser.ts"]
 }
