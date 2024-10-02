@@ -719,7 +719,7 @@ var ConstantClassInfo = Parser.start().uint16be("name_index");
           InstructionParser
         ]
       }),
-      lengthInBytes: function (item, buffer) {
+      lengthInBytes: function (item) {
         //console.log("eyy", this, this.$parent.code_length);
         return this.$parent.code_length;
       }
@@ -772,7 +772,7 @@ var ConstantClassInfo = Parser.start().uint16be("name_index");
     .uint16("count")
     .array("entries", {
       type: CpInfo,
-      readUntil: function (item, buffer, offset) {
+      readUntil: function (item, buffer) {
         if (this.entries.length >= this.count - 1) return true;
         // Check if we've just read a long or double
         if (item.tag === 5 || item.tag === 6) {
