@@ -220,8 +220,8 @@ const TYPE_RANGES: {
   Uint8: { min: 0, max: 255 },
   Uint16: { min: 0, max: 65535 },
   Uint32: { min: 0, max: 4294967295 },
-  BigInt64: { min: -9223372036854775808n, max: 9223372036854775807n },
-  BigUint64: { min: 0n, max: 18446744073709551615n },
+  BigInt64: { min: BigInt("-9223372036854775808"), max: BigInt("9223372036854775807") },
+  BigUint64: { min: BigInt("0"), max: BigInt("18446744073709551615") },
   Float32: { min: -3.4e38, max: 3.4e38 },
   Float64: { min: -1.8e308, max: 1.8e308 },
 };
