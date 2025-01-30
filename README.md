@@ -95,6 +95,22 @@ Parse a `Buffer`/`Uint8Array` object `buffer` with this parser and return the
 resulting object. When `parse(buffer)` is called for the first time, the
 associated parser code is compiled on-the-fly and internally cached.
 
+### encode(object)
+Encode an object `object` with this parser and return the resulting buffer.
+
+```typescript
+const parser = new Parser()
+  .int8('age')
+  .string('name', { zeroTerminated: true });
+
+const buffer = parser.encode({
+  age: 25,
+  name: 'John'
+}); 
+
+// Results in: <Buffer 19 4a 6f 68 6e 00>
+```
+
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
 returned from the `parse` method.
