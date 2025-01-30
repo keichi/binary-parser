@@ -211,6 +211,21 @@ type BitSizes =
   | 31
   | 32;
 
+const TYPE_RANGES: {
+  [type: string]: { min: number | bigint; max: number | bigint };
+} = {
+  Int8: { min: -128, max: 127 },
+  Int16: { min: -32768, max: 32767 },
+  Int32: { min: -2147483648, max: 2147483647 },
+  Uint8: { min: 0, max: 255 },
+  Uint16: { min: 0, max: 65535 },
+  Uint32: { min: 0, max: 4294967295 },
+  BigInt64: { min: -9223372036854775808n, max: 9223372036854775807n },
+  BigUint64: { min: 0n, max: 18446744073709551615n },
+  Float32: { min: -3.4e38, max: 3.4e38 },
+  Float64: { min: -1.8e308, max: 1.8e308 },
+};
+
 const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   uint8: 1,
   uint16le: 2,
@@ -638,7 +653,7 @@ export class Parser {
       !aliasRegistry.has(options.type) &&
       !(options.type in PRIMITIVE_SIZES)
     ) {
-      throw new Error(`Array element type "${options.type}" is unknown.`);
+      throw new Error(`Array element type "${options.type}" is unkown.`);
     }
 
     return this.setNextParser("array", varName, options);
@@ -675,7 +690,7 @@ export class Parser {
         !aliasRegistry.has(value) &&
         !((value as string) in PRIMITIVE_SIZES)
       ) {
-        throw new Error(`Choice type "${value}" is unknown.`);
+        throw new Error(`Choice type "${value}" is unkown.`);
       }
     }
 
@@ -706,7 +721,7 @@ export class Parser {
   }
 
   pointer(varName: string, options: ParserOptions): this {
-    if (options.offset == null) {
+    if (!options.offset) {
       throw new Error("offset is required for pointer.");
     }
 
@@ -719,7 +734,7 @@ export class Parser {
       !(options.type in PRIMITIVE_SIZES) &&
       !aliasRegistry.has(options.type)
     ) {
-      throw new Error(`Pointer type "${options.type}" is unknown.`);
+      throw new Error(`Pointer type "${options.type}" is unkown.`);
     }
 
     return this.setNextParser("pointer", varName, options);
@@ -897,13 +912,269 @@ export class Parser {
     return size;
   }
 
-  // Follow the parser chain till the root and start parsing from there
+  /**
+   * Parse the given buffer and return the parsed object
+   *
+   * @param buffer - the buffer to parse
+   * @returns the parsed object
+   *
+   * @example
+   * const parser = new Parser()
+   *  .endianess('little')
+   * .uint16('num1')
+   * .uint16('num2');
+   *
+   * const buf = Buffer.from([0x01, 0x02, 0x03, 0x04]);
+   * parser.parse(buf); // => { num1: 513, num2: 1027 }
+   *
+   * @throws {Error} - Throws an error if the buffer is not a buffer
+   * @throws {Error} - Throws an error if the buffer is too small
+   */
+
   parse(buffer: Buffer | Uint8Array) {
     if (!this.compiled) {
       this.compile();
     }
 
     return this.compiled!(buffer, this.constructorFn);
+  }
+
+  private encodeValue(
+    dataView: DataView,
+    object: any,
+    offset: number = 0,
+  ): number {
+    if (this.varName && !object.hasOwnProperty(this.varName)) {
+      throw new Error(`Field "${this.varName}" not present`);
+    }
+
+    if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type as string) >= 0) {
+      const val = object[this.varName];
+      const size = PRIMITIVE_SIZES[this.type as PrimitiveTypes];
+      const littleEndian =
+        PRIMITIVE_LITTLE_ENDIANS[this.type as PrimitiveTypes];
+      const typeName = PRIMITIVE_NAMES[this.type as PrimitiveTypes];
+
+      const range = TYPE_RANGES[typeName];
+      const value = typeName.startsWith("Big") ? BigInt(val) : val;
+
+      if (value < range.min || value > range.max) {
+        throw new Error(
+          `Field "${this.varName}" should be a ${typeName} and should be between ${range.min} and ${range.max}`,
+        );
+      }
+
+      switch (typeName) {
+        case "Int8":
+          dataView.setInt8(offset, val);
+          break;
+        case "Int16":
+          dataView.setInt16(offset, val, littleEndian);
+          break;
+        case "Int32":
+          dataView.setInt32(offset, val, littleEndian);
+          break;
+        case "Uint8":
+          dataView.setUint8(offset, val);
+          break;
+        case "Uint16":
+          dataView.setUint16(offset, val, littleEndian);
+          break;
+        case "Uint32":
+          dataView.setUint32(offset, val, littleEndian);
+          break;
+        case "Float32":
+          dataView.setFloat32(offset, val, littleEndian);
+          break;
+        case "Float64":
+          dataView.setFloat64(offset, val, littleEndian);
+          break;
+        case "BigInt64":
+          dataView.setBigInt64(offset, BigInt(val), littleEndian);
+          break;
+        case "BigUint64":
+          dataView.setBigUint64(offset, BigInt(val), littleEndian);
+          break;
+      }
+
+      if (this.next) {
+        return this.next.encodeValue(dataView, object, offset + size);
+      }
+
+      return offset + size;
+    }
+
+    if (this.type === "bit") {
+      const val = object[this.varName];
+      const size = this.options.length as number;
+
+      if (typeof val !== "string") {
+        throw new Error("Bit field should be a string");
+      }
+
+      for (let i = 0; i < size; i++) {
+        dataView.setUint8(offset + i, val.charCodeAt(i));
+      }
+
+      if (this.next) {
+        return this.next.encodeValue(dataView, object, offset + size);
+      }
+
+      return offset + size;
+    }
+
+    if (this.type === "string") {
+      const val = object[this.varName];
+      const textEncoder = new TextEncoder();
+      const buffer = textEncoder.encode(val);
+
+      let length = buffer.length;
+      if (typeof this.options.length === "number") {
+        length = Math.min(length, this.options.length);
+      }
+
+      new Uint8Array(dataView.buffer, offset, length).set(
+        buffer.subarray(0, length),
+      );
+
+      if (this.options.zeroTerminated) {
+        dataView.setUint8(offset + length, 0);
+        length++;
+      }
+      const newOffset = offset + length;
+      if (this.next) {
+        return this.next.encodeValue(dataView, object, newOffset);
+      }
+      return newOffset;
+    } else if (this.type === "array") {
+      const arr = object[this.varName];
+      let newOffset = offset;
+
+      for (const item of arr) {
+        if (typeof this.options.type === "string") {
+          const parser = new Parser().primitiveN(
+            this.options.type as PrimitiveTypes,
+            "value",
+            {},
+          );
+          newOffset = parser.encodeValue(dataView, { value: item }, newOffset);
+        } else if (this.options.type instanceof Parser) {
+          newOffset = this.options.type.encodeValue(dataView, item, newOffset);
+        }
+      }
+
+      if (this.next) {
+        return this.next.encodeValue(dataView, object, newOffset);
+      }
+      return newOffset;
+    }
+
+    if (this.type === "nest") {
+      const val = object[this.varName];
+      if (this.options.type instanceof Parser) {
+        return this.options.type.encodeValue(dataView, val, offset);
+      }
+    }
+
+    if (this.next) {
+      return this.next.encodeValue(dataView, object, offset);
+    }
+
+    return offset;
+  }
+
+  calculateSize(object: any): number {
+    if (!this.type && !this.next) return 0;
+
+    let size = 0;
+
+    if (this.type) {
+      if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
+        size += PRIMITIVE_SIZES[this.type as PrimitiveTypes];
+      } else if (this.type === "bit") {
+        size += this.options.length as number;
+      } else if (this.type === "string") {
+        const val = object[this.varName];
+        if (val) {
+          const textEncoder = new TextEncoder();
+          const encoded = textEncoder.encode(val);
+
+          if (typeof this.options.length === "number") {
+            size += Math.min(encoded.length, this.options.length);
+          } else if (this.options.zeroTerminated) {
+            size += encoded.length + 1; // +1 for null terminator
+          } else {
+            size += encoded.length;
+          }
+        }
+      } else if (this.type === "array") {
+        const arr = object[this.varName];
+        if (arr && Array.isArray(arr)) {
+          if (typeof this.options.type === "string") {
+            size +=
+              arr.length * PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
+          } else if (this.options.type instanceof Parser) {
+            size += arr.reduce(
+              (sum, item) =>
+                sum +
+                (this.options.type instanceof Parser
+                  ? this.options.type.calculateSize(item)
+                  : 0),
+              0,
+            );
+          }
+        }
+      } else if (this.type === "nest") {
+        const val = object[this.varName];
+        if (val && this.options.type instanceof Parser) {
+          size += this.options.type.calculateSize(val);
+        }
+      }
+    }
+
+    if (this.next) {
+      size += this.next.calculateSize(object);
+    }
+
+    return size;
+  }
+
+  /**
+   * Encodes a JavaScript object into a binary buffer according to the parser's specification.
+   *
+   * @param {object} data - The object to encode
+   * @returns {Buffer} The encoded binary data
+   *
+   * @example
+   * // Basic usage with primitive types
+   * const parser = new Parser()
+   *   .int8('age')
+   *   .string('name', { zeroTerminated: true });
+   *
+   * const buffer = parser.encode({
+   *   age: 25,
+   *   name: 'John'
+   * });
+   *
+   * console.log(buffer); // <Buffer 19 4a 6f 68 6e 00>
+   *
+   * @throws {Error} When a required field is missing from the input object
+   * @throws {Error} When field values don't match their type constraints
+   * @throws {Error} When an integer overflows or underflows
+   */
+  encode(data: any): Buffer {
+    const size = this.calculateSize(data);
+
+    const buffer = Buffer.alloc(size);
+    const dataView = new DataView(
+      buffer.buffer,
+      buffer.byteOffset,
+      buffer.length,
+    );
+
+    this.encodeValue(dataView, data);
+
+    return buffer;
   }
 
   private setNextParser(
@@ -1038,30 +1309,6 @@ export class Parser {
     return ctx;
   }
 
-  private nextNotBit() {
-    // Used to test if next type is a bitN or not
-    if (this.next) {
-      if (this.next.type === "nest") {
-        // For now consider a nest as a bit
-        if (this.next.options && this.next.options.type instanceof Parser) {
-          // Something in the nest
-          if (this.next.options.type.next) {
-            return this.next.options.type.next.type !== "bit";
-          }
-          return false;
-        } else {
-          // Nest is empty. For now assume this means bit is not next. However what if something comes after the nest?
-          return true;
-        }
-      } else {
-        return this.next.type !== "bit";
-      }
-    } else {
-      // Nothing else so next can't be bits
-      return true;
-    }
-  }
-
   private generateBit(ctx: Context) {
     // TODO find better method to handle nested bit fields
     const parser = JSON.parse(JSON.stringify(this));
@@ -1071,7 +1318,10 @@ export class Parser {
     parser.varName = ctx.generateVariable(parser.varName);
     ctx.bitFields.push(parser);
 
-    if (!this.next || this.nextNotBit()) {
+    if (
+      !this.next ||
+      (this.next && ["bit", "nest"].indexOf(this.next.type) < 0)
+    ) {
       const val = ctx.generateTmpVariable();
 
       ctx.pushCode(`var ${val} = 0;`);

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2020",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -12,7 +12,5 @@
     "types": ["node", "mocha"],
     "esModuleInterop": true
   },
-  "files": [
-    "lib/binary_parser.ts"
-  ]
+  "files": ["lib/binary_parser.ts"]
 }
