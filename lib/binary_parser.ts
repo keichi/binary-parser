@@ -292,6 +292,30 @@ export class Parser {
     return new Parser();
   }
 
+  private sanitizeFieldName(name: string): string {
+    if (name && !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name)) {
+      throw new Error(`Invalid field name: ${name}`);
+    }
+    return name;
+  }
+
+  private sanitizeEncoding(encoding: string): string {
+    const allowed = [
+      "utf8",
+      "utf-8",
+      "ascii",
+      "hex",
+      "base64",
+      "base64url",
+      "latin1",
+      "binary",
+    ];
+    if (!allowed.includes(encoding.toLowerCase())) {
+      throw new Error(`Invalid encoding: ${encoding}`);
+    }
+    return encoding;
+  }
+
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
     const typeName = PRIMITIVE_NAMES[type];
     const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
@@ -593,6 +617,7 @@ export class Parser {
     }
 
     options.encoding = options.encoding || "utf8";
+    this.sanitizeEncoding(options.encoding);
 
     return this.setNextParser("string", varName, options);
   }
@@ -914,7 +939,7 @@ export class Parser {
     const parser = new Parser();
 
     parser.type = type;
-    parser.varName = varName;
+    parser.varName = this.sanitizeFieldName(varName);
     parser.options = options;
     parser.endian = this.endian;
 

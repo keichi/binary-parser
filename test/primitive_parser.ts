@@ -441,6 +441,29 @@ function primitiveParserTests(
         deepStrictEqual(bufferParser.parse(buffer), { buf: buffer });
       });
     });
+
+    describe("Security", () => {
+      it("should throw an error on invalid field name", () => {
+        try {
+          new Parser().uint8('a; console.log("INJECTED CODE EXECUTED"); //');
+          throw new Error("Should have thrown error");
+        } catch (e: any) {
+          ok(e.message.includes("Invalid field name"));
+        }
+      });
+
+      it("should throw an error on invalid encoding name", () => {
+        try {
+          new Parser().string("s", {
+            length: 1,
+            encoding: "utf8'); console.log('INJECTED ENCODING EXECUTED'); //",
+          });
+          throw new Error("Should have thrown error");
+        } catch (e: any) {
+          ok(e.message.includes("Invalid encoding"));
+        }
+      });
+    });
   });
 }
 
