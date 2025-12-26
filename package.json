@@ -17,11 +17,10 @@
     "typescript": "^5.1.6"
   },
   "exports": {
-    ".": {
-      "import": "./dist/esm/binary_parser.mjs",
-      "require": "./dist/binary_parser.js"
-    },
-    "./*": "./*"
+    "types": "./dist/binary_parser.d.ts",
+    "require": "./dist/binary_parser.js",
+    "import": "./dist/esm/binary_parser.mjs",
+    "default": "./dist/esm/binary_parser.mjs"
   },
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm",
