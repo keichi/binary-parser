@@ -1,6 +1,6 @@
 # Binary-parser
 
-[![build](https://github.com/keichi/binary-parser/workflows/build/badge.svg)](https://github.com/keichi/binary-parser/actions?query=workflow%3Abuild)
+[![test-nodejs](https://github.com/keichi/binary-parser/workflows/test-nodejs/badge.svg)](https://github.com/keichi/binary-parser/actions?query=workflow%3Atest-nodejs)
 [![npm](https://img.shields.io/npm/v/binary-parser)](https://www.npmjs.com/package/binary-parser)
 [![license](https://img.shields.io/github/license/keichi/binary-parser)](https://github.com/keichi/binary-parser/blob/master/LICENSE)
 
