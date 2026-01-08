@@ -4,12 +4,18 @@
 [![npm](https://img.shields.io/npm/v/binary-parser)](https://www.npmjs.com/package/binary-parser)
 [![license](https://img.shields.io/github/license/keichi/binary-parser)](https://github.com/keichi/binary-parser/blob/master/LICENSE)
 
-Binary-parser is a parser builder for JavaScript that enables you to write
-efficient binary parsers in a simple and declarative manner.
+Until the *encoding* feature is merged in baseline of original project,
+this branch is published under the name: **binary-parser-encoder** in [npm](https://npmjs.org/).
+
+[![build](https://github.com/Ericbla/binary-parser/workflows/build/badge.svg)](https://github.com/Ericbla/binary-parser/actions?query=workflow%3Abuild)
+[![npm](https://img.shields.io/npm/v/binary-parser-encoder)](https://www.npmjs.com/package/binary-parser-encoder)
+
+Binary-parser is a parser/encoder builder for JavaScript that enables you to write
+efficient binary parsers/encoders in a simple and declarative manner.
 
 It supports all common data types required to analyze a structured binary
-data. Binary-parser dynamically generates and compiles the parser code
-on-the-fly, which runs as fast as a hand-written parser (which takes much more
+data. Binary-parser dynamically generates and compiles the parser and encoder code
+on-the-fly, which runs as fast as a hand-written parser/encoder (which takes much more
 time and effort to write). Supported data types are:
 
 - [Integers](#uint8-16-32-64le-bename-options) (8, 16, 32 and 64 bit signed
@@ -32,12 +38,14 @@ and [binary](https://github.com/substack/node-binary).
 ## Quick Start
 
 1. Create an empty `Parser` object with `new Parser()` or `Parser.start()`.
-2. Chain methods to build your desired parser. (See [API](#api) for detailed
+2. Chain methods to build your desired parser and/or encoder. (See [API](#api) for detailed
    documentation of each method)
 3. Call `Parser.prototype.parse` with a `Buffer`/`Uint8Array` object passed as
    its only argument.
 4. The parsed result will be returned as an object.
    - If parsing failed, an exception will be thrown.
+5. Or call `Parser.prototype.encode` with an object passed as argument.
+6. Encoded result will be returned as a `Buffer` object.
 
 ```javascript
 // Module import
@@ -73,6 +81,23 @@ const buf = Buffer.from("450002c5939900002c06ef98adc24f6c850186d1", "hex");
 
 // Parse buffer and show result
 console.log(ipHeader.parse(buf));
+
+var anIpHeader = {
+  version: 4,
+  headerLength: 5,
+  tos: 0,
+  packetLength: 709,
+  id: 37785,
+  offset: 0,
+  fragOffset: 0,
+  ttl: 44,
+  protocol: 6,
+  checksum: 61336,
+  src: [ 173, 194, 79, 108 ],
+  dst: [ 133, 1, 134, 209 ] };
+
+// Encode an IP header object and show result as hex string
+console.log(ipHeader.encode(anIpHeader).toString("hex"));
 ```
 
 ## Installation
@@ -87,13 +112,21 @@ The npm package provides entry points for both CommonJS and ES modules.
 
 ## API
 
-### new Parser()
+### new Parser([options])
 Create an empty parser object that parses nothing.
+`options` is an optional object to pass options to this declarative
+parser.
+  - `smartBufferSize` The chunk size of the encoding (smart)buffer (when encoding is used) (default is 256 bytes).
 
 ### parse(buffer)
 Parse a `Buffer`/`Uint8Array` object `buffer` with this parser and return the
 resulting object. When `parse(buffer)` is called for the first time, the
 associated parser code is compiled on-the-fly and internally cached.
+
+### encode(obj)
+Encode an `Object` object `obj` with this parser and return the resulting
+`Buffer`. When `encode(obj)` is called for the first time, encoder code is
+compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
@@ -151,12 +184,23 @@ the following keys:
 - `length ` - (Optional) Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
+  Note: When encoding the string is padded with a `padd` charecter to fit the length requirement.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
-  reads until it reaches zero.
+  reads until it reaches zero (or the specified `length`). When encoding, a *null* character is inserted at end of
+  the string (if the optional `length` allows it).
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads
-  until it reaches the end of the buffer. Will consume zero-bytes.
+  until it reaches the end of the buffer. Will consume zero-bytes. (Note: has
+  no effect on encoding function)
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
-  null characters from end of the string.
+  null characters from end of the string. (Note: When encoding, this will also set the **default** `padd` character
+  to null instead of space)
+- `trim` - (Optional, default to `false`) If true, then trim() (remove leading and trailing spaces)
+  the parsed string.
+- `padding` - (Optional, Only used for encoding, default to `right`) If `left` then the string
+  will be right aligned (padding left with `padd` char or space) depending of the `length` option
+- `padd` - (Optional, Only used for encoding with `length` specified) A string  from which first character (1 Byte)
+  is used as a padding char if necessary (provided string length is less than `length` option). Note: Only 'ascii'
+  or utf8 < 0x80  are alowed. Note: The default padd character is *space* (or *null* when `stripNull` is used).
 
 ### buffer(name[, options])
 Parse bytes as a buffer. Its type will be the same as the input to
@@ -175,7 +219,8 @@ keys:
   calculation.
 - `readUntil` - (either `length` or `readUntil` is required) If `"eof"`, then
   this parser will read till it reaches the end of the `Buffer`/`Uint8Array`
-  object. If it is a function, this parser will read the buffer until the
+  object. (Note: has no effect on encoding.)
+  If it is a function, this parser will read the buffer until the
   function returns true.
 
 ### array(name, options)
@@ -194,6 +239,12 @@ keys:
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   If `"eof"`, then this parser reads until the end of the `Buffer`/`Uint8Array`
   object. If function it reads until the function returns true.
+  **<u>Note</u>**: When encoding,
+  the `buffer` second parameter of `readUntil` function is the buffer already encoded
+  before this array. So no *read-ahead* is possible.
+- `encodeUntil` - a function (item, object), only used when encoding, that replaces
+  the `readUntil` function when present and allow limit the number of encoded items
+  by returning true based on *item* values or other *object* properies.
 
 ```javascript
 const parser = new Parser()
@@ -331,7 +382,7 @@ const parser = new Parser()
 ### seek(relOffset)
 Move the buffer offset for `relOffset` bytes from the current position. Use a
 negative `relOffset` value to rewind the offset. This method was previously
-named `skip(length)`.
+named `skip(length)`. (Note: when encoding, the skipped bytes will be filled with zeros)
 
 ### endianness(endianness)
 Define what endianness to use in this parser. `endianness` can be either
@@ -346,6 +397,21 @@ const parser = new Parser()
   // Or you can omit endianness (in this case, little-endian is used)
   .uint16("b")
   .int32("c");
+```
+
+### encoderSetOptions(opts)
+Set specific options for encoding.
+Current supported `opts` object may contain:
+  - bitEndianess: true|false (default false) When true, tell the encoder to respect endianess BITs order, so that
+    encoding is exactly the reverse of the parsing process for bits fields.
+
+```javascript
+var parser = new Parser()
+  .endianess("little")
+  .encoderSetOptions({bitEndianess: true}) // Use BITs endianess for bits fields
+  .bit4("a")
+  .bit4("b")
+  .uint16("c");
 ```
 
 ### namely(alias)
@@ -495,26 +561,44 @@ mainParser.parse(buffer);
 Returns how many bytes this parser consumes. If the size of the parser cannot
 be statically determined, a `NaN` is returned.
 
-### compile()
+### compile() and compileEncode()
 Compile this parser on-the-fly and cache its result. Usually, there is no need
-to call this method directly, since it's called when `parse(buffer)` is
+to call this method directly, since it's called when `parse(buffer)` or `encode(obj)` is
 executed for the first time.
 
-### getCode()
-Dynamically generates the code for this parser and returns it as a string.
+### getCode() and getCodeEncode()
+Dynamically generates the code for this parser/encoder and returns it as a string.
 Useful for debugging the generated code.
 
 ### Common options
 These options can be used in all parsers.
 
 - `formatter` - Function that transforms the parsed value into a more desired
-  form.
+  form. *formatter*(value, obj, buffer, offset) &rarr; *new value* \
+  where `value` is the value to be formatted, `obj` is the current object being generated, `buffer` is the buffer currently beeing parsed and `offset` is the current offset in that buffer.
     ```javascript
     const parser = new Parser().array("ipv4", {
       type: uint8,
       length: "4",
-      formatter: function(arr) {
+      formatter: function(arr, obj, buffer, offset) {
         return arr.join(".");
+      }
+    });
+    ```
+
+- `encoder` - Function that transforms an object property into a more desired
+  form for encoding. This is the opposite of the above `formatter` function. \
+  *encoder*(value) &rarr; *new value* \
+  where `value` is the value to be encoded (de-formatted) and `obj` is the object currently being encoded.
+    ```javascript
+    const parser = new Parser().array("ipv4", {
+      type: uint8,
+      length: "4",
+      formatter: function(arr, obj, buffer, offset) {
+        return arr.join(".");
+      },
+      encoder: function(str, obj) {
+        return str.split(".");
       }
     });
     ```
