@@ -348,6 +348,14 @@ const parser = new Parser()
   .int32("c");
 ```
 
+This setting also affects the bit extraction order of
+[bit field](#bit1-32name-options) methods (`bit1` to `bit32`). In big-endian
+mode, bit fields are extracted from MSB  to LSB.
+In little-endian mode, bit fields are extracted from LSB to MSB.
+If you need big-endian bit ordering while using little-endian
+byte ordering, you can parse bit fields in a separate `Parser` with
+`.endianness("big")` and embed it using `.nest()`.
+
 ### namely(alias)
 Set an alias to this parser, so that it can be referred to by name in methods
 like `.array`, `.nest` and `.choice`, without the requirement to have an
