@@ -24,6 +24,19 @@ function compositeParserTests(
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
       });
+      it("should reject an array length that exceeds the remaining buffer", () => {
+        const parser = Parser.start()
+          .uint32be("count")
+          .array("items", {
+            length: "count",
+            type: new Parser().buffer("payload", { length: 1 }),
+          });
+
+        const buffer = factory([0x00, 0x01, 0x86, 0xa0]);
+        throws(() => {
+          parser.parse(buffer);
+        });
+      });
       it("should parse array of primitive types with lengthInBytes", () => {
         const parser = Parser.start().uint8("length").array("message", {
           lengthInBytes: "length",
