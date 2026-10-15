@@ -1299,6 +1299,13 @@ export class Parser {
         `for (var ${counter} = offset + ${lengthInBytes}; offset < ${counter}; ) {`,
       );
     } else {
+      // Reject a length field that claims more elements than the buffer can
+      // hold, so a tiny crafted input cannot force a huge allocation/loop.
+      ctx.pushCode(`if (${length} > buffer.length - offset) {`);
+      ctx.generateError(
+        `"Array length " + (${length}) + " exceeds buffer length"`,
+      );
+      ctx.pushCode(`}`);
       ctx.pushCode(
         `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`,
       );
