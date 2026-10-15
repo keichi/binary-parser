@@ -471,8 +471,7 @@ function primitiveParserTests(
   });
 }
 
-// Buffer is unavailable in the browser.
-if (typeof window === "undefined") {
+if (typeof Buffer !== "undefined") {
   primitiveParserTests("Buffer", (arr) => Buffer.from(arr));
 }
 primitiveParserTests("Uint8Array", (arr) => Uint8Array.from(arr));

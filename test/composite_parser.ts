@@ -1,7 +1,7 @@
 import { Parser } from "../lib/binary_parser";
 
-// Node built-ins such as Buffer and zlib are unavailable in the browser.
-const isNode = typeof window === "undefined";
+// node:zlib is only available on Node (and Node-compatible runtimes).
+const isNode = typeof process !== "undefined" && !!process.versions?.node;
 
 function compositeParserTests(
   name: string,
@@ -1456,7 +1456,7 @@ function compositeParserTests(
   });
 }
 
-if (isNode) {
+if (typeof Buffer !== "undefined") {
   compositeParserTests("Buffer", (arr) => Buffer.from(arr));
 }
 compositeParserTests("Uint8Array", (arr) => Uint8Array.from(arr));
