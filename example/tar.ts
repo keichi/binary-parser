@@ -36,7 +36,8 @@ const tarItem = new Parser()
 
 const tarArchive = new Parser().array("files", {
   type: tarItem,
-  readUntil: "eof",
+  // An archive ends with zero-filled blocks
+  readUntil: (_, buf) => buf.length < 512 || buf[0] === 0,
 });
 
 readFile(join(__dirname, "test.tar"), (_, data) => {
