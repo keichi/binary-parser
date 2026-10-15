@@ -41,10 +41,10 @@ and [binary](https://github.com/substack/node-binary).
 
 ```javascript
 // Module import
-const Parser = require("binary-parser").Parser;
+import { Parser } from "binary-parser";
 
-// Alternative way to import the module
-// import { Parser } from "binary-parser";
+// Alternatively, in CommonJS
+// const { Parser } = require("binary-parser");
 
 // Build an IP packet header Parser
 const ipHeader = new Parser()
@@ -83,7 +83,8 @@ You can install `binary-parser` via npm:
 npm install binary-parser
 ```
 
-The npm package provides entry points for both CommonJS and ES modules.
+The npm package is distributed as an ES module. CommonJS code can still load
+it with `require()` on Node.js 22.12 or later.
 It is tested on Node.js, Bun, Deno and web browsers. On Deno, import it as
 `npm:binary-parser`.
 

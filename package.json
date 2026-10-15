@@ -2,8 +2,9 @@
   "name": "binary-parser",
   "version": "2.3.0",
   "description": "Blazing-fast binary parser builder",
+  "type": "module",
   "main": "dist/binary_parser.js",
-  "module": "dist/esm/binary_parser.mjs",
+  "types": "dist/binary_parser.d.ts",
   "devDependencies": {
     "@types/node": "^22.20.5",
     "@vitest/browser-playwright": "^5.0.4",
@@ -14,14 +15,10 @@
   },
   "exports": {
     "types": "./dist/binary_parser.d.ts",
-    "require": "./dist/binary_parser.js",
-    "import": "./dist/esm/binary_parser.mjs",
-    "default": "./dist/esm/binary_parser.mjs"
+    "default": "./dist/binary_parser.js"
   },
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --module commonjs --outDir dist",
-    "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
+    "build": "tsc",
     "format": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "format:fix": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "test": "vitest run --project node",
@@ -53,6 +50,6 @@
   },
   "bugs": "http://github.com/keichi/binary-parser/issues",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }
