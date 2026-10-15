@@ -1,0 +1,26 @@
+name: test-runtimes
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: oven-sh/setup-bun@v2
+    - run: npm ci
+    - run: bun --bun vitest run --project node
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+    - run: npm ci
+    - run: deno run -A npm:vitest run --project node
