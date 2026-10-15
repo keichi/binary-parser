@@ -13,8 +13,8 @@
     "karma-typescript": "^5.5.4",
     "mocha": "^11.8.0",
     "prettier": "^3.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^5.0.4"
   },
   "exports": {
     "types": "./dist/binary_parser.d.ts",
@@ -28,7 +28,7 @@
     "build:esm": "tsc --module esnext --outDir dist/esm && mv dist/esm/binary_parser.js dist/esm/binary_parser.mjs",
     "format": "prettier --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "format:fix": "prettier --write \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
-    "test": "mocha --require ts-node/register test/*.ts",
+    "test": "vitest run",
     "test:browser": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
     "prepare": "npm run build"
   },
