@@ -1,4 +1,4 @@
-import { Parser } from "../lib/binary_parser";
+import { Parser } from "../lib/binary_parser.ts";
 
 const tcpHeader = new Parser()
   .endianness("big")

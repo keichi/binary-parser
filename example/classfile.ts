@@ -2,7 +2,7 @@ import { readFile } from "fs";
 import { join } from "path";
 import { inspect } from "util";
 
-import { Parser } from "../lib/binary_parser";
+import { Parser } from "../lib/binary_parser.ts";
 
 const ConstantClassInfo = Parser.start().uint16be("name_index");
 
@@ -1307,6 +1307,6 @@ const ClassFile = Parser.start()
     length: "attributes_count",
   });
 
-readFile(join(__dirname, "Hello.class"), (_, data) => {
+readFile(join(import.meta.dirname, "Hello.class"), (_, data) => {
   console.log(inspect(ClassFile.parse(data), { depth: null, colors: true }));
 });

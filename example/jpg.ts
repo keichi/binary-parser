@@ -2,7 +2,7 @@ import { readFile } from "fs";
 import { join } from "path";
 import { inspect } from "util";
 
-import { Parser } from "../lib/binary_parser";
+import { Parser } from "../lib/binary_parser.ts";
 
 const SOI = Parser.start();
 
@@ -108,6 +108,6 @@ const JPEG = Parser.start().array("segments", {
   readUntil: "eof",
 });
 
-readFile(join(__dirname, "test.jpg"), (_, data) => {
+readFile(join(import.meta.dirname, "test.jpg"), (_, data) => {
   console.log(inspect(JPEG.parse(data), { depth: null, colors: true }));
 });
