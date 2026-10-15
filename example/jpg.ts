@@ -50,7 +50,12 @@ const SOS = Parser.start()
   })
   .uint8("spectrumStart")
   .uint8("spectrumEnd")
-  .uint8("spectrumSelect");
+  .uint8("spectrumSelect")
+  // Entropy-coded data continues until a marker other than 0xFF00 or RSTn
+  .buffer("data", {
+    readUntil: (b: number, buf: Buffer) =>
+      b === 0xff && buf[1] !== 0 && (buf[1] < 0xd0 || buf[1] > 0xd7),
+  });
 
 const DQT = Parser.start()
   .endianness("big")
