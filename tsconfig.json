@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "module": "nodenext",
+    "outDir": "./dist",
     "rootDir": "./lib",
     "declaration": true,
     "declarationMap": true,
