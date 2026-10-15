@@ -10,26 +10,19 @@ const chs = new Parser()
   .bit6("sector")
   .uint8("cylinder");
 
+function mergeCylinder(val: any) {
+  val.cylinder |= val.cylinderHigh << 8;
+  delete val.cylinderHigh;
+  return val;
+}
+
 const partitionTable = new Parser()
   .uint8("bootFlag")
-  .nest("startCHS", {
-    type: chs,
-    formatter: function (val) {
-      delete val.cylinderHigh;
-      return val;
-    },
-  })
+  .nest("startCHS", { type: chs, formatter: mergeCylinder })
   .uint8("type")
-  .nest("endCHS", {
-    type: chs,
-    formatter: function (val) {
-      val.cylinder |= val.cylinderHigh << 8;
-      delete val.cylinderHigh;
-      return val;
-    },
-  })
+  .nest("endCHS", { type: chs, formatter: mergeCylinder })
   .uint32le("startLBA")
-  .uint32le("endLBA");
+  .uint32le("sectorCount");
 
 const mbrParser = new Parser()
   .seek(446)
