@@ -1,4 +1,3 @@
-import { deepStrictEqual, notDeepStrictEqual, ok } from "assert";
 import { Parser } from "../lib/binary_parser";
 
 function primitiveParserTests(
@@ -15,13 +14,13 @@ function primitiveParserTests(
         const parser = Parser.start();
         const buffer = factory([0xa, 0x14, 0x1e, 0x28, 0x32]);
 
-        deepStrictEqual(parser.parse(buffer), {});
+        expect(parser.parse(buffer)).toStrictEqual({});
       });
       it("should parse integer types", () => {
         const parser = Parser.start().uint8("a").int16le("b").uint32be("c");
 
         const buffer = factory([0x00, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           a: 0,
           b: 1234,
           c: 12345678,
@@ -35,7 +34,7 @@ function primitiveParserTests(
             0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
             0x00, 0xff, 0xff, 0xff, 0xff,
           ]);
-          deepStrictEqual(parser.parse(buf), {
+          expect(parser.parse(buf)).toStrictEqual({
             a: BigInt("4294967295"),
             b: BigInt("18446744069414584320"),
           });
@@ -53,7 +52,7 @@ function primitiveParserTests(
             0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
             0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
           ]);
-          deepStrictEqual(parser.parse(buf), {
+          expect(parser.parse(buf)).toStrictEqual({
             a: BigInt("4294967295"),
             b: BigInt("-4294967295"),
             c: BigInt("4294967295"),
@@ -71,7 +70,7 @@ function primitiveParserTests(
           });
 
         const buffer = factory([0x01, 0xd2, 0x04]);
-        deepStrictEqual(parser.parse(buffer), { a: 2, b: "test1234" });
+        expect(parser.parse(buffer)).toStrictEqual({ a: 2, b: "test1234" });
       });
       it("should parse floating point types", () => {
         const parser = Parser.start().floatbe("a").doublele("b");
@@ -83,8 +82,8 @@ function primitiveParserTests(
         ]);
         const result = parser.parse(buffer);
 
-        ok(Math.abs(result.a - 12.345) < FLT_EPSILON);
-        ok(Math.abs(result.b - -0.0678) < FLT_EPSILON);
+        expect(Math.abs(result.a - 12.345) < FLT_EPSILON).toBeTruthy();
+        expect(Math.abs(result.b - -0.0678) < FLT_EPSILON).toBeTruthy();
       });
       it("should handle endianness", () => {
         const parser = Parser.start().int32le("little").int32be("big");
@@ -92,7 +91,7 @@ function primitiveParserTests(
         const buffer = factory([
           0x4e, 0x61, 0xbc, 0x00, 0x00, 0xbc, 0x61, 0x4e,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           little: 12345678,
           big: 12345678,
         });
@@ -107,7 +106,7 @@ function primitiveParserTests(
         const buffer = factory([
           0x00, 0xff, 0xff, 0xfe, 0xd2, 0x04, 0x00, 0xbc, 0x61, 0x4e,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           a: 0,
           b: 1234,
           c: 12345678,
@@ -120,7 +119,7 @@ function primitiveParserTests(
         const bytes = Array<number>();
 
         s = s.replace(/\s/g, "");
-        deepStrictEqual(s.length % 8, 0);
+        expect(s.length % 8).toStrictEqual(0);
         for (let i = 0; i < s.length; i += 8) {
           bytes.push(parseInt(s.slice(i, i + 8), 2));
         }
@@ -129,9 +128,8 @@ function primitiveParserTests(
       }
 
       it("binary literal helper should work", () => {
-        deepStrictEqual(binaryLiteral("11110000"), factory([0xf0]));
-        deepStrictEqual(
-          binaryLiteral("11110000 10100101"),
+        expect(binaryLiteral("11110000")).toStrictEqual(factory([0xf0]));
+        expect(binaryLiteral("11110000 10100101")).toStrictEqual(
           factory([0xf0, 0xa5]),
         );
       });
@@ -140,7 +138,7 @@ function primitiveParserTests(
         const parser1 = new Parser().bit1("a").bit2("b").bit4("c").bit1("d");
 
         const buf = binaryLiteral("1 10 1010 0");
-        deepStrictEqual(parser1.parse(buf), {
+        expect(parser1.parse(buf)).toStrictEqual({
           a: 1,
           b: 2,
           c: 10,
@@ -154,7 +152,7 @@ function primitiveParserTests(
           .bit4("c")
           .bit1("d");
 
-        deepStrictEqual(parser2.parse(buf), {
+        expect(parser2.parse(buf)).toStrictEqual({
           a: 0,
           b: 2,
           c: 10,
@@ -165,7 +163,7 @@ function primitiveParserTests(
         const parser1 = new Parser().bit3("a").bit9("b").bit4("c");
 
         const buf = binaryLiteral("101 111000111 0111");
-        deepStrictEqual(parser1.parse(buf), {
+        expect(parser1.parse(buf)).toStrictEqual({
           a: 5,
           b: 455,
           c: 7,
@@ -176,7 +174,7 @@ function primitiveParserTests(
           .bit3("a")
           .bit9("b")
           .bit4("c");
-        deepStrictEqual(parser2.parse(buf), {
+        expect(parser2.parse(buf)).toStrictEqual({
           a: 7,
           b: 398,
           c: 11,
@@ -190,7 +188,7 @@ function primitiveParserTests(
           .bit2("d")
           .bit1("e");
         const buf = binaryLiteral("1 101010101010101010101010 1111 01 1");
-        deepStrictEqual(parser1.parse(buf), {
+        expect(parser1.parse(buf)).toStrictEqual({
           a: 1,
           b: 11184810,
           c: 15,
@@ -205,7 +203,7 @@ function primitiveParserTests(
           .bit4("c")
           .bit2("d")
           .bit1("e");
-        deepStrictEqual(parser2.parse(buf), {
+        expect(parser2.parse(buf)).toStrictEqual({
           a: 1,
           b: 11184829,
           c: 10,
@@ -216,12 +214,16 @@ function primitiveParserTests(
       it("should parse 32-bit fields", () => {
         const parser1 = new Parser().bit32("a");
         const buf1 = binaryLiteral("10110101011101010111001010011101");
-        deepStrictEqual(parser1.parse(buf1), { a: 3044373149 });
+        expect(parser1.parse(buf1)).toStrictEqual({ a: 3044373149 });
         const parser2 = new Parser().bit6("a").bit32("b").bit2("c");
         const buf2 = binaryLiteral(
           "101101 10110101011101010111001010011101 11",
         );
-        deepStrictEqual(parser2.parse(buf2), { a: 45, b: 3044373149, c: 3 });
+        expect(parser2.parse(buf2)).toStrictEqual({
+          a: 45,
+          b: 3044373149,
+          c: 3,
+        });
       });
       it("should parse arbitrarily large bit field sequence", () => {
         const parser1 = new Parser()
@@ -233,7 +235,7 @@ function primitiveParserTests(
         const buf = binaryLiteral(
           "1 101010101010101010101010 1111 01 110100110",
         );
-        deepStrictEqual(parser1.parse(buf), {
+        expect(parser1.parse(buf)).toStrictEqual({
           a: 1,
           b: 11184810,
           c: 15,
@@ -248,7 +250,7 @@ function primitiveParserTests(
           .bit4("c")
           .bit2("d")
           .bit9("e");
-        deepStrictEqual(parser2.parse(buf), {
+        expect(parser2.parse(buf)).toStrictEqual({
           a: 1,
           b: 11184829,
           c: 10,
@@ -263,7 +265,7 @@ function primitiveParserTests(
 
         const buf = binaryLiteral("11010100");
 
-        deepStrictEqual(parser.parse(buf), {
+        expect(parser.parse(buf)).toStrictEqual({
           a: 1,
           x: {
             b: 2,
@@ -279,7 +281,7 @@ function primitiveParserTests(
           .bit3("b", { assert: (v) => v === 7 })
           .bit1("c", { assert: (v) => v === 1 });
         const buf = binaryLiteral("1010 111 1");
-        deepStrictEqual(parser.parse(buf), { a: 10, b: 7, c: 1 });
+        expect(parser.parse(buf)).toStrictEqual({ a: 10, b: 7, c: 1 });
       });
 
       it("should format bit fields", () => {
@@ -288,7 +290,7 @@ function primitiveParserTests(
           .bit3("b", { formatter: (v) => v * 3 })
           .bit1("c", { formatter: (v) => v * 4 });
         const buf = binaryLiteral("1010 111 1");
-        deepStrictEqual(parser.parse(buf), { a: 20, b: 21, c: 4 });
+        expect(parser.parse(buf)).toStrictEqual({ a: 20, b: 21, c: 4 });
       });
     });
 
@@ -301,7 +303,7 @@ function primitiveParserTests(
           encoding: "utf8",
         });
 
-        deepStrictEqual(parser.parse(buffer).msg, text);
+        expect(parser.parse(buffer).msg).toStrictEqual(text);
       });
       it("should parse UTF8 encoded string", () => {
         const text = "こんにちは、せかい。";
@@ -311,7 +313,7 @@ function primitiveParserTests(
           encoding: "utf8",
         });
 
-        deepStrictEqual(parser.parse(buffer).msg, text);
+        expect(parser.parse(buffer).msg).toStrictEqual(text);
       });
       it("should parse HEX encoded string", () => {
         const text = "cafebabe";
@@ -321,7 +323,7 @@ function primitiveParserTests(
           encoding: "hex",
         });
 
-        deepStrictEqual(parser.parse(buffer).msg, text);
+        expect(parser.parse(buffer).msg).toStrictEqual(text);
       });
       it("should parse variable length string", () => {
         const buffer = hexToBuf("0c68656c6c6f2c20776f726c64");
@@ -329,7 +331,7 @@ function primitiveParserTests(
           .uint8("length")
           .string("msg", { length: "length", encoding: "utf8" });
 
-        deepStrictEqual(parser.parse(buffer).msg, "hello, world");
+        expect(parser.parse(buffer).msg).toStrictEqual("hello, world");
       });
       it("should parse zero terminated string", () => {
         const buffer = hexToBuf("68656c6c6f2c20776f726c6400");
@@ -338,7 +340,7 @@ function primitiveParserTests(
           encoding: "utf8",
         });
 
-        deepStrictEqual(parser.parse(buffer), { msg: "hello, world" });
+        expect(parser.parse(buffer)).toStrictEqual({ msg: "hello, world" });
       });
       it("should parser zero terminated fixed-length string", () => {
         const buffer = factory(
@@ -349,7 +351,7 @@ function primitiveParserTests(
           .string("b", { length: 5, zeroTerminated: true })
           .string("c", { length: 5, zeroTerminated: true });
 
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           a: "abc",
           b: "defgh",
           c: "ij",
@@ -366,8 +368,8 @@ function primitiveParserTests(
           stripNull: true,
         });
 
-        deepStrictEqual(parser1.parse(buffer).str, "test\u0000\u0000");
-        deepStrictEqual(parser2.parse(buffer).str, "test");
+        expect(parser1.parse(buffer).str).toStrictEqual("test\u0000\u0000");
+        expect(parser2.parse(buffer).str).toStrictEqual("test");
       });
       it("should parse string greedily with zero-bytes internally", () => {
         const buffer = factory(
@@ -375,7 +377,7 @@ function primitiveParserTests(
         );
         const parser = Parser.start().string("a", { greedy: true });
 
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           a: "abc\u0000defghij\u0000",
         });
       });
@@ -389,7 +391,9 @@ function primitiveParserTests(
 
         const hex = "deadbeefdeadbeef";
 
-        deepStrictEqual(parser.parse(hexToBuf("08" + hex)).raw, hexToBuf(hex));
+        expect(parser.parse(hexToBuf("08" + hex)).raw).toStrictEqual(
+          hexToBuf(hex),
+        );
       });
 
       it("should clone buffer if options.clone is true", () => {
@@ -400,9 +404,9 @@ function primitiveParserTests(
 
         const buf = hexToBuf("deadbeefdeadbeef");
         const result = parser.parse(buf);
-        deepStrictEqual(result.raw, buf);
+        expect(result.raw).toStrictEqual(buf);
         result.raw[0] = 0xff;
-        notDeepStrictEqual(result.raw, buf);
+        expect(result.raw).not.toStrictEqual(buf);
       });
 
       it("should parse until function returns true when readUntil is function", () => {
@@ -414,19 +418,19 @@ function primitiveParserTests(
           });
 
         const result1 = parser.parse(hexToBuf("aa"));
-        deepStrictEqual(result1, { cmd: 0xaa, data: factory([]) });
+        expect(result1).toStrictEqual({ cmd: 0xaa, data: factory([]) });
 
         const result2 = parser.parse(hexToBuf("aabbcc"));
-        deepStrictEqual(result2, { cmd: 0xaa, data: hexToBuf("bbcc") });
+        expect(result2).toStrictEqual({ cmd: 0xaa, data: hexToBuf("bbcc") });
 
         const result3 = parser.parse(hexToBuf("aa02bbcc"));
-        deepStrictEqual(result3, { cmd: 0xaa, data: factory([]) });
+        expect(result3).toStrictEqual({ cmd: 0xaa, data: factory([]) });
 
         const result4 = parser.parse(hexToBuf("aabbcc02"));
-        deepStrictEqual(result4, { cmd: 0xaa, data: hexToBuf("bbcc") });
+        expect(result4).toStrictEqual({ cmd: 0xaa, data: hexToBuf("bbcc") });
 
         const result5 = parser.parse(hexToBuf("aabbcc02dd"));
-        deepStrictEqual(result5, { cmd: 0xaa, data: hexToBuf("bbcc") });
+        expect(result5).toStrictEqual({ cmd: 0xaa, data: hexToBuf("bbcc") });
       });
 
       // this is a test for testing a fix of a bug, that removed the last byte
@@ -438,7 +442,7 @@ function primitiveParserTests(
         });
 
         const buffer = factory(new TextEncoder().encode("John\0Doe\0"));
-        deepStrictEqual(bufferParser.parse(buffer), { buf: buffer });
+        expect(bufferParser.parse(buffer)).toStrictEqual({ buf: buffer });
       });
     });
 
@@ -448,7 +452,7 @@ function primitiveParserTests(
           new Parser().uint8('a; console.log("INJECTED CODE EXECUTED"); //');
           throw new Error("Should have thrown error");
         } catch (e: any) {
-          ok(e.message.includes("Invalid field name"));
+          expect(e.message.includes("Invalid field name")).toBeTruthy();
         }
       });
 
@@ -460,12 +464,15 @@ function primitiveParserTests(
           });
           throw new Error("Should have thrown error");
         } catch (e: any) {
-          ok(e.message.includes("Invalid encoding"));
+          expect(e.message.includes("Invalid encoding")).toBeTruthy();
         }
       });
     });
   });
 }
 
-primitiveParserTests("Buffer", (arr) => Buffer.from(arr));
+// Buffer is unavailable in the browser.
+if (typeof window === "undefined") {
+  primitiveParserTests("Buffer", (arr) => Buffer.from(arr));
+}
 primitiveParserTests("Uint8Array", (arr) => Uint8Array.from(arr));

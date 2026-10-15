@@ -1,6 +1,7 @@
-import { deepStrictEqual, throws, doesNotThrow, ok } from "assert";
-import { deflateRawSync, inflateRawSync } from "zlib";
 import { Parser } from "../lib/binary_parser";
+
+// Node built-ins such as Buffer and zlib are unavailable in the browser.
+const isNode = typeof window === "undefined";
 
 function compositeParserTests(
   name: string,
@@ -19,7 +20,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
@@ -31,7 +32,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 12,
           message: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         });
@@ -47,7 +48,7 @@ function compositeParserTests(
         const buffer = factory([
           0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x02,
           message: [
             { key: 0xca, value: 1234 },
@@ -75,7 +76,7 @@ function compositeParserTests(
         const buffer = factory([
           0x02, 0x00, 0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x02,
           valueLength: 0x02,
           message: [
@@ -104,7 +105,7 @@ function compositeParserTests(
         const buffer = factory([
           0x02, 0x00, 0x02, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x02,
           valueLength: 0x02,
           message: [
@@ -124,7 +125,7 @@ function compositeParserTests(
         const buffer = factory([
           0x06, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x06,
           message: [
             { key: 0xca, value: 1234 },
@@ -141,7 +142,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           message: [
             { key: 0xca, value: 1234 },
             { key: 0xbe, value: 1235 },
@@ -163,7 +164,7 @@ function compositeParserTests(
         const buffer = factory([
           0x06, 0x00, 0xca, 0xd2, 0x04, 0xbe, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x06,
           message: [
             { key: 0xca, value: 1234 },
@@ -183,7 +184,7 @@ function compositeParserTests(
         });
 
         const size = 1 + 10 * (1 + 5 * 4);
-        const buffer = Buffer.alloc ? Buffer.alloc(size) : new Buffer(size);
+        const buffer = new Uint8Array(size);
         const dataView = new DataView(buffer.buffer);
 
         let iterator = 0;
@@ -198,7 +199,7 @@ function compositeParserTests(
           }
         }
 
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 10,
           rows: [
             { length: 5, cols: [0, 0, 0, 0, 0] },
@@ -223,7 +224,7 @@ function compositeParserTests(
         const buffer = factory([
           0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
         });
       });
@@ -236,7 +237,7 @@ function compositeParserTests(
         const buffer = factory([
           0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           data: [0xff, 0xff, 0xff, 0x01, 0x00],
         });
       });
@@ -249,7 +250,7 @@ function compositeParserTests(
         const buffer = factory([
           0xff, 0xff, 0xff, 0x01, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           data: [0xff, 0xff, 0xff, 0x01],
         });
       });
@@ -270,7 +271,7 @@ function compositeParserTests(
           0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x2e, 0x16, 0x00, 0x00, 0xd2,
           0x04, 0x00, 0x00, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62, 0x62,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           numlumps: 2,
           lumps: {
             AAAAAAAA: {
@@ -294,7 +295,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([0x0a, 0x0a, 0x01, 0x6e]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           data: "10.10.1.110",
         });
       });
@@ -308,7 +309,7 @@ function compositeParserTests(
           });
 
         const buffer = factory([1, 1, 1, 0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 1,
           data: [
             {
@@ -356,7 +357,7 @@ function compositeParserTests(
           /* 1 */ 1,
           /* 0 */ 0,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 2,
           data: [
             {
@@ -394,13 +395,13 @@ function compositeParserTests(
           .nest("child", { type: ChildParser });
 
         const buffer1 = factory([0x1, 0x2]);
-        deepStrictEqual(ParentParser.parse(buffer1), {
+        expect(ParentParser.parse(buffer1)).toStrictEqual({
           version: 1,
           child: { data: { v1: 2 } },
         });
 
         const buffer2 = factory([0x2, 0x3, 0x4]);
-        deepStrictEqual(ParentParser.parse(buffer2), {
+        expect(ParentParser.parse(buffer2)).toStrictEqual({
           version: 2,
           child: { data: { v2: 0x0304 } },
         });
@@ -431,7 +432,7 @@ function compositeParserTests(
         const buffer = factory([
           0x02, 0x00, 0x02, 0x00, 0x50, 0xd2, 0x04, 0x51, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x02,
           valueLength: 0x02,
           message: [
@@ -468,7 +469,7 @@ function compositeParserTests(
         const buffer = factory([
           0x02, 0x00, 0x02, 0x00, 0x50, 0xd2, 0x04, 0x51, 0xd3, 0x04,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           length: 0x02,
           valueLength: 0x02,
           message: [
@@ -500,7 +501,7 @@ function compositeParserTests(
           });
 
         const buffer = factory([0x0, 0x4e, 0x61, 0xbc, 0x00, 0x01, 0xd2, 0x04]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           tag1: 0,
           data1: 12345678,
           tag2: 1,
@@ -521,7 +522,7 @@ function compositeParserTests(
           .int32le("test");
 
         const buffer = factory([0x03, 0xff, 0x2f, 0xcb, 0x04, 0x0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           tag: 3,
           data: 0xff,
           test: 314159,
@@ -544,7 +545,7 @@ function compositeParserTests(
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        deepStrictEqual(parser.parse(buffer1), {
+        expect(parser.parse(buffer1)).toStrictEqual({
           tag: 1,
           data: {
             length: 12,
@@ -553,7 +554,7 @@ function compositeParserTests(
         });
 
         const buffer2 = factory([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        deepStrictEqual(parser.parse(buffer2), {
+        expect(parser.parse(buffer2)).toStrictEqual({
           tag: 3,
           data: {
             number: 12345678,
@@ -575,7 +576,7 @@ function compositeParserTests(
           });
 
         const buffer = factory([1, 1, 1, 0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           type: 1,
           data: {
             type: 1,
@@ -604,7 +605,7 @@ function compositeParserTests(
           });
 
         const buffer = factory([2, /* left */ 1, 1, 0, /* right */ 0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           type: 2,
           data: {
             left: {
@@ -637,7 +638,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([2, /* left */ 1, 1, 0, /* right */ 0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           type: 2,
           data: {
             left: {
@@ -667,7 +668,7 @@ function compositeParserTests(
         });
 
         const buffer = factory([2, /* left */ 1, 1, 0, /* right */ 0]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           type: 2,
           data: {
             left: {
@@ -723,7 +724,7 @@ function compositeParserTests(
           /* right -> */ 1,
           /* -> */ 0,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           type: 2,
           data: {
             left: {
@@ -763,14 +764,14 @@ function compositeParserTests(
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        deepStrictEqual(parser.parse(buffer1), {
+        expect(parser.parse(buffer1)).toStrictEqual({
           tag: 1,
           length: 12,
           message: "hello, world",
         });
 
         const buffer2 = factory([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        deepStrictEqual(parser.parse(buffer2), {
+        expect(parser.parse(buffer2)).toStrictEqual({
           tag: 3,
           number: 12345678,
         });
@@ -792,14 +793,14 @@ function compositeParserTests(
           0x1, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64,
         ]);
-        deepStrictEqual(parser.parse(buffer1), {
+        expect(parser.parse(buffer1)).toStrictEqual({
           tag: 1,
           length: 12,
           message: "hello, world",
         });
 
         const buffer2 = factory([0x03, 0x4e, 0x61, 0xbc, 0x00]);
-        deepStrictEqual(parser.parse(buffer2), {
+        expect(parser.parse(buffer2)).toStrictEqual({
           tag: 3,
           number: 12345678,
         });
@@ -823,14 +824,14 @@ function compositeParserTests(
           48, 48, 49, 48, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77,
           0x6f, 0x72, 0x6c, 0x64,
         ]);
-        deepStrictEqual(parser.parse(buffer1), {
+        expect(parser.parse(buffer1)).toStrictEqual({
           selector: "0010", // -> choice 2
           length: 12,
           message: "hello, world",
         });
 
         const buffer2 = factory([48, 49, 49, 49, 0x4e, 0x61, 0xbc, 0x00]);
-        deepStrictEqual(parser.parse(buffer2), {
+        expect(parser.parse(buffer2)).toStrictEqual({
           selector: "0111", // -> choice 7
           number: 12345678,
         });
@@ -858,7 +859,7 @@ function compositeParserTests(
           0x1, 0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f,
           0x72, 0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
         ]);
-        deepStrictEqual(parser.parse(buffer1), {
+        expect(parser.parse(buffer1)).toStrictEqual({
           tag: 1,
           items: 2,
           data: {
@@ -868,7 +869,7 @@ function compositeParserTests(
           },
         });
         const buffer2 = factory([0x03, 0x0, 0x4e, 0x61, 0xbc, 0x00]);
-        deepStrictEqual(parser.parse(buffer2), {
+        expect(parser.parse(buffer2)).toStrictEqual({
           tag: 3,
           items: 0,
           data: {
@@ -900,7 +901,7 @@ function compositeParserTests(
         const age = [0x20];
         const buffer = [...name, ...age];
 
-        deepStrictEqual(personParser.parse(factory(buffer)), {
+        expect(personParser.parse(factory(buffer))).toStrictEqual({
           name: {
             firstName: "John",
             lastName: "Doe",
@@ -926,7 +927,7 @@ function compositeParserTests(
         });
 
         const buffer = factory(new TextEncoder().encode("John\0Doe\0"));
-        deepStrictEqual(personParser.parse(buffer), {
+        expect(personParser.parse(buffer)).toStrictEqual({
           name: "John Doe",
         });
       });
@@ -940,7 +941,7 @@ function compositeParserTests(
 
         const buf = factory(new TextEncoder().encode("foo\0bar\0"));
 
-        deepStrictEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
+        expect(parser.parse(buf)).toStrictEqual({ s1: "foo", s2: "bar" });
       });
 
       it("should 'flatten' output when omitting varName", () => {
@@ -952,7 +953,7 @@ function compositeParserTests(
 
         const buf = factory(new TextEncoder().encode("foo\0bar\0"));
 
-        deepStrictEqual(parser.parse(buf), { s1: "foo", s2: "bar" });
+        expect(parser.parse(buf)).toStrictEqual({ s1: "foo", s2: "bar" });
       });
 
       it("should be able to use parsing context", () => {
@@ -973,7 +974,7 @@ function compositeParserTests(
           0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           items: 2,
           data: {
             length: 12,
@@ -987,8 +988,8 @@ function compositeParserTests(
         const parser = Parser.start().bit6("one").bit8("two");
         const buffer = factory([0xa8, 0x78]);
         const result = parser.parse(buffer);
-        deepStrictEqual(result.one, 0xa8 >> 2);
-        deepStrictEqual(result.two, 0x78 >> 2);
+        expect(result.one).toStrictEqual(0xa8 >> 2);
+        expect(result.two).toStrictEqual(0x78 >> 2);
       });
 
       it("bit to nested bit should work", () => {
@@ -999,10 +1000,10 @@ function compositeParserTests(
           });
         const buffer = factory([0xa8, 0x78, 0x45]);
         const result = parser.parse(buffer);
-        deepStrictEqual(result.one, 0xa8 >> 2);
-        deepStrictEqual(result.nested.two, 0x78 >> 2);
+        expect(result.one).toStrictEqual(0xa8 >> 2);
+        expect(result.nested.two).toStrictEqual(0x78 >> 2);
         // switching to uint8 should start at next byte (skipping two bits here)
-        deepStrictEqual(result.nested.three, 0x45);
+        expect(result.nested.three).toStrictEqual(0x45);
       });
 
       it("bit before nest should work", () => {
@@ -1023,7 +1024,7 @@ function compositeParserTests(
           0x2, 0xc, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
           0x6c, 0x64, 0x01, 0x02, 0x02, 0x02,
         ]);
-        deepStrictEqual(parser.parse(buffer), {
+        expect(parser.parse(buffer)).toStrictEqual({
           items: 2,
           data: {
             length: 12,
@@ -1046,8 +1047,8 @@ function compositeParserTests(
 
         const buffer = factory(new TextEncoder().encode("John Doe\0"));
         const person = parser.parse(buffer);
-        ok(person instanceof Person);
-        deepStrictEqual(person.name, "John Doe");
+        expect(person instanceof Person).toBeTruthy();
+        expect(person.name).toStrictEqual("John Doe");
       });
     });
 
@@ -1059,7 +1060,7 @@ function compositeParserTests(
         });
         const buf = factory([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        deepStrictEqual(parser.parse(buf), { x: 3 });
+        expect(parser.parse(buf)).toStrictEqual({ x: 3 });
       });
 
       it("should restore pointer to original position", () => {
@@ -1068,7 +1069,7 @@ function compositeParserTests(
           .uint16be("y");
         const buf = factory([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        deepStrictEqual(parser.parse(buf), { x: 0x3, y: 0x0102 });
+        expect(parser.parse(buf)).toStrictEqual({ x: 0x3, y: 0x0102 });
       });
 
       it("should work with child parser", () => {
@@ -1088,7 +1089,7 @@ function compositeParserTests(
           6,
         ]);
 
-        deepStrictEqual(parser.parse(buf), {
+        expect(parser.parse(buf)).toStrictEqual({
           x: 0x04030201,
           y: { s: "hello" },
         });
@@ -1106,7 +1107,7 @@ function compositeParserTests(
         });
       const buf = factory([0, 6, 0, 0, 1, 2, 3, 4, 5, 6]);
 
-      deepStrictEqual(parser.parse(buf), {
+      expect(parser.parse(buf)).toStrictEqual({
         len: 6,
         child: { a: [1, 2, 3, 4, 5, 6] },
       });
@@ -1120,7 +1121,7 @@ function compositeParserTests(
           .int16("b")
           .saveOffset("bytesRead");
 
-        deepStrictEqual(parser.parse(buff), {
+        expect(parser.parse(buff)).toStrictEqual({
           a: 1,
           b: 2,
           bytesRead: 3,
@@ -1134,7 +1135,7 @@ function compositeParserTests(
           .saveOffset("bytesRead")
           .int16("b");
 
-        deepStrictEqual(parser.parse(buff), {
+        expect(parser.parse(buff)).toStrictEqual({
           a: 1,
           b: 2,
           bytesRead: 1,
@@ -1147,7 +1148,7 @@ function compositeParserTests(
           .string("name", { zeroTerminated: true })
           .saveOffset("bytesRead");
 
-        deepStrictEqual(parser.parse(buff), {
+        expect(parser.parse(buff)).toStrictEqual({
           name: "test",
           bytesRead: 5,
         });
@@ -1167,7 +1168,7 @@ function compositeParserTests(
           })
           .buffer("raw", { length: 8 });
 
-        deepStrictEqual(parser.sizeOf(), 1 + 4 + 10 + 2 + 3 + 8);
+        expect(parser.sizeOf()).toStrictEqual(1 + 4 + 10 + 2 + 3 + 8);
       });
       it("should assert parsed values", () => {
         const parser1 = Parser.start().string("msg", {
@@ -1176,14 +1177,14 @@ function compositeParserTests(
           assert: "hello, world",
         });
         const buffer1 = hexToBuf("68656c6c6f2c20776f726c6400");
-        doesNotThrow(() => {
+        expect(() => {
           parser1.parse(buffer1);
-        });
+        }).not.toThrow();
 
         const buffer2 = hexToBuf("68656c6c6f2c206a7300");
-        throws(() => {
+        expect(() => {
           parser1.parse(buffer2);
-        });
+        }).toThrow();
 
         let parser2 = new Parser()
           .int16le("a")
@@ -1198,14 +1199,14 @@ function compositeParserTests(
           });
 
         const buffer3 = hexToBuf("d2042e16001b");
-        doesNotThrow(() => {
+        expect(() => {
           parser2.parse(buffer3);
-        });
+        }).not.toThrow();
 
         const buffer4 = hexToBuf("2e16001bd204");
-        throws(() => {
+        expect(() => {
           parser2.parse(buffer4);
-        });
+        }).toThrow();
 
         const parser3 = new Parser()
           .int16le("a")
@@ -1217,14 +1218,14 @@ function compositeParserTests(
           });
 
         const buffer5 = hexToBuf("d2042e16001b");
-        doesNotThrow(() => {
+        expect(() => {
           parser3.parse(buffer5);
-        });
+        }).not.toThrow();
 
         const buffer6 = hexToBuf("2e16001bd204");
-        throws(() => {
+        expect(() => {
           parser3.parse(buffer6);
-        });
+        }).toThrow();
       });
     });
 
@@ -1233,42 +1234,42 @@ function compositeParserTests(
         const buffer = factory([0, 1, 0, 4]);
 
         const parser1 = Parser.start().bit17("a").uint8("b");
-        deepStrictEqual(parser1.parse(buffer), {
+        expect(parser1.parse(buffer)).toStrictEqual({
           a: 1 << 1,
           b: 4,
         });
         const parser2 = Parser.start().bit18("a").uint8("b");
-        deepStrictEqual(parser2.parse(buffer), {
+        expect(parser2.parse(buffer)).toStrictEqual({
           a: 1 << 2,
           b: 4,
         });
         const parser3 = Parser.start().bit19("a").uint8("b");
-        deepStrictEqual(parser3.parse(buffer), {
+        expect(parser3.parse(buffer)).toStrictEqual({
           a: 1 << 3,
           b: 4,
         });
         const parser4 = Parser.start().bit20("a").uint8("b");
-        deepStrictEqual(parser4.parse(buffer), {
+        expect(parser4.parse(buffer)).toStrictEqual({
           a: 1 << 4,
           b: 4,
         });
         const parser5 = Parser.start().bit21("a").uint8("b");
-        deepStrictEqual(parser5.parse(buffer), {
+        expect(parser5.parse(buffer)).toStrictEqual({
           a: 1 << 5,
           b: 4,
         });
         const parser6 = Parser.start().bit22("a").uint8("b");
-        deepStrictEqual(parser6.parse(buffer), {
+        expect(parser6.parse(buffer)).toStrictEqual({
           a: 1 << 6,
           b: 4,
         });
         const parser7 = Parser.start().bit23("a").uint8("b");
-        deepStrictEqual(parser7.parse(buffer), {
+        expect(parser7.parse(buffer)).toStrictEqual({
           a: 1 << 7,
           b: 4,
         });
         const parser8 = Parser.start().bit24("a").uint8("b");
-        deepStrictEqual(parser8.parse(buffer), {
+        expect(parser8.parse(buffer)).toStrictEqual({
           a: 1 << 8,
           b: 4,
         });
@@ -1276,53 +1277,53 @@ function compositeParserTests(
     });
 
     describe("Wrapper", () => {
-      it("should parse deflated then inflated data", () => {
-        const text = "This is compressible text.\0";
-        const bufferBefore = factory([
-          12,
-          ...Array.from(new TextEncoder().encode(text)),
-          34,
-        ]);
+      it.skipIf(!isNode)(
+        "should parse deflated then inflated data",
+        async () => {
+          const { deflateRawSync, inflateRawSync } = await import("node:zlib");
+          const text = "This is compressible text.\0";
+          const bufferBefore = factory([
+            12,
+            ...Array.from(new TextEncoder().encode(text)),
+            34,
+          ]);
 
-        // Skip if we are testing with Uint8Array since the zlib polyfill does
-        // not support Uint8Array
-        if (bufferBefore instanceof Uint8Array) return;
+          const compressedData = factory(deflateRawSync(bufferBefore));
 
-        const compressedData = factory(deflateRawSync(bufferBefore));
+          const buffer = factory([
+            ...Array.from(
+              new Uint8Array(new Uint32Array([compressedData.length]).buffer),
+            ),
+            ...Array.from(compressedData),
+            42,
+          ]);
 
-        const buffer = factory([
-          ...Array.from(
-            new Uint8Array(new Uint32Array([compressedData.length]).buffer),
-          ),
-          ...Array.from(compressedData),
-          42,
-        ]);
+          const bufferParser = Parser.start()
+            .uint8("a")
+            .string("b", {
+              zeroTerminated: true,
+            })
+            .uint8("c");
 
-        const bufferParser = Parser.start()
-          .uint8("a")
-          .string("b", {
-            zeroTerminated: true,
-          })
-          .uint8("c");
-
-        const mainParser = Parser.start()
-          .uint32le("length")
-          .wrapped("compressedData", {
-            length: "length",
-            wrapper: (x: Uint8Array) => inflateRawSync(x),
-            type: bufferParser,
-          })
-          .uint8("answer");
-        deepStrictEqual(mainParser.parse(buffer), {
-          length: compressedData.length,
-          compressedData: {
-            a: 12,
-            b: text.substring(0, text.length - 1),
-            c: 34,
-          },
-          answer: 42,
-        });
-      });
+          const mainParser = Parser.start()
+            .uint32le("length")
+            .wrapped("compressedData", {
+              length: "length",
+              wrapper: (x: Uint8Array) => inflateRawSync(x),
+              type: bufferParser,
+            })
+            .uint8("answer");
+          expect(mainParser.parse(buffer)).toStrictEqual({
+            length: compressedData.length,
+            compressedData: {
+              a: 12,
+              b: text.substring(0, text.length - 1),
+              c: 34,
+            },
+            answer: 42,
+          });
+        },
+      );
       it("should embed parsed object in current object", () => {
         const parserEmptyName = Parser.start()
           .uint8("messageId")
@@ -1382,12 +1383,11 @@ function compositeParserTests(
               }),
           });
 
-        const buffer = Buffer.from(
+        const buffer = hexToBuf(
           "1002f11012345678a003303132a101dfa20255aaf21201020304a003343536a202aa55a101eb",
-          "hex",
         );
 
-        deepStrictEqual(parserEmptyName.parse(buffer), {
+        expect(parserEmptyName.parse(buffer)).toStrictEqual({
           messageId: 16,
           reportCount: 2,
           reports: [
@@ -1404,17 +1404,17 @@ function compositeParserTests(
                 {
                   dataType: 160,
                   dataLength: 3,
-                  data: Buffer.from([48, 49, 50]),
+                  data: factory([48, 49, 50]),
                 },
                 {
                   dataType: 161,
                   dataLength: 1,
-                  data: Buffer.from([223]),
+                  data: factory([223]),
                 },
                 {
                   dataType: 162,
                   dataLength: 2,
-                  data: Buffer.from([85, 170]),
+                  data: factory([85, 170]),
                 },
               ],
             },
@@ -1431,25 +1431,24 @@ function compositeParserTests(
                 {
                   dataType: 160,
                   dataLength: 3,
-                  data: Buffer.from([52, 53, 54]),
+                  data: factory([52, 53, 54]),
                 },
                 {
                   dataType: 162,
                   dataLength: 2,
-                  data: Buffer.from([170, 85]),
+                  data: factory([170, 85]),
                 },
                 {
                   dataType: 161,
                   dataLength: 1,
-                  data: Buffer.from([235]),
+                  data: factory([235]),
                 },
               ],
             },
           ],
         });
 
-        deepStrictEqual(
-          parserEmptyName.parse(buffer),
+        expect(parserEmptyName.parse(buffer)).toStrictEqual(
           parserWithoutName.parse(buffer),
         );
       });
@@ -1457,5 +1456,7 @@ function compositeParserTests(
   });
 }
 
-compositeParserTests("Buffer", (arr) => Buffer.from(arr));
+if (isNode) {
+  compositeParserTests("Buffer", (arr) => Buffer.from(arr));
+}
 compositeParserTests("Uint8Array", (arr) => Uint8Array.from(arr));
