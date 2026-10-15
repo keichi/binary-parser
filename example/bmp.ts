@@ -1,7 +1,7 @@
 import { readFile } from "fs";
 import { join } from "path";
 
-import { Parser } from "../lib/binary_parser";
+import { Parser } from "../lib/binary_parser.ts";
 
 // C structure BITMAPFILEHEADER
 // typedef struct tagBITMAPFILEHEADER {
@@ -58,6 +58,6 @@ const bmpFile = new Parser()
     type: bmpInfoHeader,
   });
 
-readFile(join(__dirname, "test.bmp"), (_, data) => {
+readFile(join(import.meta.dirname, "test.bmp"), (_, data) => {
   console.log(bmpFile.parse(data));
 });

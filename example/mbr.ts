@@ -2,7 +2,7 @@ import { readFile } from "fs";
 import { join } from "path";
 import { inspect } from "util";
 
-import { Parser } from "../lib/binary_parser";
+import { Parser } from "../lib/binary_parser.ts";
 
 const chs = new Parser()
   .uint8("head")
@@ -41,6 +41,6 @@ const mbrParser = new Parser()
     assert: 0x55aa,
   });
 
-readFile(join(__dirname, "raspbian.img"), (_, data) => {
+readFile(join(import.meta.dirname, "raspbian.img"), (_, data) => {
   console.log(inspect(mbrParser.parse(data), { depth: null, colors: true }));
 });
