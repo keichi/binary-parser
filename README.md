@@ -84,6 +84,8 @@ npm install binary-parser
 ```
 
 The npm package provides entry points for both CommonJS and ES modules.
+It is tested on Node.js, Bun, Deno and web browsers. On Deno, import it as
+`npm:binary-parser`.
 
 ## API
 
