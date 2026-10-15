@@ -7,10 +7,12 @@
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.2",
+    "esbuild": "^0.28.2",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "karma": "^6.4.2",
     "karma-chrome-launcher": "^3.2.0",
+    "karma-esbuild": "^2.3.0",
     "karma-mocha": "^2.0.1",
-    "karma-typescript": "^5.5.4",
     "mocha": "^10.2.0",
     "prettier": "^3.0.0",
     "ts-node": "^10.9.1",

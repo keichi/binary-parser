@@ -1,6 +1,8 @@
 // Karma configuration
 // Generated on Mon Oct 04 2021 18:19:34 GMT+0900 (Japan Standard Time)
 
+const { polyfillNode } = require("esbuild-plugin-polyfill-node");
+
 module.exports = function (config) {
   config.set({
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -8,10 +10,10 @@ module.exports = function (config) {
 
     // frameworks to use
     // available frameworks: https://www.npmjs.com/search?q=keywords:karma-adapter
-    frameworks: ["mocha", "karma-typescript"],
+    frameworks: ["mocha"],
 
     // list of files / patterns to load in the browser
-    files: ["test/*.ts", "lib/*.ts"],
+    files: ["test/*.ts"],
 
     // list of files / patterns to exclude
     exclude: [],
@@ -19,13 +21,13 @@ module.exports = function (config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://www.npmjs.com/search?q=keywords:karma-preprocessor
     preprocessors: {
-      "**/*.ts": "karma-typescript", // *.tsx for React Jsx
+      "**/*.ts": ["esbuild"],
     },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://www.npmjs.com/search?q=keywords:karma-reporter
-    reporters: ["progress", "karma-typescript"],
+    reporters: ["progress"],
 
     // web server port
     port: 9876,
@@ -51,5 +53,9 @@ module.exports = function (config) {
     // Concurrency level
     // how many browser instances should be started simultaneously
     concurrency: Infinity,
+
+    esbuild: {
+      plugins: [polyfillNode({ globals: { buffer: true } })],
+    },
   });
 };
