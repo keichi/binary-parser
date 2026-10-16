@@ -1,4 +1,4 @@
-import { deepStrictEqual, notDeepStrictEqual, ok } from "assert";
+import { deepStrictEqual, notDeepStrictEqual, ok, throws } from "assert";
 import { Parser } from "../lib/binary_parser";
 
 function primitiveParserTests(
@@ -462,6 +462,42 @@ function primitiveParserTests(
         } catch (e: any) {
           ok(e.message.includes("Invalid encoding"));
         }
+      });
+
+      it("should throw an error on invalid references in options", () => {
+        const payload = "x+(globalThis.INJECTED=1,0)";
+        const parsers = [
+          () => new Parser().uint8("x").buffer("d", { length: payload }),
+          () => new Parser().uint8("x").string("d", { length: payload }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .array("a", { type: "uint8", lengthInBytes: payload }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .array("a", { type: "uint8", length: payload }),
+          () =>
+            new Parser().uint8("x").choice("c", {
+              tag: payload,
+              choices: { 1: "uint8" },
+            }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .pointer("p", { type: "uint8", offset: payload }),
+          () =>
+            new Parser().array("a", {
+              type: new Parser().uint8("x"),
+              length: 1,
+              key: payload,
+            }),
+        ];
+        for (const p of parsers) {
+          throws(() => p().parse(factory([1, 2, 3, 4])), /Invalid reference/);
+        }
+        throws(() => new Parser().namely("a(){};function b"), /Invalid/);
+        ok(!(globalThis as any).INJECTED);
       });
     });
   });

@@ -1,3 +1,12 @@
+const IDENTIFIER = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+
+function sanitizeReference(ref: string): string {
+  if (!ref.split(".").every((s) => IDENTIFIER.test(s))) {
+    throw new Error(`Invalid reference: ${ref}`);
+  }
+  return ref;
+}
+
 class Context {
   code = "";
   scopes = [["vars"]];
@@ -28,7 +37,7 @@ class Context {
       case "number":
         return val.toString();
       case "string":
-        return this.generateVariable(val);
+        return this.generateVariable(sanitizeReference(val));
       case "function":
         return `${this.addImport(val)}.call(${this.generateVariable()}, vars)`;
     }
@@ -293,7 +302,7 @@ export class Parser {
   }
 
   private sanitizeFieldName(name: string): string {
-    if (name && !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name)) {
+    if (name && !IDENTIFIER.test(name)) {
       throw new Error(`Invalid field name: ${name}`);
     }
     return name;
@@ -580,6 +589,7 @@ export class Parser {
   }
 
   namely(alias: string): this {
+    this.sanitizeFieldName(alias);
     aliasRegistry.set(alias, this);
     this.alias = alias;
     return this;
@@ -1282,6 +1292,7 @@ export class Parser {
     const item = ctx.generateTmpVariable();
     const key = this.options.key;
     const isHash = typeof key === "string";
+    if (isHash) sanitizeReference(key);
 
     if (isHash) {
       ctx.pushCode(`${lhs} = {};`);

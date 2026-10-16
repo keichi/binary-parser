@@ -512,7 +512,7 @@ These options can be used in all parsers.
     ```javascript
     const parser = new Parser().array("ipv4", {
       type: uint8,
-      length: "4",
+      length: 4,
       formatter: function(arr) {
         return arr.join(".");
       }
