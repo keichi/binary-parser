@@ -292,6 +292,17 @@ function primitiveParserTests(
         const buf = binaryLiteral("1010 111 1");
         expect(parser.parse(buf)).toStrictEqual({ a: 20, b: 21, c: 4 });
       });
+
+      it("should not mutate shared options object", () => {
+        const options = {};
+        const parser = new Parser()
+          .bit4("a", options)
+          .bit8("b", options)
+          .bit4("c");
+        const buf = hexToBuf("abcd");
+        expect(parser.parse(buf)).toStrictEqual({ a: 0xa, b: 0xbc, c: 0xd });
+        expect(options).toStrictEqual({});
+      });
     });
 
     describe("String parser", () => {
