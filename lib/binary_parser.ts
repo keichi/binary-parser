@@ -676,11 +676,11 @@ export class Parser {
     }
 
     if (!options) {
-      throw new Error("tag and choices are are required for choice.");
+      throw new Error("tag and choices are required for choice.");
     }
 
     if (!options.tag) {
-      throw new Error("tag is requird for choice.");
+      throw new Error("tag is required for choice.");
     }
 
     if (!options.choices) {
