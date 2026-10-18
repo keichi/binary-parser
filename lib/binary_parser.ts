@@ -1228,7 +1228,7 @@ export class Parser {
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode("while(buffer.length > offset++);");
+      ctx.pushCode("offset = buffer.length;");
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`

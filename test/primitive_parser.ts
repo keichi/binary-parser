@@ -381,6 +381,14 @@ function primitiveParserTests(
           a: "abc\u0000defghij\u0000",
         });
       });
+      it("should leave offset at end of buffer after greedy string", () => {
+        const buffer = factory(new TextEncoder().encode("ab"));
+        const parser = Parser.start()
+          .string("s", { greedy: true })
+          .saveOffset("o");
+
+        expect(parser.parse(buffer)).toStrictEqual({ s: "ab", o: 2 });
+      });
     });
 
     describe("Bytes parser", () => {
