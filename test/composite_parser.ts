@@ -1050,6 +1050,40 @@ function compositeParserTests(
         expect(person instanceof Person).toBeTruthy();
         expect(person.name).toStrictEqual("John Doe");
       });
+
+      it("should use the aliased parser's own constructor", () => {
+        class Foo {
+          isFoo = true;
+        }
+        class Bar {
+          isBar = true;
+        }
+
+        Parser.start().create(Foo).uint8("v").namely("ConstructorTestFoo");
+
+        const buffer = factory([1, 2]);
+        const plain = new Parser()
+          .nest("n", { type: "ConstructorTestFoo" })
+          .parse(buffer);
+        expect(plain.n instanceof Foo).toBeTruthy();
+        expect(plain.n.v).toStrictEqual(1);
+
+        const withBar = Parser.start()
+          .create(Bar)
+          .nest("n", { type: "ConstructorTestFoo" })
+          .parse(buffer);
+        expect(withBar instanceof Bar).toBeTruthy();
+        expect(withBar.n instanceof Foo).toBeTruthy();
+
+        const topLevel = Parser.start()
+          .create(Bar)
+          .uint8("a")
+          .nest("self", { type: "ConstructorTestFoo" })
+          .namely("ConstructorTestTop");
+        const result = topLevel.parse(buffer);
+        expect(result instanceof Bar).toBeTruthy();
+        expect(result.self instanceof Foo).toBeTruthy();
+      });
     });
 
     describe("Pointer parser", () => {
