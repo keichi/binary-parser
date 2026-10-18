@@ -370,14 +370,20 @@ function primitiveParserTests(
       it("should parse latin1, ascii and base64 strings larger than a chunk", () => {
         const bytes = Uint8Array.from({ length: 20000 }, (_, i) => i * 7);
         const buffer = factory(bytes);
-        for (const encoding of ["latin1", "ascii", "base64"] as const) {
+        // Naive per-byte reference (no Buffer, so it also runs in browsers)
+        let latin1 = "";
+        let ascii = "";
+        for (const b of bytes) {
+          latin1 += String.fromCharCode(b);
+          ascii += String.fromCharCode(b & 0x7f);
+        }
+        const expected = { latin1, ascii, base64: btoa(latin1) };
+        for (const [encoding, msg] of Object.entries(expected)) {
           const parser = Parser.start().string("msg", {
             length: buffer.length,
             encoding,
           });
-          expect(parser.parse(buffer).msg).toStrictEqual(
-            Buffer.from(bytes).toString(encoding),
-          );
+          expect(parser.parse(buffer).msg).toStrictEqual(msg);
         }
       });
       it("should parse variable length string", () => {
