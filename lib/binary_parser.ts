@@ -1195,8 +1195,25 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding!;
-    const isHex = encoding.toLowerCase() === "hex";
-    const toHex = 'b => b.toString(16).padStart(2, "0")';
+    const latin1 = (bytes: string, mask = "b") =>
+      `Array.from(${bytes}, b => String.fromCharCode(${mask})).join('')`;
+    const decode = (bytes: string) => {
+      switch (encoding.toLowerCase()) {
+        case "hex":
+          return `Array.from(${bytes}, b => b.toString(16).padStart(2, "0")).join('')`;
+        case "latin1":
+        case "binary":
+          return latin1(bytes);
+        case "ascii":
+          return latin1(bytes, "b & 0x7f");
+        case "base64":
+          return `btoa(${latin1(bytes)})`;
+        case "base64url":
+          return `btoa(${latin1(bytes)}).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')`;
+        default:
+          return `new TextDecoder('${encoding}').decode(${bytes})`;
+      }
+    };
 
     if (this.options.length && this.options.zeroTerminated) {
       const len = this.options.length;
@@ -1205,35 +1222,23 @@ export class Parser {
         `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, ${end})`)};`);
     } else if (this.options.length) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`,
+        `${name} = ${decode(`buffer.subarray(offset, offset + ${len})`)};`,
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("while(dataView.getUint8(offset++) !== 0);");
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`,
+        `${name} = ${decode(`buffer.subarray(${start}, offset - 1)`)};`,
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("while(buffer.length > offset++);");
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
     }
     if (this.options.stripNull) {
       ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);
