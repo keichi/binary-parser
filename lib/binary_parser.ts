@@ -447,8 +447,7 @@ export class Parser {
   }
 
   private bitN(size: BitSizes, varName: string, options: ParserOptions): this {
-    options.length = size;
-    return this.setNextParser("bit", varName, options);
+    return this.setNextParser("bit", varName, { ...options, length: size });
   }
 
   bit1(varName: string, options: ParserOptions = {}): this {
@@ -616,8 +615,8 @@ export class Parser {
       );
     }
 
-    options.encoding = options.encoding || "utf8";
-    this.sanitizeEncoding(options.encoding);
+    options = { ...options, encoding: options.encoding || "utf8" };
+    this.sanitizeEncoding(options.encoding!);
 
     return this.setNextParser("string", varName, options);
   }
