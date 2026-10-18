@@ -1,7 +1,7 @@
 class Context {
   code = "";
   scopes = [["vars"]];
-  bitFields: Parser[] = [];
+  bitFields: (Parser & { thisVar: string })[] = [];
   tmpVariableCount = 0;
   references = new Map<string, { resolved: boolean; requested: boolean }>();
   importPath: string;
