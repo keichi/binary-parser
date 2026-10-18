@@ -1033,6 +1033,25 @@ function compositeParserTests(
           },
         });
       });
+      it("should not be affected by a later parser reusing the same alias", () => {
+        Parser.start().namely("collidingAlias").uint8("a");
+        const first = Parser.start().nest("x", { type: "collidingAlias" });
+
+        Parser.start().namely("collidingAlias").uint16le("b");
+        const second = Parser.start().nest("y", { type: "collidingAlias" });
+
+        const buffer = factory([0x01, 0x02]);
+        expect(first.parse(buffer)).toStrictEqual({ x: { a: 1 } });
+        expect(second.parse(buffer)).toStrictEqual({ y: { b: 0x0201 } });
+
+        const both = Parser.start()
+          .nest("first", { type: first })
+          .nest("second", { type: second });
+        expect(both.parse(factory([0x01, 0x02, 0x03]))).toStrictEqual({
+          first: { x: { a: 1 } },
+          second: { y: { b: 0x0302 } },
+        });
+      });
     });
 
     describe("Constructors", () => {

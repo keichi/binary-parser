@@ -3,7 +3,7 @@ class Context {
   scopes = [["vars"]];
   bitFields: Parser[] = [];
   tmpVariableCount = 0;
-  references = new Map<string, { resolved: boolean; requested: boolean }>();
+  references = new Map<Parser, { resolved: boolean; requested: boolean }>();
   importPath: string;
   imports: any[] = [];
   reverseImports = new Map<any, number>();
@@ -76,23 +76,23 @@ class Context {
     return `${this.importPath}[${id}]`;
   }
 
-  addReference(alias: string) {
-    if (!this.references.has(alias)) {
-      this.references.set(alias, { resolved: false, requested: false });
+  addReference(parser: Parser) {
+    if (!this.references.has(parser)) {
+      this.references.set(parser, { resolved: false, requested: false });
     }
   }
 
-  markResolved(alias: string) {
-    const reference = this.references.get(alias);
+  markResolved(parser: Parser) {
+    const reference = this.references.get(parser);
 
     if (reference) {
       reference.resolved = true;
     }
   }
 
-  markRequested(aliasList: string[]) {
-    aliasList.forEach((alias) => {
-      const reference = this.references.get(alias);
+  markRequested(parsers: Parser[]) {
+    parsers.forEach((parser) => {
+      const reference = this.references.get(parser);
 
       if (reference) {
         reference.requested = true;
@@ -100,15 +100,16 @@ class Context {
     });
   }
 
-  getUnresolvedReferences(): string[] {
+  getUnresolvedReferences(): Parser[] {
     return Array.from(this.references)
       .filter(([_, reference]) => !reference.resolved && !reference.requested)
-      .map(([alias, _]) => alias);
+      .map(([parser, _]) => parser);
   }
 }
 
 const aliasRegistry = new Map<string, Parser>();
 const FUNCTION_PREFIX = "___parser_";
+let parserCount = 0;
 
 interface ParserOptions {
   length?: number | string | ((item: any) => number);
@@ -285,6 +286,10 @@ export class Parser {
   constructorFn?: Function;
   alias?: string;
   useContextVariables = false;
+  // Unique id used to name the generated function of an aliased parser
+  private id = parserCount++;
+  // Aliased parsers referenced by name, captured when the field is defined
+  private aliasRefs = new Map<string, Parser>();
 
   constructor() {}
 
@@ -800,7 +805,7 @@ export class Parser {
       this.addRawCode(ctx);
     } else {
       this.addAliasedCode(ctx);
-      ctx.pushCode(`return ${FUNCTION_PREFIX + this.alias}(0).result;`);
+      ctx.pushCode(`return ${FUNCTION_PREFIX + this.id}(0).result;`);
     }
 
     return ctx;
@@ -830,7 +835,7 @@ export class Parser {
   }
 
   private addAliasedCode(ctx: Context) {
-    ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
+    ctx.pushCode(`function ${FUNCTION_PREFIX + this.id}(offset, context) {`);
     ctx.pushCode(
       `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
     );
@@ -841,7 +846,7 @@ export class Parser {
 
     this.generate(ctx);
 
-    ctx.markResolved(this.alias!);
+    ctx.markResolved(this);
     this.resolveReferences(ctx);
 
     ctx.pushCode(
@@ -856,9 +861,7 @@ export class Parser {
   private resolveReferences(ctx: Context) {
     const references = ctx.getUnresolvedReferences();
     ctx.markRequested(references);
-    references.forEach((alias) => {
-      aliasRegistry.get(alias)?.addAliasedCode(ctx);
-    });
+    references.forEach((parser) => parser.addAliasedCode(ctx));
   }
 
   compile() {
@@ -943,6 +946,14 @@ export class Parser {
     parser.options = options;
     parser.endian = this.endian;
 
+    const types = [options.type, options.defaultChoice];
+    types.push(...Object.values(options.choices || {}));
+    types.forEach((type) => {
+      if (typeof type === "string" && aliasRegistry.has(type)) {
+        parser.aliasRefs.set(type, aliasRegistry.get(type)!);
+      }
+    });
+
     if (this.head) {
       this.head.next = parser;
     } else {
@@ -951,6 +962,11 @@ export class Parser {
     this.head = parser;
 
     return this;
+  }
+
+  private lookupAlias(type?: string | Parser): Parser | undefined {
+    if (typeof type !== "string") return undefined;
+    return this.aliasRefs.get(type) || aliasRegistry.get(type);
   }
 
   // Call code generator for this parser
@@ -1304,8 +1320,10 @@ export class Parser {
       );
     }
 
+    const aliased = this.lookupAlias(type);
+
     if (typeof type === "string") {
-      if (!aliasRegistry.get(type)) {
+      if (!aliased) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
@@ -1314,7 +1332,9 @@ export class Parser {
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
+        ctx.pushCode(
+          `var ${tempVar} = ${FUNCTION_PREFIX + aliased.id}(offset, {`,
+        );
         if (ctx.useContextVariables) {
           const parentVar = ctx.generateVariable();
           ctx.pushCode(`$parent: ${parentVar},`);
@@ -1327,7 +1347,7 @@ export class Parser {
         ctx.pushCode(
           `var ${item} = ${tempVar}.result; offset = ${tempVar}.offset;`,
         );
-        if (type !== this.alias) ctx.addReference(type);
+        ctx.addReference(aliased);
       }
     } else if (type instanceof Parser) {
       ctx.pushCode(`var ${item} = {};`);
@@ -1376,7 +1396,8 @@ export class Parser {
   ) {
     if (typeof type === "string") {
       const varName = ctx.generateVariable(this.varName);
-      if (!aliasRegistry.has(type)) {
+      const aliased = this.lookupAlias(type);
+      if (!aliased) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
@@ -1385,7 +1406,9 @@ export class Parser {
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
-        ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
+        ctx.pushCode(
+          `var ${tempVar} = ${FUNCTION_PREFIX + aliased.id}(offset, {`,
+        );
         if (ctx.useContextVariables) {
           ctx.pushCode(`$parent: ${varName}.$parent,`);
           ctx.pushCode(`$root: ${varName}.$root,`);
@@ -1394,7 +1417,7 @@ export class Parser {
         ctx.pushCode(
           `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`,
         );
-        if (type !== this.alias) ctx.addReference(type);
+        ctx.addReference(aliased);
       }
     } else if (type instanceof Parser) {
       ctx.pushPath(varName);
@@ -1463,10 +1486,11 @@ export class Parser {
           ctx.pushCode(`delete ${nestVar}.$root;`);
         }
       }
-    } else if (aliasRegistry.has(this.options.type!)) {
+    } else if (this.lookupAlias(this.options.type)) {
+      const aliased = this.lookupAlias(this.options.type)!;
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
+        `var ${tempVar} = ${FUNCTION_PREFIX + aliased.id}(offset, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -1477,9 +1501,7 @@ export class Parser {
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
       );
-      if (this.options.type !== this.alias) {
-        ctx.addReference(this.options.type!);
-      }
+      ctx.addReference(aliased);
     }
   }
 
@@ -1536,15 +1558,12 @@ export class Parser {
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
-    } else if (aliasRegistry.has(this.options.type!)) {
+    } else if (this.lookupAlias(this.options.type)) {
+      const aliased = this.lookupAlias(this.options.type)!;
       const tempVar = ctx.generateTmpVariable();
-      ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`,
-      );
+      ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + aliased.id}(0);`);
       ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
-      if (this.options.type !== this.alias) {
-        ctx.addReference(this.options.type!);
-      }
+      ctx.addReference(aliased);
     }
     ctx.pushCode(`buffer = ${tempBuf};`);
     ctx.pushCode(`dataView = ${tempView};`);
@@ -1593,10 +1612,11 @@ export class Parser {
         ctx.pushCode(`delete ${nestVar}.$parent;`);
         ctx.pushCode(`delete ${nestVar}.$root;`);
       }
-    } else if (aliasRegistry.has(this.options.type!)) {
+    } else if (this.lookupAlias(this.options.type)) {
+      const aliased = this.lookupAlias(this.options.type)!;
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
+        `var ${tempVar} = ${FUNCTION_PREFIX + aliased.id}(offset, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -1607,9 +1627,7 @@ export class Parser {
       ctx.pushCode(
         `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
       );
-      if (this.options.type !== this.alias) {
-        ctx.addReference(this.options.type!);
-      }
+      ctx.addReference(aliased);
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type!) >= 0) {
       const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
       const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
