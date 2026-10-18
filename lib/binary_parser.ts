@@ -1352,7 +1352,10 @@ export class Parser {
     }
 
     if (isHash) {
-      ctx.pushCode(`${lhs}[${item}.${key}] = ${item};`);
+      // defineProperty so that keys like "__proto__" become own properties
+      ctx.pushCode(
+        `Object.defineProperty(${lhs}, ${item}.${key}, { value: ${item}, enumerable: true, writable: true, configurable: true });`,
+      );
     } else {
       ctx.pushCode(`${lhs}.push(${item});`);
     }
