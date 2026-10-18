@@ -274,6 +274,26 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   doublebe: false,
 };
 
+// These helpers must be self-contained (no outer references) since they may
+// be inlined via toString().
+function bytesToLatin1(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192) as any);
+  }
+  return s;
+}
+
+// Like Node.js, unset the high bit; the result is pure ASCII, so UTF-8 decoding
+// is exact and much faster than String.fromCharCode.
+function bytesToAscii(bytes: Uint8Array): string {
+  const masked = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) {
+    masked[i] = bytes[i] & 0x7f;
+  }
+  return new TextDecoder().decode(masked);
+}
+
 export class Parser {
   varName = "";
   type: Types = "";
@@ -447,8 +467,7 @@ export class Parser {
   }
 
   private bitN(size: BitSizes, varName: string, options: ParserOptions): this {
-    options.length = size;
-    return this.setNextParser("bit", varName, options);
+    return this.setNextParser("bit", varName, { ...options, length: size });
   }
 
   bit1(varName: string, options: ParserOptions = {}): this {
@@ -598,32 +617,32 @@ export class Parser {
   }
 
   string(varName: string, options: ParserOptions): this {
-    if (!options.zeroTerminated && !options.length && !options.greedy) {
+    if (!options.zeroTerminated && options.length == null && !options.greedy) {
       throw new Error(
         "One of length, zeroTerminated, or greedy must be defined for string.",
       );
     }
 
-    if ((options.zeroTerminated || options.length) && options.greedy) {
+    if ((options.zeroTerminated || options.length != null) && options.greedy) {
       throw new Error(
         "greedy is mutually exclusive with length and zeroTerminated for string.",
       );
     }
 
-    if (options.stripNull && !(options.length || options.greedy)) {
+    if (options.stripNull && !(options.length != null || options.greedy)) {
       throw new Error(
         "length or greedy must be defined if stripNull is enabled.",
       );
     }
 
-    options.encoding = options.encoding || "utf8";
-    this.sanitizeEncoding(options.encoding);
+    options = { ...options, encoding: options.encoding || "utf8" };
+    this.sanitizeEncoding(options.encoding!);
 
     return this.setNextParser("string", varName, options);
   }
 
   buffer(varName: string, options: ParserOptions): this {
-    if (!options.length && !options.readUntil) {
+    if (options.length == null && !options.readUntil) {
       throw new Error("length or readUntil must be defined for buffer.");
     }
 
@@ -640,7 +659,7 @@ export class Parser {
       throw new Error("Both wrapper and type must be defined for wrapped.");
     }
 
-    if (!options.length && !options.readUntil) {
+    if (options.length == null && !options.readUntil) {
       throw new Error("length or readUntil must be defined for wrapped.");
     }
 
@@ -648,7 +667,11 @@ export class Parser {
   }
 
   array(varName: string, options: ParserOptions): this {
-    if (!options.readUntil && !options.length && !options.lengthInBytes) {
+    if (
+      !options.readUntil &&
+      options.length == null &&
+      options.lengthInBytes == null
+    ) {
       throw new Error(
         "One of readUntil, length and lengthInBytes must be defined for array.",
       );
@@ -676,11 +699,11 @@ export class Parser {
     }
 
     if (!options) {
-      throw new Error("tag and choices are are required for choice.");
+      throw new Error("tag and choices are required for choice.");
     }
 
     if (!options.tag) {
-      throw new Error("tag is requird for choice.");
+      throw new Error("tag is required for choice.");
     }
 
     if (!options.choices) {
@@ -1195,8 +1218,8 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding!;
-    const latin1 = (bytes: string, mask = "b") =>
-      `Array.from(${bytes}, b => String.fromCharCode(${mask})).join('')`;
+    const latin1 = (bytes: string) =>
+      `${ctx.addImport(bytesToLatin1)}(${bytes})`;
     const decode = (bytes: string) => {
       switch (encoding.toLowerCase()) {
         case "hex":
@@ -1205,7 +1228,7 @@ export class Parser {
         case "binary":
           return latin1(bytes);
         case "ascii":
-          return latin1(bytes, "b & 0x7f");
+          return `${ctx.addImport(bytesToAscii)}(${bytes})`;
         case "base64":
           return `btoa(${latin1(bytes)})`;
         case "base64url":
@@ -1215,15 +1238,15 @@ export class Parser {
       }
     };
 
-    if (this.options.length && this.options.zeroTerminated) {
+    if (this.options.length != null && this.options.zeroTerminated) {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
+        `while(offset - ${start} < ${len} && dataView.getUint8(offset++) !== 0);`,
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, ${end})`)};`);
-    } else if (this.options.length) {
+    } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
         `${name} = ${decode(`buffer.subarray(offset, offset + ${len})`)};`,
@@ -1358,7 +1381,10 @@ export class Parser {
     }
 
     if (isHash) {
-      ctx.pushCode(`${lhs}[${item}.${key}] = ${item};`);
+      // defineProperty so that keys like "__proto__" become own properties
+      ctx.pushCode(
+        `Object.defineProperty(${lhs}, ${item}.${key}, { value: ${item}, enumerable: true, writable: true, configurable: true });`,
+      );
     } else {
       ctx.pushCode(`${lhs}.push(${item});`);
     }

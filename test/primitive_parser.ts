@@ -292,9 +292,34 @@ function primitiveParserTests(
         const buf = binaryLiteral("1010 111 1");
         expect(parser.parse(buf)).toStrictEqual({ a: 20, b: 21, c: 4 });
       });
+
+      it("should not mutate shared options object", () => {
+        const options = {};
+        const parser = new Parser()
+          .bit4("a", options)
+          .bit8("b", options)
+          .bit4("c");
+        const buf = hexToBuf("abcd");
+        expect(parser.parse(buf)).toStrictEqual({ a: 0xa, b: 0xbc, c: 0xd });
+        expect(options).toStrictEqual({});
+      });
     });
 
     describe("String parser", () => {
+      it("should parse string with length 0", () => {
+        const parser = Parser.start()
+          .string("a", { length: 0 })
+          .string("b", { length: 0, zeroTerminated: true })
+          .string("c", { length: 0, stripNull: true })
+          .uint8("x");
+
+        expect(parser.parse(factory([0x41]))).toStrictEqual({
+          a: "",
+          b: "",
+          c: "",
+          x: 0x41,
+        });
+      });
       it("should parse UTF8 encoded string (ASCII only)", () => {
         const text = "hello, world";
         const buffer = factory(new TextEncoder().encode(text));
@@ -340,6 +365,19 @@ function primitiveParserTests(
             encoding,
           });
           expect(parser.parse(buffer).msg).toStrictEqual(msg);
+        }
+      });
+      it("should parse latin1, ascii and base64 strings larger than a chunk", () => {
+        const bytes = Uint8Array.from({ length: 20000 }, (_, i) => i * 7);
+        const buffer = factory(bytes);
+        for (const encoding of ["latin1", "ascii", "base64"] as const) {
+          const parser = Parser.start().string("msg", {
+            length: buffer.length,
+            encoding,
+          });
+          expect(parser.parse(buffer).msg).toStrictEqual(
+            Buffer.from(bytes).toString(encoding),
+          );
         }
       });
       it("should parse variable length string", () => {
@@ -401,6 +439,13 @@ function primitiveParserTests(
     });
 
     describe("Bytes parser", () => {
+      it("should parse buffer with length 0", () => {
+        const parser = new Parser().buffer("raw", { length: 0 }).uint8("x");
+        const result = parser.parse(factory([0x41]));
+
+        expect(result.raw.length).toBe(0);
+        expect(result.x).toBe(0x41);
+      });
       it("should parse as buffer", () => {
         const parser = new Parser().uint8("len").buffer("raw", {
           length: "len",
