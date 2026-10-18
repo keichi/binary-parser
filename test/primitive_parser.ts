@@ -412,6 +412,22 @@ function primitiveParserTests(
           n: { y: 5 },
         });
       });
+
+      it("should assert and format bit fields spanning into a nest", () => {
+        const selves: unknown[] = [];
+        const parser = new Parser()
+          .bit4("a", {
+            assert: 0xa,
+            formatter: function (v) {
+              selves.push(this);
+              return v;
+            },
+          })
+          .nest("n", { type: new Parser().bit4("b") });
+        const result = parser.parse(binaryLiteral("1010 1011"));
+        expect(result).toStrictEqual({ a: 0xa, n: { b: 0xb } });
+        expect(selves[0]).toBe(result);
+      });
     });
 
     describe("String parser", () => {
