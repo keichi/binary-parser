@@ -13,6 +13,18 @@ function compositeParserTests(
     }
 
     describe("Array parser", () => {
+      it("should parse array with length 0", () => {
+        const parser = Parser.start()
+          .array("a", { length: 0, type: "uint8" })
+          .array("b", { lengthInBytes: 0, type: "uint8" })
+          .uint8("x");
+
+        expect(parser.parse(factory([0x41]))).toStrictEqual({
+          a: [],
+          b: [],
+          x: 0x41,
+        });
+      });
       it("should parse array of primitive types", () => {
         const parser = Parser.start().uint8("length").array("message", {
           length: "length",
