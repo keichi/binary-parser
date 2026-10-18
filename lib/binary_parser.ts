@@ -1356,10 +1356,14 @@ export class Parser {
     }
 
     if (isHash) {
-      // defineProperty so that keys like "__proto__" become own properties
+      // Plain assignment is much faster, but "__proto__" would replace the
+      // prototype, so use defineProperty to make it an own property instead
+      const hashKey = ctx.generateTmpVariable();
+      ctx.pushCode(`var ${hashKey} = ${item}.${key};`);
       ctx.pushCode(
-        `Object.defineProperty(${lhs}, ${item}.${key}, { value: ${item}, enumerable: true, writable: true, configurable: true });`,
+        `if (${hashKey} === "__proto__") Object.defineProperty(${lhs}, ${hashKey}, { value: ${item}, enumerable: true, writable: true, configurable: true });`,
       );
+      ctx.pushCode(`else ${lhs}[${hashKey}] = ${item};`);
     } else {
       ctx.pushCode(`${lhs}.push(${item});`);
     }
