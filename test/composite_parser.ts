@@ -877,6 +877,27 @@ function compositeParserTests(
           },
         });
       });
+      it("should throw if varName is omitted and a choice is a string", () => {
+        Parser.start().uint8("v").namely("choiceNoVarNameAlias");
+        expect(() =>
+          new Parser().uint8("tag").choice({
+            tag: "tag",
+            choices: { 1: "choiceNoVarNameAlias" },
+          }),
+        ).toThrow();
+        expect(() =>
+          new Parser()
+            .uint8("tag")
+            .choice({ tag: "tag", choices: { 1: "uint8" } }),
+        ).toThrow();
+        expect(() =>
+          new Parser().uint8("tag").choice({
+            tag: "tag",
+            choices: { 1: Parser.start().uint8("v") },
+            defaultChoice: "uint8",
+          }),
+        ).toThrow();
+      });
     });
 
     describe("Nest parser", () => {
@@ -1451,6 +1472,16 @@ function compositeParserTests(
         expect(parserEmptyName.parse(buffer)).toStrictEqual(
           parserWithoutName.parse(buffer),
         );
+      });
+      it("should throw if varName is omitted and type is a string", () => {
+        Parser.start().uint8("v").namely("wrappedNoVarNameAlias");
+        expect(() =>
+          new Parser().uint8("x").wrapped({
+            length: 1,
+            wrapper: (b: Uint8Array) => b,
+            type: "wrappedNoVarNameAlias",
+          }),
+        ).toThrow();
       });
     });
   });
