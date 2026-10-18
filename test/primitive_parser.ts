@@ -303,6 +303,22 @@ function primitiveParserTests(
         expect(parser.parse(buf)).toStrictEqual({ a: 0xa, b: 0xbc, c: 0xd });
         expect(options).toStrictEqual({});
       });
+
+      it("should assert and format bit fields spanning into a nest", () => {
+        let self: any;
+        const parser = new Parser()
+          .bit4("a", {
+            assert: 0xa,
+            formatter: function (v) {
+              self = this;
+              return v;
+            },
+          })
+          .nest("n", { type: new Parser().bit4("b") });
+        const result = parser.parse(binaryLiteral("1010 1011"));
+        expect(result).toStrictEqual({ a: 0xa, n: { b: 0xb } });
+        expect(self).toBe(result);
+      });
     });
 
     describe("String parser", () => {
