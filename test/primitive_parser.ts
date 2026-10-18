@@ -412,6 +412,27 @@ function primitiveParserTests(
           c: "ij",
         });
       });
+      it("should exclude null terminator at the last byte of fixed-length string", () => {
+        const buffer = factory(new TextEncoder().encode("abc\u0000de"));
+        const parser = Parser.start()
+          .string("a", { length: 4, zeroTerminated: true })
+          .string("b", { length: 2 });
+
+        expect(parser.parse(buffer)).toStrictEqual({ a: "abc", b: "de" });
+      });
+      it("should parse zero terminated string with function/field length", () => {
+        const buffer = factory(new TextEncoder().encode("\u0004abcdef\u0000"));
+        const parser = Parser.start()
+          .uint8("len")
+          .string("a", { length: "len", zeroTerminated: true })
+          .string("b", { length: () => 4, zeroTerminated: true });
+
+        expect(parser.parse(buffer)).toStrictEqual({
+          len: 4,
+          a: "abcd",
+          b: "ef",
+        });
+      });
       it("should strip trailing null characters", () => {
         const buffer = hexToBuf("746573740000");
         const parser1 = Parser.start().string("str", {

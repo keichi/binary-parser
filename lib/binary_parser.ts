@@ -1239,13 +1239,14 @@ export class Parser {
     };
 
     if (this.options.length != null && this.options.zeroTerminated) {
-      const len = this.options.length;
+      const len = ctx.generateTmpVariable();
+      ctx.pushCode(`var ${len} = ${ctx.generateOption(this.options.length)};`);
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(offset - ${start} < ${len} && dataView.getUint8(offset++) !== 0);`,
+        `while(offset - ${start} < ${len} && dataView.getUint8(offset) !== 0) offset++;`,
       );
-      const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
-      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, ${end})`)};`);
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
+      ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
     } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
