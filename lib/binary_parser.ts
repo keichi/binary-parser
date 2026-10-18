@@ -1282,6 +1282,9 @@ export class Parser {
     const item = ctx.generateTmpVariable();
     const key = this.options.key;
     const isHash = typeof key === "string";
+    const checkProgress =
+      this.options.readUntil === "eof" || lengthInBytes !== undefined;
+    const start = checkProgress ? ctx.generateTmpVariable() : "";
 
     if (isHash) {
       ctx.pushCode(`${lhs} = {};`);
@@ -1302,6 +1305,9 @@ export class Parser {
       ctx.pushCode(
         `for (var ${counter} = ${length}; ${counter} > 0; ${counter}--) {`,
       );
+    }
+    if (checkProgress) {
+      ctx.pushCode(`var ${start} = offset;`);
     }
 
     if (typeof type === "string") {
@@ -1356,6 +1362,12 @@ export class Parser {
       ctx.pushCode(`${lhs}[${item}.${key}] = ${item};`);
     } else {
       ctx.pushCode(`${lhs}.push(${item});`);
+    }
+
+    if (checkProgress) {
+      ctx.pushCode(
+        `if (offset <= ${start}) throw new Error("Array element did not consume any bytes");`,
+      );
     }
 
     ctx.pushCode("}");
