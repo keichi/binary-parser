@@ -486,6 +486,13 @@ function primitiveParserTests(
             new Parser()
               .uint8("x")
               .pointer("p", { type: "uint8", offset: payload }),
+          () => new Parser().uint8("x").seek(payload),
+          () =>
+            new Parser().uint8("x").wrapped("w", {
+              length: payload,
+              wrapper: (b: any) => b,
+              type: new Parser().uint8("y"),
+            }),
           () =>
             new Parser().array("a", {
               type: new Parser().uint8("x"),
@@ -498,6 +505,16 @@ function primitiveParserTests(
         }
         throws(() => new Parser().namely("a(){};function b"), /Invalid/);
         ok(!(globalThis as any).INJECTED);
+      });
+
+      it("should accept dotted references in options", () => {
+        const parser = new Parser()
+          .nest("header", { type: new Parser().uint8("len") })
+          .buffer("d", { length: "header.len" });
+        deepStrictEqual(parser.parse(factory([2, 9, 9])), {
+          header: { len: 2 },
+          d: factory([9, 9]),
+        });
       });
     });
   });
