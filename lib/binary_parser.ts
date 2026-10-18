@@ -597,19 +597,19 @@ export class Parser {
   }
 
   string(varName: string, options: ParserOptions): this {
-    if (!options.zeroTerminated && !options.length && !options.greedy) {
+    if (!options.zeroTerminated && options.length == null && !options.greedy) {
       throw new Error(
         "One of length, zeroTerminated, or greedy must be defined for string.",
       );
     }
 
-    if ((options.zeroTerminated || options.length) && options.greedy) {
+    if ((options.zeroTerminated || options.length != null) && options.greedy) {
       throw new Error(
         "greedy is mutually exclusive with length and zeroTerminated for string.",
       );
     }
 
-    if (options.stripNull && !(options.length || options.greedy)) {
+    if (options.stripNull && !(options.length != null || options.greedy)) {
       throw new Error(
         "length or greedy must be defined if stripNull is enabled.",
       );
@@ -622,7 +622,7 @@ export class Parser {
   }
 
   buffer(varName: string, options: ParserOptions): this {
-    if (!options.length && !options.readUntil) {
+    if (options.length == null && !options.readUntil) {
       throw new Error("length or readUntil must be defined for buffer.");
     }
 
@@ -639,7 +639,7 @@ export class Parser {
       throw new Error("Both wrapper and type must be defined for wrapped.");
     }
 
-    if (!options.length && !options.readUntil) {
+    if (options.length == null && !options.readUntil) {
       throw new Error("length or readUntil must be defined for wrapped.");
     }
 
@@ -647,7 +647,11 @@ export class Parser {
   }
 
   array(varName: string, options: ParserOptions): this {
-    if (!options.readUntil && !options.length && !options.lengthInBytes) {
+    if (
+      !options.readUntil &&
+      options.length == null &&
+      options.lengthInBytes == null
+    ) {
       throw new Error(
         "One of readUntil, length and lengthInBytes must be defined for array.",
       );
@@ -1197,11 +1201,11 @@ export class Parser {
     const isHex = encoding.toLowerCase() === "hex";
     const toHex = 'b => b.toString(16).padStart(2, "0")';
 
-    if (this.options.length && this.options.zeroTerminated) {
+    if (this.options.length != null && this.options.zeroTerminated) {
       const len = this.options.length;
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
+        `while(offset - ${start} < ${len} && dataView.getUint8(offset++) !== 0);`,
       );
       const end = `offset - ${start} < ${len} ? offset - 1 : offset`;
       ctx.pushCode(
@@ -1209,7 +1213,7 @@ export class Parser {
           ? `${name} = Array.from(buffer.subarray(${start}, ${end}), ${toHex}).join('');`
           : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, ${end}));`,
       );
-    } else if (this.options.length) {
+    } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
         isHex

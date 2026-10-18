@@ -306,6 +306,20 @@ function primitiveParserTests(
     });
 
     describe("String parser", () => {
+      it("should parse string with length 0", () => {
+        const parser = Parser.start()
+          .string("a", { length: 0 })
+          .string("b", { length: 0, zeroTerminated: true })
+          .string("c", { length: 0, stripNull: true })
+          .uint8("x");
+
+        expect(parser.parse(factory([0x41]))).toStrictEqual({
+          a: "",
+          b: "",
+          c: "",
+          x: 0x41,
+        });
+      });
       it("should parse UTF8 encoded string (ASCII only)", () => {
         const text = "hello, world";
         const buffer = factory(new TextEncoder().encode(text));
@@ -395,6 +409,13 @@ function primitiveParserTests(
     });
 
     describe("Bytes parser", () => {
+      it("should parse buffer with length 0", () => {
+        const parser = new Parser().buffer("raw", { length: 0 }).uint8("x");
+        const result = parser.parse(factory([0x41]));
+
+        expect(result.raw.length).toBe(0);
+        expect(result.x).toBe(0x41);
+      });
       it("should parse as buffer", () => {
         const parser = new Parser().uint8("len").buffer("raw", {
           length: "len",
