@@ -364,6 +364,10 @@ Set an alias to this parser, so that it can be referred to by name in methods
 like `.array`, `.nest` and `.choice`, without the requirement to have an
 instance of this parser.
 
+Aliases are global. A name is resolved to a parser when the field referencing
+it is defined, so registering another parser under the same alias later does
+not affect fields that were already defined.
+
 Especially, the parser may reference itself:
 
 ```javascript
