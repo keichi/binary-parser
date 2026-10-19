@@ -853,7 +853,9 @@ export class Parser {
   private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
     ctx.pushCode(
-      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
+      `var vars = ${
+        this.constructorFn ? `new ${ctx.addImport(this.constructorFn)}()` : "{}"
+      };`,
     );
     ctx.pushCode(
       "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
