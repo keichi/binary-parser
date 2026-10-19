@@ -240,6 +240,27 @@ function compositeParserTests(
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
         });
       });
+      it("should throw when an element consumes no bytes", () => {
+        const element = Parser.start().pointer("p", {
+          offset: 0,
+          type: "uint8",
+        });
+        const eof = Parser.start().array("a", {
+          type: element,
+          readUntil: "eof",
+        });
+        const bytes = Parser.start().array("a", {
+          type: element,
+          lengthInBytes: 1,
+        });
+
+        expect(() => eof.parse(factory([1]))).toThrow(
+          "Array element did not consume any bytes",
+        );
+        expect(() => bytes.parse(factory([1]))).toThrow(
+          "Array element did not consume any bytes",
+        );
+      });
       it("should parse until function returns true when readUntil is function", () => {
         const parser = Parser.start().array("data", {
           readUntil: (item: number, _: Buffer) => item === 0,
