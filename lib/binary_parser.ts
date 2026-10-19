@@ -1,7 +1,7 @@
 class Context {
   code = "";
   scopes = [["vars"]];
-  bitFields: Parser[] = [];
+  bitFields: (Parser & { thisVar: string })[] = [];
   tmpVariableCount = 0;
   references = new Map<string, { resolved: boolean; requested: boolean }>();
   importPath: string;
@@ -1040,12 +1040,13 @@ export class Parser {
     return this.generateNext(ctx);
   }
 
-  private generateAssert(ctx: Context) {
+  private generateAssert(
+    ctx: Context,
+    varName = ctx.generateVariable(this.varName),
+  ) {
     if (!this.options.assert) {
       return;
     }
-
-    const varName = ctx.generateVariable(this.varName);
 
     switch (typeof this.options.assert) {
       case "function":
@@ -1115,6 +1116,7 @@ export class Parser {
     parser.generateAssert = this.generateAssert.bind(this);
     parser.generateFormatter = this.generateFormatter.bind(this);
     parser.varName = ctx.generateVariable(parser.varName);
+    parser.thisVar = ctx.generateVariable();
     ctx.bitFields.push(parser);
 
     if (!this.next || this.nextNotBit()) {
@@ -1188,7 +1190,7 @@ export class Parser {
         }
 
         if (parser.options.assert) {
-          parser.generateAssert(ctx);
+          parser.generateAssert(ctx, parser.varName);
         }
 
         if (parser.options.formatter) {
@@ -1196,6 +1198,7 @@ export class Parser {
             ctx,
             parser.varName,
             parser.options.formatter,
+            parser.thisVar,
           );
         }
 
@@ -1580,12 +1583,11 @@ export class Parser {
     ctx: Context,
     varName: string,
     formatter: Function,
+    thisVar = ctx.generateVariable(),
   ) {
     if (typeof formatter === "function") {
       const func = ctx.addImport(formatter);
-      ctx.pushCode(
-        `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`,
-      );
+      ctx.pushCode(`${varName} = ${func}.call(${thisVar}, ${varName});`);
     }
   }
 
