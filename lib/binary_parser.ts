@@ -1375,10 +1375,13 @@ export class Parser {
     }
 
     if (isHash) {
-      // defineProperty so that keys like "__proto__" become own properties
-      ctx.pushCode(
-        `Object.defineProperty(${lhs}, ${item}.${key}, { value: ${item}, enumerable: true, writable: true, configurable: true });`,
-      );
+      // Reject "__proto__" since assigning it would replace the prototype
+      const hashKey = ctx.generateTmpVariable();
+      ctx.pushCode(`var ${hashKey} = ${item}.${key};`);
+      ctx.pushCode(`if (${hashKey} === "__proto__") {`);
+      ctx.generateError(`"Invalid key: __proto__"`);
+      ctx.pushCode("}");
+      ctx.pushCode(`${lhs}[${hashKey}] = ${item};`);
     } else {
       ctx.pushCode(`${lhs}.push(${item});`);
     }
