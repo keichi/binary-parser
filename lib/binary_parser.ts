@@ -232,6 +232,27 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   doublebe: 8,
 };
 
+// Number of bytes consumed by consecutive bit fields, mirroring generateBit
+function bitFieldsSize(lengths: number[]): number {
+  let bytes = 0;
+  let rem = 0;
+  lengths.forEach((length, i) => {
+    if (length > rem) {
+      let maxBits = 0;
+      for (let j = i; j < lengths.length; j++) {
+        if (maxBits + lengths[j] > 32) break;
+        maxBits += lengths[j];
+      }
+      const read = Math.min(4, Math.max(1, Math.ceil((maxBits - rem) / 8)));
+      bytes += read;
+      length -= rem;
+      rem = read * 8;
+    }
+    rem -= length;
+  });
+  return bytes;
+}
+
 const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
   uint8: "Uint8",
   uint16le: "Uint16",
@@ -894,6 +915,7 @@ export class Parser {
 
   sizeOf(): number {
     let size = NaN;
+    let next = this.next;
 
     if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
       size = PRIMITIVE_SIZES[this.type as PrimitiveTypes];
@@ -918,26 +940,47 @@ export class Parser {
       typeof this.options.length === "number"
     ) {
       let elementSize = NaN;
-      if (typeof this.options.type === "string") {
-        elementSize = PRIMITIVE_SIZES[this.options.type as PrimitiveTypes];
-      } else if (this.options.type instanceof Parser) {
-        elementSize = this.options.type.sizeOf();
+      const type = this.options.type;
+      if (typeof type === "string" && aliasRegistry.has(type)) {
+        elementSize = aliasRegistry.get(type)!.sizeOf();
+      } else if (typeof type === "string") {
+        elementSize = PRIMITIVE_SIZES[type as PrimitiveTypes];
+      } else if (type instanceof Parser) {
+        elementSize = type.sizeOf();
       }
       size = this.options.length * elementSize;
 
       // if this a skip
     } else if (this.type === "seek") {
-      size = this.options.length as number;
+      if (typeof this.options.length === "number") {
+        size = this.options.length;
+      }
 
       // if this is a nested parser
     } else if (this.type === "nest") {
-      size = (this.options.type as Parser).sizeOf();
-    } else if (!this.type) {
+      const type = this.options.type!;
+      size = (
+        typeof type === "string" ? aliasRegistry.get(type) : type
+      )!.sizeOf();
+
+      // if this is a run of consecutive bit fields
+    } else if (this.type === "bit") {
+      const lengths = [this.options.length as number];
+      while (next && next.type === "bit") {
+        lengths.push(next.options.length as number);
+        next = next.next;
+      }
+      size = bitFieldsSize(lengths);
+    } else if (
+      !this.type ||
+      this.type === "pointer" ||
+      this.type === "saveOffset"
+    ) {
       size = 0;
     }
 
-    if (this.next) {
-      size += this.next.sizeOf();
+    if (next) {
+      size += next.sizeOf();
     }
 
     return size;

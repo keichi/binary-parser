@@ -1228,6 +1228,49 @@ function compositeParserTests(
 
         expect(parser.sizeOf()).toStrictEqual(1 + 4 + 10 + 2 + 3 + 8);
       });
+      it("should count size for bit fields", () => {
+        const cases = [
+          [4, 4],
+          [1],
+          [3, 7],
+          [16, 8],
+          [20, 4, 8],
+          [30, 4],
+          [32, 32],
+          [7, 30, 3],
+          [12, 12, 12, 12],
+        ];
+        for (const lengths of cases) {
+          const parser: any = new Parser();
+          lengths.forEach((length, i) => parser[`bit${length}`](`b${i}`));
+          parser.uint8("x").saveOffset("end");
+          const { end } = parser.parse(new Uint8Array(32));
+          expect(parser.sizeOf()).toStrictEqual(end);
+        }
+      });
+      it("should count size for seek with non-number length as NaN", () => {
+        const parser = new Parser().uint8("x").seek("x").uint8("a");
+        expect(parser.sizeOf()).toBeNaN();
+      });
+      it("should count size for aliased nest and array types", () => {
+        new Parser().namely("sizeOfAlias").uint16("a").uint8("b");
+        expect(
+          new Parser().nest("n", { type: "sizeOfAlias" }).sizeOf(),
+        ).toStrictEqual(3);
+        expect(
+          new Parser()
+            .array("arr", { type: "sizeOfAlias", length: 2 })
+            .sizeOf(),
+        ).toStrictEqual(6);
+      });
+      it("should count pointer and saveOffset as zero bytes", () => {
+        const parser = new Parser()
+          .uint8("a")
+          .saveOffset("off")
+          .pointer("p", { type: "uint8", offset: 0 })
+          .uint16("b");
+        expect(parser.sizeOf()).toStrictEqual(3);
+      });
       it("should assert parsed values", () => {
         const parser1 = Parser.start().string("msg", {
           encoding: "utf8",
