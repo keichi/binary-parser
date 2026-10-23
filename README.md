@@ -149,8 +149,9 @@ characters and start with an alphabet. `options` is an object which can have
 the following keys:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
-  Supported encodings include `"hex"` and all encodings supported by
-  [`TextDecoder`](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/encoding).
+  Supported encodings are `"utf8"` (`"utf-8"`), `"ascii"`, `"latin1"`
+  (`"binary"`), `"hex"`, `"base64"` and `"base64url"`, with the same semantics
+  as Node.js `Buffer#toString()`.
 - `length ` - (Optional) Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.

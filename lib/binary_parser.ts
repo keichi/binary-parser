@@ -274,6 +274,26 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   doublebe: false,
 };
 
+// These helpers must be self-contained (no outer references) since they may
+// be inlined via toString().
+function bytesToLatin1(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192) as any);
+  }
+  return s;
+}
+
+// Like Node.js, unset the high bit; the result is pure ASCII, so UTF-8 decoding
+// is exact and much faster than String.fromCharCode.
+function bytesToAscii(bytes: Uint8Array): string {
+  const masked = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) {
+    masked[i] = bytes[i] & 0x7f;
+  }
+  return new TextDecoder().decode(masked);
+}
+
 export class Parser {
   varName = "";
   type: Types = "";
@@ -1216,8 +1236,25 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const encoding = this.options.encoding!;
-    const isHex = encoding.toLowerCase() === "hex";
-    const toHex = 'b => b.toString(16).padStart(2, "0")';
+    const latin1 = (bytes: string) =>
+      `${ctx.addImport(bytesToLatin1)}(${bytes})`;
+    const decode = (bytes: string) => {
+      switch (encoding.toLowerCase()) {
+        case "hex":
+          return `Array.from(${bytes}, b => b.toString(16).padStart(2, "0")).join('')`;
+        case "latin1":
+        case "binary":
+          return latin1(bytes);
+        case "ascii":
+          return `${ctx.addImport(bytesToAscii)}(${bytes})`;
+        case "base64":
+          return `btoa(${latin1(bytes)})`;
+        case "base64url":
+          return `btoa(${latin1(bytes)}).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')`;
+        default:
+          return `new TextDecoder('${encoding}').decode(${bytes})`;
+      }
+    };
 
     if (this.options.length != null && this.options.zeroTerminated) {
       const len = ctx.generateTmpVariable();
@@ -1226,36 +1263,24 @@ export class Parser {
       ctx.pushCode(
         `while(offset - ${start} < ${len} && dataView.getUint8(offset) !== 0) offset++;`,
       );
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
       ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
     } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`,
+        `${name} = ${decode(`buffer.subarray(offset, offset + ${len})`)};`,
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("while(dataView.getUint8(offset++) !== 0);");
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`,
+        `${name} = ${decode(`buffer.subarray(${start}, offset - 1)`)};`,
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("offset = buffer.length;");
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
     }
     if (this.options.stripNull) {
       ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);

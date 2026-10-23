@@ -350,6 +350,42 @@ function primitiveParserTests(
 
         expect(parser.parse(buffer).msg).toStrictEqual(text);
       });
+      it("should parse latin1, ascii and base64 encoded strings", () => {
+        const buffer = hexToBuf("4180fffbef");
+        const expected = {
+          latin1: "A\x80\xff\xfb\xef",
+          binary: "A\x80\xff\xfb\xef",
+          ascii: "A\x00\x7f\x7b\x6f",
+          base64: "QYD/++8=",
+          base64url: "QYD_--8",
+        };
+        for (const [encoding, msg] of Object.entries(expected)) {
+          const parser = Parser.start().string("msg", {
+            length: buffer.length,
+            encoding,
+          });
+          expect(parser.parse(buffer).msg).toStrictEqual(msg);
+        }
+      });
+      it("should parse latin1, ascii and base64 strings larger than a chunk", () => {
+        const bytes = Uint8Array.from({ length: 20000 }, (_, i) => i * 7);
+        const buffer = factory(bytes);
+        // Naive per-byte reference (no Buffer, so it also runs in browsers)
+        let latin1 = "";
+        let ascii = "";
+        for (const b of bytes) {
+          latin1 += String.fromCharCode(b);
+          ascii += String.fromCharCode(b & 0x7f);
+        }
+        const expected = { latin1, ascii, base64: btoa(latin1) };
+        for (const [encoding, msg] of Object.entries(expected)) {
+          const parser = Parser.start().string("msg", {
+            length: buffer.length,
+            encoding,
+          });
+          expect(parser.parse(buffer).msg).toStrictEqual(msg);
+        }
+      });
       it("should parse variable length string", () => {
         const buffer = hexToBuf("0c68656c6c6f2c20776f726c64");
         const parser = Parser.start()
