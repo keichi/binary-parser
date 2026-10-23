@@ -663,6 +663,12 @@ export class Parser {
       throw new Error("length or readUntil must be defined for wrapped.");
     }
 
+    if (!(options.type instanceof Parser) && !varName) {
+      throw new Error(
+        "type must be a Parser object if the variable name is omitted.",
+      );
+    }
+
     return this.setNextParser("wrapper", varName as string, options);
   }
 
@@ -725,6 +731,18 @@ export class Parser {
       ) {
         throw new Error(`Choice type "${value}" is unknown.`);
       }
+
+      if (typeof value === "string" && !varName) {
+        throw new Error(
+          "Choice type must be a Parser object if the variable name is omitted.",
+        );
+      }
+    }
+
+    if (typeof options.defaultChoice === "string" && !varName) {
+      throw new Error(
+        "defaultChoice must be a Parser object if the variable name is omitted.",
+      );
     }
 
     return this.setNextParser("choice", varName as string, options);
@@ -1261,7 +1279,7 @@ export class Parser {
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode("while(buffer.length > offset++);");
+      ctx.pushCode("offset = buffer.length;");
       ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
     }
     if (this.options.stripNull) {
