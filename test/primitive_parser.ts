@@ -472,6 +472,10 @@ function primitiveParserTests(
           () =>
             new Parser()
               .uint8("x")
+              .string("d", { length: payload, zeroTerminated: true }),
+          () =>
+            new Parser()
+              .uint8("x")
               .array("a", { type: "uint8", lengthInBytes: payload }),
           () =>
             new Parser()
@@ -505,6 +509,21 @@ function primitiveParserTests(
         }
         throws(() => new Parser().namely("a(){};function b"), /Invalid/);
         ok(!(globalThis as any).INJECTED);
+      });
+
+      it("should resolve length of zero-terminated strings", () => {
+        const parser = new Parser()
+          .uint8("len")
+          .string("a", { length: "len", zeroTerminated: true })
+          .string("b", {
+            length: (ctx: any) => ctx.len,
+            zeroTerminated: true,
+          });
+        deepStrictEqual(parser.parse(factory([3, 97, 0, 98, 99, 100, 101])), {
+          len: 3,
+          a: "a",
+          b: "bcd",
+        });
       });
 
       it("should accept dotted references in options", () => {

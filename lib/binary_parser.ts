@@ -1209,7 +1209,7 @@ export class Parser {
     const toHex = 'b => b.toString(16).padStart(2, "0")';
 
     if (this.options.length && this.options.zeroTerminated) {
-      const len = this.options.length;
+      const len = ctx.generateOption(this.options.length);
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
         `while(dataView.getUint8(offset++) !== 0 && offset - ${start} < ${len});`,
