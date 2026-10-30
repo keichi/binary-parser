@@ -131,6 +131,18 @@ Parse bytes as a bit field and store it in variable `name`. There are 32
 methods from `bit1` to `bit32` each corresponding to 1-bit-length to
 32-bits-length bit field.
 
+Use `skipBits(length)` to advance the bit cursor without storing the skipped
+bits in the parsed result. This is useful when a format reserves or pads bits
+between fields. The `length` argument is the number of bits to skip and must
+be a positive integer.
+
+```javascript
+const parser = new Parser()
+  .bit6("header")
+  .skipBits(2) // skip reserved bits
+  .uint8("nextByte");
+```
+
 ### {float, double}{le, be}(name[, options])
 Parse bytes as a floating-point value and stores it to a variable named
 `name`.
