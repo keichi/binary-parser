@@ -974,8 +974,17 @@ export class Parser {
     return this;
   }
 
-  // Call code generator for this parser
+  // Generate consecutive fields without consuming one stack frame per field.
   private generate(ctx: Context) {
+    let parser: Parser | undefined = this;
+    while (parser) {
+      parser.generateField(ctx);
+      parser = parser.next;
+    }
+    return ctx;
+  }
+
+  private generateField(ctx: Context) {
     if (this.type) {
       switch (this.type) {
         case "uint8":
@@ -1036,8 +1045,6 @@ export class Parser {
     if (this.options.formatter && this.type !== "bit") {
       this.generateFormatter(ctx, varName, this.options.formatter);
     }
-
-    return this.generateNext(ctx);
   }
 
   private generateAssert(ctx: Context) {
@@ -1075,15 +1082,6 @@ export class Parser {
     ctx.pushCode("}");
   }
 
-  // Recursively call code generators and append results
-  private generateNext(ctx: Context): Context {
-    if (this.next) {
-      ctx = this.next.generate(ctx);
-    }
-
-    return ctx;
-  }
-
   private nextNotBit() {
     // Used to test if next type is a bitN or not
     if (this.next) {
@@ -1109,12 +1107,12 @@ export class Parser {
   }
 
   private generateBit(ctx: Context) {
-    // TODO find better method to handle nested bit fields
-    const parser = JSON.parse(JSON.stringify(this));
+    // Retain only this field's metadata, not the rest of the parser chain.
+    const parser = new Parser();
     parser.options = this.options;
     parser.generateAssert = this.generateAssert.bind(this);
     parser.generateFormatter = this.generateFormatter.bind(this);
-    parser.varName = ctx.generateVariable(parser.varName);
+    parser.varName = ctx.generateVariable(this.varName);
     ctx.bitFields.push(parser);
 
     if (!this.next || this.nextNotBit()) {
