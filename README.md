@@ -134,7 +134,7 @@ methods from `bit1` to `bit32` each corresponding to 1-bit-length to
 Use `skipBits(length)` to advance the bit cursor without storing the skipped
 bits in the parsed result. This is useful when a format reserves or pads bits
 between fields. The `length` argument is the number of bits to skip and must
-be a positive integer.
+be a positive integer not greater than 32 (the same limit as `bit1`–`bit32`).
 
 ```javascript
 const parser = new Parser()

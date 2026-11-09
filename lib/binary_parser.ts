@@ -598,6 +598,10 @@ export class Parser {
       throw new Error("skipBits length must be a positive integer.");
     }
 
+    if (length > 32) {
+      throw new Error("skipBits length must not exceed 32.");
+    }
+
     return this.setNextParser("bit", "", { ...options, length, skip: true });
   }
 
