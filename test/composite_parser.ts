@@ -1050,6 +1050,49 @@ function compositeParserTests(
         expect(result.two).toStrictEqual(0x78 >> 2);
       });
 
+      it("should skip bits without storing them", () => {
+        const parser = Parser.start().bit6("one").skipBits(2).uint8("two");
+        const buffer = factory([0xa8, 0x45]);
+        const result = parser.parse(buffer);
+        expect(result.one).toStrictEqual(0xa8 >> 2);
+        expect(result.two).toStrictEqual(0x45);
+        expect(Object.keys(result)).toStrictEqual(["one", "two"]);
+      });
+
+      it("should skip 32 bits without storing them", () => {
+        const parser = Parser.start().skipBits(32).uint8("two");
+        const buffer = factory([0x01, 0x02, 0x03, 0x04, 0x45]);
+        const result = parser.parse(buffer);
+        expect(result.two).toStrictEqual(0x45);
+        expect(Object.keys(result)).toStrictEqual(["two"]);
+      });
+
+      it("should skip bits then read a normal field", () => {
+        const parser = Parser.start().bit6("one").skipBits(26).uint8("two");
+        const buffer = factory([0xa8, 0x00, 0x00, 0x00, 0x45]);
+        const result = parser.parse(buffer);
+        expect(result.one).toStrictEqual(0xa8 >> 2);
+        expect(result.two).toStrictEqual(0x45);
+      });
+
+      it("should reject invalid skipBits length", () => {
+        expect(() => Parser.start().skipBits(0)).toThrow(
+          "skipBits length must be a positive integer.",
+        );
+      });
+
+      it("should reject skipBits length above 32", () => {
+        expect(() => Parser.start().skipBits(33)).toThrow(
+          "skipBits length must not exceed 32.",
+        );
+      });
+
+      it("should reject assert option on skipBits", () => {
+        expect(() => Parser.start().skipBits(1, { assert: 1 })).toThrow(
+          "assert option on skipBits is not allowed.",
+        );
+      });
+
       it("bit to nested bit should work", () => {
         const parser = Parser.start()
           .bit6("one")

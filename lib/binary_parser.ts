@@ -128,6 +128,7 @@ interface ParserOptions {
   tag?: string | ((item: any) => number);
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
+  skip?: boolean;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -586,6 +587,22 @@ export class Parser {
 
   skip(length: ParserOptions["length"], options: ParserOptions = {}): this {
     return this.seek(length, options);
+  }
+
+  skipBits(length: number, options: ParserOptions = {}): this {
+    if (options.assert) {
+      throw new Error("assert option on skipBits is not allowed.");
+    }
+
+    if (typeof length !== "number" || !Number.isInteger(length) || length < 1) {
+      throw new Error("skipBits length must be a positive integer.");
+    }
+
+    if (length > 32) {
+      throw new Error("skipBits length must not exceed 32.");
+    }
+
+    return this.setNextParser("bit", "", { ...options, length, skip: true });
   }
 
   seek(relOffset: ParserOptions["length"], options: ParserOptions = {}): this {
@@ -1162,41 +1179,46 @@ export class Parser {
         let length = parser.options.length as number;
         if (length > rem) {
           if (rem) {
-            const mask = -1 >>> (32 - rem);
-            ctx.pushCode(
-              `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
-                length - rem
-              };`,
-            );
+            if (!parser.options.skip) {
+              const mask = -1 >>> (32 - rem);
+              ctx.pushCode(
+                `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
+                  length - rem
+                };`,
+              );
+            }
             length -= rem;
           }
           bitOffset = 0;
           rem = sum = getBytes(getMaxBits(i) - rem);
         }
-        const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
-        const mask = -1 >>> (32 - length);
 
-        ctx.pushCode(
-          `${parser.varName} ${
-            length < (parser.options.length as number) ? "|=" : "="
-          } ${val} >> ${offset} & 0x${mask.toString(16)};`,
-        );
+        if (!parser.options.skip) {
+          const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
+          const mask = -1 >>> (32 - length);
 
-        // Ensure value is unsigned
-        if ((parser.options.length as number) === 32) {
-          ctx.pushCode(`${parser.varName} >>>= 0`);
-        }
-
-        if (parser.options.assert) {
-          parser.generateAssert(ctx);
-        }
-
-        if (parser.options.formatter) {
-          parser.generateFormatter(
-            ctx,
-            parser.varName,
-            parser.options.formatter,
+          ctx.pushCode(
+            `${parser.varName} ${
+              length < (parser.options.length as number) ? "|=" : "="
+            } ${val} >> ${offset} & 0x${mask.toString(16)};`,
           );
+
+          // Ensure value is unsigned
+          if ((parser.options.length as number) === 32) {
+            ctx.pushCode(`${parser.varName} >>>= 0`);
+          }
+
+          if (parser.options.assert) {
+            parser.generateAssert(ctx);
+          }
+
+          if (parser.options.formatter) {
+            parser.generateFormatter(
+              ctx,
+              parser.varName,
+              parser.options.formatter,
+            );
+          }
         }
 
         bitOffset += length;
