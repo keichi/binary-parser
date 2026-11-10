@@ -303,6 +303,67 @@ function primitiveParserTests(
         expect(parser.parse(buf)).toStrictEqual({ a: 0xa, b: 0xbc, c: 0xd });
         expect(options).toStrictEqual({});
       });
+
+      for (const endianness of ["big", "little"] as const) {
+        it(`should compile thousands of ${endianness}-endian bit fields`, () => {
+          const parser = new Parser().endianness(endianness);
+          const expected: Record<string, number> = {};
+          const bytes = [];
+          for (let i = 0; i < 6000; ++i) {
+            parser.bit1(`flag${i}`);
+            expected[`flag${i}`] = i % 2;
+            if (i % 8 === 0) bytes.push(endianness === "big" ? 0x55 : 0xaa);
+          }
+          expect(parser.parse(factory(bytes))).toStrictEqual(expected);
+        });
+      }
+
+      it("should compile a large bit schema followed by other field types", () => {
+        const parser = new Parser();
+        const expected: Record<string, unknown> = {};
+        for (let i = 0; i < 1200; ++i) {
+          parser.bit1(`flag${i}`, {
+            assert: (value) => value === i % 2,
+            formatter: (value) => value !== 0,
+          });
+          expected[`flag${i}`] = i % 2 !== 0;
+        }
+        for (let i = 0; i < 50; ++i) {
+          parser.uint8(`byte${i}`);
+          expected[`byte${i}`] = i;
+        }
+        for (let i = 0; i < 20; ++i) {
+          parser.string(`text${i}`, { length: 1 });
+          expected[`text${i}`] = String.fromCharCode(65 + i);
+        }
+        const bytes = [
+          ...new Array(150).fill(0x55),
+          ...Array.from({ length: 50 }, (_, i) => i),
+          ...Array.from({ length: 20 }, (_, i) => 65 + i),
+        ];
+        expect(parser.parse(factory(bytes))).toStrictEqual(expected);
+        bytes[0] = 0;
+        expect(() => parser.parse(factory(bytes))).toThrow("Assertion error");
+      });
+
+      it("should preserve reusable nested bit parsers and callbacks", () => {
+        const nibble = new Parser().bit4("value", {
+          assert: (value) => value > 0,
+          formatter: (value) => value * 10,
+        });
+        const parser = new Parser()
+          .nest("first", { type: nibble })
+          .nest("second", { type: nibble });
+        expect(parser.parse(factory([0xa0, 0xb0]))).toStrictEqual({
+          first: { value: 100 },
+          second: { value: 110 },
+        });
+        expect(nibble.parse(factory([0xc0]))).toStrictEqual({ value: 120 });
+        expect(parser.parse(factory([0xd0, 0xe0]))).toStrictEqual({
+          first: { value: 130 },
+          second: { value: 140 },
+        });
+      });
     });
 
     describe("String parser", () => {
