@@ -299,7 +299,7 @@ function compositeParserTests(
           },
         });
       });
-      it("should store __proto__ key as an own property of associative arrays", () => {
+      it("should reject __proto__ key of associative arrays", () => {
         const parser = Parser.start().array("a", {
           type: Parser.start()
             .uint8("l")
@@ -313,16 +313,8 @@ function compositeParserTests(
           ...Array.from("__proto__", (c) => c.charCodeAt(0)),
           1,
         ]);
-        const result = parser.parse(buffer);
 
-        expect(Object.keys(result.a)).toStrictEqual(["__proto__"]);
-        expect(Object.getPrototypeOf(result.a)).toBe(Object.prototype);
-        expect(result.a.evil).toBeUndefined();
-        expect(result.a["__proto__"]).toStrictEqual({
-          l: 9,
-          k: "__proto__",
-          evil: 1,
-        });
+        expect(() => parser.parse(buffer)).toThrow("Invalid key: __proto__");
       });
       it("should use formatter to transform parsed array", () => {
         const parser = Parser.start().array("data", {
