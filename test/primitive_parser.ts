@@ -528,6 +528,84 @@ function primitiveParserTests(
           expect(e.message.includes("Invalid encoding")).toBeTruthy();
         }
       });
+
+      it("should throw an error on invalid references in options", () => {
+        const payload = "x+(globalThis.INJECTED=1,0)";
+        const parsers = [
+          () => new Parser().uint8("x").buffer("d", { length: payload }),
+          () => new Parser().uint8("x").string("d", { length: payload }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .string("d", { length: payload, zeroTerminated: true }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .array("a", { type: "uint8", lengthInBytes: payload }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .array("a", { type: "uint8", length: payload }),
+          () =>
+            new Parser().uint8("x").choice("c", {
+              tag: payload,
+              choices: { 1: "uint8" },
+            }),
+          () =>
+            new Parser()
+              .uint8("x")
+              .pointer("p", { type: "uint8", offset: payload }),
+          () => new Parser().uint8("x").seek(payload),
+          () =>
+            new Parser().uint8("x").wrapped("w", {
+              length: payload,
+              wrapper: (b: any) => b,
+              type: new Parser().uint8("y"),
+            }),
+          () =>
+            new Parser().array("a", {
+              type: new Parser().uint8("x"),
+              length: 1,
+              key: payload,
+            }),
+        ];
+        for (const p of parsers) {
+          expect(() => p().parse(factory([1, 2, 3, 4]))).toThrow(
+            /Invalid reference/,
+          );
+        }
+        expect(() => new Parser().namely("a(){};function b")).toThrow(
+          /Invalid/,
+        );
+        expect((globalThis as any).INJECTED).toBeUndefined();
+      });
+
+      it("should resolve length of zero-terminated strings", () => {
+        const parser = new Parser()
+          .uint8("len")
+          .string("a", { length: "len", zeroTerminated: true })
+          .string("b", {
+            length: (ctx: any) => ctx.len,
+            zeroTerminated: true,
+          });
+        expect(
+          parser.parse(factory([3, 97, 0, 98, 99, 100, 101])),
+        ).toStrictEqual({
+          len: 3,
+          a: "a",
+          b: "bcd",
+        });
+      });
+
+      it("should accept dotted references in options", () => {
+        const parser = new Parser()
+          .nest("header", { type: new Parser().uint8("len") })
+          .buffer("d", { length: "header.len" });
+        expect(parser.parse(factory([2, 9, 9]))).toStrictEqual({
+          header: { len: 2 },
+          d: factory([9, 9]),
+        });
+      });
     });
   });
 }
