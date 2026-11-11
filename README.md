@@ -111,9 +111,6 @@ signed number, with `u` prefix as an unsigned number. The runtime type
 returned by the 8, 16, 32 bit methods is `number` while the type
 returned by the 64 bit is `bigint`.
 
-**Note:** [u]int64{be,le} methods only work if your runtime is node v12.0.0 or
-greater. Lower versions will throw a runtime error.
-
 ```javascript
 const parser = new Parser()
   // Signed 32-bit integer (little endian)
@@ -198,8 +195,9 @@ Parse bytes as an array. `options` is an object which can have the following
 keys:
 
 - `type` - (Required) Type of the array element. Can be a string or a user
-  defined `Parser` object. If it's a string, you have to choose from [u]int{8,
-  16, 32}{le, be}.
+  defined `Parser` object. If it's a string, you have to choose from
+  [u]int{8, 16, 32, 64}{le, be}, {float, double}{le, be}, or an alias defined
+  with `namely()`.
 - `length` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   Length of the array. Can be a number, string or a function. Use number for
   statically sized arrays.
@@ -209,6 +207,9 @@ keys:
 - `readUntil` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   If `"eof"`, then this parser reads until the end of the `Buffer`/`Uint8Array`
   object. If function it reads until the function returns true.
+- `key` - If specified, the result is an object instead of an array. Each
+  element is stored under the value of its field named `key`, so `type` must
+  be a `Parser` object or an alias that has that field.
 
 ```javascript
 const parser = new Parser()
@@ -266,6 +267,14 @@ const parser = new Parser()
   .array("data8", {
     type: userDefinedParser,
     length: "dataLength"
+  })
+
+  // Store elements in an object keyed by their "id" field
+  // e.g. { 1: { id: 1, value: 10 }, 2: { id: 2, value: 20 } }
+  .array("data9", {
+    type: new Parser().uint8("id").uint8("value"),
+    length: 2,
+    key: "id"
   });
 ```
 
@@ -488,7 +497,7 @@ current object.
   function returns `true`.
 
 ```javascript
-const zlib = require("zlib");
+import zlib from "node:zlib";
 // A parser to run on the data returned by the wrapper
 const textParser = Parser.start()
   .string("text", {
@@ -534,7 +543,7 @@ These options can be used in all parsers.
   form.
     ```javascript
     const parser = new Parser().array("ipv4", {
-      type: uint8,
+      type: "uint8",
       length: 4,
       formatter: function(arr) {
         return arr.join(".");
@@ -550,7 +559,7 @@ These options can be used in all parsers.
   and if it returns false, an exception is thrown.
 
     ```javascript
-    // simple maginc number validation
+    // simple magic number validation
     const ClassFile = Parser.start()
       .endianness("big")
       .uint32("magic", { assert: 0xcafebabe });
@@ -663,6 +672,13 @@ then run it like this:
 
 ```bash
 npm run test
+```
+
+Also make sure the code is formatted and passes the linter:
+
+```bash
+npm run format:fix
+npm run lint
 ```
 
 Make sure all the tests pass before submitting a pull request.
