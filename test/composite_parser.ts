@@ -1,7 +1,8 @@
 import { Parser } from "../lib/binary_parser";
 
 // node:zlib is only available on Node (and Node-compatible runtimes).
-const isNode = typeof process !== "undefined" && !!process.versions?.node;
+const isNode =
+  typeof process !== "undefined" && process.versions?.node !== undefined;
 
 function compositeParserTests(
   name: string,
@@ -479,8 +480,7 @@ function compositeParserTests(
         });
       });
       it("should be able to access to index context variable when using length on named parser", () => {
-        // @ts-ignore
-        const elementParser = new Parser()
+        new Parser()
           .uint8("key", {
             formatter: function (this: any, item: number) {
               return this.$index % 2 === 0 ? item : String.fromCharCode(item);
@@ -656,11 +656,9 @@ function compositeParserTests(
       it("should be able to refer to other parsers by name", () => {
         const parser = Parser.start().namely("self");
 
-        // @ts-ignore
-        const stop = Parser.start().namely("stop");
+        Parser.start().namely("stop");
 
-        // @ts-ignore
-        const twoCells = Parser.start()
+        Parser.start()
           .namely("twoCells")
           .nest("left", { type: "self" })
           .nest("right", { type: "stop" });

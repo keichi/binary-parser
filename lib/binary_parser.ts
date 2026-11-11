@@ -78,7 +78,7 @@ class Context {
   addImport(im: any): string {
     if (!this.importPath) return `(${im})`;
     let id = this.reverseImports.get(im);
-    if (!id) {
+    if (id === undefined) {
       id = this.imports.push(im) - 1;
       this.reverseImports.set(im, id);
     }
@@ -406,7 +406,7 @@ export class Parser {
   }
 
   private bigIntVersionCheck() {
-    if (!DataView.prototype.getBigInt64)
+    if (!("getBigInt64" in DataView.prototype))
       throw new Error("BigInt64 is unsupported on this runtime");
   }
 
@@ -600,7 +600,7 @@ export class Parser {
   }
 
   skipBits(length: number, options: ParserOptions = {}): this {
-    if (options.assert) {
+    if (options.assert != null) {
       throw new Error("assert option on skipBits is not allowed.");
     }
 
@@ -616,7 +616,7 @@ export class Parser {
   }
 
   seek(relOffset: ParserOptions["length"], options: ParserOptions = {}): this {
-    if (options.assert) {
+    if (options.assert != null) {
       throw new Error("assert option on seek is not allowed.");
     }
 
@@ -649,7 +649,7 @@ export class Parser {
   }
 
   buffer(varName: string, options: ParserOptions): this {
-    if (options.length == null && !options.readUntil) {
+    if (options.length == null && options.readUntil == null) {
       throw new Error("length or readUntil must be defined for buffer.");
     }
 
@@ -662,15 +662,15 @@ export class Parser {
       varName = "";
     }
 
-    if (!options || !options.wrapper || !options.type) {
+    if (!options || options.wrapper == null || options.type == null) {
       throw new Error("Both wrapper and type must be defined for wrapped.");
     }
 
-    if (options.length == null && !options.readUntil) {
+    if (options.length == null && options.readUntil == null) {
       throw new Error("length or readUntil must be defined for wrapped.");
     }
 
-    if (!(options.type instanceof Parser) && !varName) {
+    if (!(options.type instanceof Parser) && !(varName as string)) {
       throw new Error(
         "type must be a Parser object if the variable name is omitted.",
       );
@@ -681,7 +681,7 @@ export class Parser {
 
   array(varName: string, options: ParserOptions): this {
     if (
-      !options.readUntil &&
+      options.readUntil == null &&
       options.length == null &&
       options.lengthInBytes == null
     ) {
@@ -690,7 +690,7 @@ export class Parser {
       );
     }
 
-    if (!options.type) {
+    if (options.type == null) {
       throw new Error("type is required for array.");
     }
 
@@ -715,7 +715,7 @@ export class Parser {
       throw new Error("tag and choices are required for choice.");
     }
 
-    if (!options.tag) {
+    if (options.tag == null) {
       throw new Error("tag is required for choice.");
     }
 
@@ -739,14 +739,14 @@ export class Parser {
         throw new Error(`Choice type "${value}" is unknown.`);
       }
 
-      if (typeof value === "string" && !varName) {
+      if (typeof value === "string" && !(varName as string)) {
         throw new Error(
           "Choice type must be a Parser object if the variable name is omitted.",
         );
       }
     }
 
-    if (typeof options.defaultChoice === "string" && !varName) {
+    if (typeof options.defaultChoice === "string" && !(varName as string)) {
       throw new Error(
         "defaultChoice must be a Parser object if the variable name is omitted.",
       );
@@ -761,7 +761,7 @@ export class Parser {
       varName = "";
     }
 
-    if (!options || !options.type) {
+    if (!options || options.type == null) {
       throw new Error("type is required for nest.");
     }
 
@@ -769,7 +769,7 @@ export class Parser {
       throw new Error("type must be a known parser name or a Parser object.");
     }
 
-    if (!(options.type instanceof Parser) && !varName) {
+    if (!(options.type instanceof Parser) && !(varName as string)) {
       throw new Error(
         "type must be a Parser object if the variable name is omitted.",
       );
@@ -783,7 +783,7 @@ export class Parser {
       throw new Error("offset is required for pointer.");
     }
 
-    if (!options.type) {
+    if (options.type == null) {
       throw new Error("type is required for pointer.");
     }
 
@@ -1068,7 +1068,7 @@ export class Parser {
   }
 
   private generateAssert(ctx: Context) {
-    if (!this.options.assert) {
+    if (this.options.assert == null) {
       return;
     }
 
@@ -1116,7 +1116,7 @@ export class Parser {
     if (this.next) {
       if (this.next.type === "nest") {
         // For now consider a nest as a bit
-        if (this.next.options && this.next.options.type instanceof Parser) {
+        if (this.next.options.type instanceof Parser) {
           // Something in the nest
           if (this.next.options.type.next) {
             return this.next.options.type.next.type !== "bit";
@@ -1188,7 +1188,7 @@ export class Parser {
       ctx.bitFields.forEach((parser, i) => {
         let length = parser.options.length as number;
         if (length > rem) {
-          if (rem) {
+          if (rem > 0) {
             if (!parser.options.skip) {
               const mask = -1 >>> (32 - rem);
               ctx.pushCode(
@@ -1218,7 +1218,7 @@ export class Parser {
             ctx.pushCode(`${parser.varName} >>>= 0`);
           }
 
-          if (parser.options.assert) {
+          if (parser.options.assert != null) {
             parser.generateAssert(ctx);
           }
 
@@ -1329,7 +1329,10 @@ export class Parser {
 
   private generateArray(ctx: Context) {
     const length = ctx.generateOption(this.options.length!);
-    const lengthInBytes = ctx.generateOption(this.options.lengthInBytes!);
+    const lengthInBytes =
+      this.options.lengthInBytes == null
+        ? undefined
+        : ctx.generateOption(this.options.lengthInBytes);
     const type = this.options.type;
     const counter = ctx.generateTmpVariable();
     const lhs = ctx.generateVariable(this.varName);
@@ -1374,7 +1377,7 @@ export class Parser {
           const parentVar = ctx.generateVariable();
           ctx.pushCode(`$parent: ${parentVar},`);
           ctx.pushCode(`$root: ${parentVar}.$root,`);
-          if (!this.options.readUntil && lengthInBytes === undefined) {
+          if (this.options.readUntil == null && lengthInBytes === undefined) {
             ctx.pushCode(`$index: ${length} - ${counter},`);
           }
         }
@@ -1392,7 +1395,7 @@ export class Parser {
       if (ctx.useContextVariables) {
         ctx.pushCode(`${item}.$parent = ${parentVar};`);
         ctx.pushCode(`${item}.$root = ${parentVar}.$root;`);
-        if (!this.options.readUntil && lengthInBytes === undefined) {
+        if (this.options.readUntil == null && lengthInBytes === undefined) {
           ctx.pushCode(`${item}.$index = ${length} - ${counter};`);
         }
       }
@@ -1484,7 +1487,7 @@ export class Parser {
       ctx.pushCode("break;");
     }
     ctx.pushCode("default:");
-    if (this.options.defaultChoice) {
+    if (this.options.defaultChoice != null) {
       this.generateChoiceCase(ctx, this.varName, this.options.defaultChoice);
     } else {
       ctx.generateError(`"Met undefined tag value " + ${tag} + " at choice"`);
@@ -1516,10 +1519,8 @@ export class Parser {
       ctx.popPath(this.varName);
 
       if (this.varName && ctx.useContextVariables) {
-        if (ctx.useContextVariables) {
-          ctx.pushCode(`delete ${nestVar}.$parent;`);
-          ctx.pushCode(`delete ${nestVar}.$root;`);
-        }
+        ctx.pushCode(`delete ${nestVar}.$parent;`);
+        ctx.pushCode(`delete ${nestVar}.$root;`);
       }
     } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
