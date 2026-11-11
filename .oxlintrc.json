@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "error", "suspicious": "warn" },
+  "rules": {
+    "eqeqeq": ["error", "smart"],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "typescript/no-implied-eval": "off",
+    "typescript/no-unsafe-type-assertion": "off",
+    "typescript/strict-boolean-expressions": ["error", {
+      "allowNullableBoolean": true,
+      "allowString": true,
+      "allowNullableString": true,
+      "allowNumber": false
+    }],
+    "typescript/no-unnecessary-condition": "error"
+  },
+  "ignorePatterns": ["dist/**"]
+}
