@@ -284,6 +284,23 @@ function primitiveParserTests(
         expect(parser.parse(buf)).toStrictEqual({ a: 10, b: 7, c: 1 });
       });
 
+      it("should honor falsy assert values (0 and empty string)", () => {
+        expect(() =>
+          new Parser().uint8("a", { assert: 0 }).parse(factory([1])),
+        ).toThrow("Assertion error");
+        expect(() =>
+          new Parser().bit8("a", { assert: 0 }).parse(factory([1])),
+        ).toThrow("Assertion error");
+        expect(() =>
+          new Parser()
+            .string("a", { length: 1, assert: "" })
+            .parse(factory([0x61])),
+        ).toThrow("Assertion error");
+        expect(
+          new Parser().uint8("a", { assert: 0 }).parse(factory([0])),
+        ).toStrictEqual({ a: 0 });
+      });
+
       it("should format bit fields", () => {
         const parser = new Parser()
           .bit4("a", { formatter: (v) => v * 2 })

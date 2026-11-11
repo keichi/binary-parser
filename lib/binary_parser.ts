@@ -600,7 +600,7 @@ export class Parser {
   }
 
   skipBits(length: number, options: ParserOptions = {}): this {
-    if (options.assert) {
+    if (options.assert != null) {
       throw new Error("assert option on skipBits is not allowed.");
     }
 
@@ -616,7 +616,7 @@ export class Parser {
   }
 
   seek(relOffset: ParserOptions["length"], options: ParserOptions = {}): this {
-    if (options.assert) {
+    if (options.assert != null) {
       throw new Error("assert option on seek is not allowed.");
     }
 
@@ -1068,7 +1068,7 @@ export class Parser {
   }
 
   private generateAssert(ctx: Context) {
-    if (!this.options.assert) {
+    if (this.options.assert == null) {
       return;
     }
 
@@ -1218,7 +1218,7 @@ export class Parser {
             ctx.pushCode(`${parser.varName} >>>= 0`);
           }
 
-          if (parser.options.assert) {
+          if (parser.options.assert != null) {
             parser.generateAssert(ctx);
           }
 
