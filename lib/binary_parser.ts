@@ -1578,7 +1578,7 @@ export class Parser {
     const tempView = ctx.generateTmpVariable();
     const func = ctx.addImport(this.options.wrapper);
     ctx.pushCode(
-      `${wrappedBuf} = ${func}.call(this, ${wrappedBuf}).subarray(0);`,
+      `${wrappedBuf} = ${func}.call(${ctx.generateVariable()}, ${wrappedBuf}).subarray(0);`,
     );
     ctx.pushCode(`var ${tempBuf} = buffer;`);
     ctx.pushCode(`var ${tempOff} = offset;`);
