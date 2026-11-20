@@ -1551,6 +1551,22 @@ function compositeParserTests(
           parserWithoutName.parse(buffer),
         );
       });
+      it("should call wrapper with the current context as this", () => {
+        const parser = Parser.start()
+          .uint8("key")
+          .wrapped("data", {
+            length: 1,
+            wrapper: function (this: { key: number }, buf: Uint8Array) {
+              return factory([buf[0] ^ this.key]);
+            },
+            type: Parser.start().uint8("a"),
+          });
+
+        expect(parser.parse(factory([3, 5]))).toStrictEqual({
+          key: 3,
+          data: { a: 6 },
+        });
+      });
       it("should throw if varName is omitted and type is a string", () => {
         Parser.start().uint8("v").namely("wrappedNoVarNameAlias");
         expect(() =>
