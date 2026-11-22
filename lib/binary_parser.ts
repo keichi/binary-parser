@@ -162,15 +162,23 @@ type PrimitiveTypes =
   | "uint8"
   | "uint16le"
   | "uint16be"
+  | "uint24le"
+  | "uint24be"
   | "uint32le"
   | "uint32be"
+  | "uint48le"
+  | "uint48be"
   | "uint64le"
   | "uint64be"
   | "int8"
   | "int16le"
   | "int16be"
+  | "int24le"
+  | "int24be"
   | "int32le"
   | "int32be"
+  | "int48le"
+  | "int48be"
   | "int64le"
   | "int64be"
   | "floatle"
@@ -181,10 +189,14 @@ type PrimitiveTypes =
 type PrimitiveTypesWithoutEndian =
   | "uint8"
   | "uint16"
+  | "uint24"
   | "uint32"
   | "int8"
   | "int16"
+  | "int24"
   | "int32"
+  | "int48"
+  | "uint48"
   | "int64"
   | "uint64"
   | "float"
@@ -228,13 +240,21 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   uint8: 1,
   uint16le: 2,
   uint16be: 2,
+  uint24le: 3,
+  uint24be: 3,
   uint32le: 4,
   uint32be: 4,
   int8: 1,
   int16le: 2,
   int16be: 2,
+  int24le: 3,
+  int24be: 3,
   int32le: 4,
   int32be: 4,
+  int48be: 6,
+  int48le: 6,
+  uint48be: 6,
+  uint48le: 6,
   int64be: 8,
   int64le: 8,
   uint64be: 8,
@@ -249,13 +269,21 @@ const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
   uint8: "Uint8",
   uint16le: "Uint16",
   uint16be: "Uint16",
+  uint24le: "Uint24",
+  uint24be: "Uint24",
   uint32le: "Uint32",
   uint32be: "Uint32",
   int8: "Int8",
   int16le: "Int16",
   int16be: "Int16",
+  int24le: "Int24",
+  int24be: "Int24",
   int32le: "Int32",
   int32be: "Int32",
+  int48be: "Int48",
+  int48le: "Int48",
+  uint48be: "Uint48",
+  uint48le: "Uint48",
   int64be: "BigInt64",
   int64le: "BigInt64",
   uint64be: "BigUint64",
@@ -270,13 +298,21 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   uint8: false,
   uint16le: true,
   uint16be: false,
+  uint24le: true,
+  uint24be: false,
   uint32le: true,
   uint32be: false,
   int8: false,
   int16le: true,
   int16be: false,
+  int24le: true,
+  int24be: false,
   int32le: true,
   int32be: false,
+  int48be: false,
+  int48le: true,
+  uint48be: false,
+  uint48le: true,
   int64be: false,
   int64le: true,
   uint64be: false,
@@ -286,6 +322,32 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   doublele: true,
   doublebe: false,
 };
+
+// Returns an expression that reads a value of the given type at offset.
+// DataView has no 24/48-bit getters, so compose them from narrower reads.
+// 48-bit values fit in a safe integer, so they are returned as number.
+function readPrimitive(type: PrimitiveTypes): string {
+  switch (type) {
+    case "uint48be":
+      return "(dataView.getUint16(offset) * 0x100000000 + dataView.getUint32(offset + 2))";
+    case "int48be":
+      return "(dataView.getInt16(offset) * 0x100000000 + dataView.getUint32(offset + 2))";
+    case "uint48le":
+      return "(dataView.getUint32(offset, true) + dataView.getUint16(offset + 4, true) * 0x100000000)";
+    case "int48le":
+      return "(dataView.getUint32(offset, true) + dataView.getInt16(offset + 4, true) * 0x100000000)";
+    case "uint24be":
+      return "(dataView.getUint16(offset) << 8 | dataView.getUint8(offset + 2))";
+    case "int24be":
+      return "(dataView.getInt16(offset) << 8 | dataView.getUint8(offset + 2))";
+    case "uint24le":
+      return "(dataView.getUint16(offset, true) | dataView.getUint8(offset + 2) << 16)";
+    case "int24le":
+      return "(dataView.getUint16(offset, true) | dataView.getInt8(offset + 2) << 16)";
+    default:
+      return `dataView.get${PRIMITIVE_NAMES[type]}(offset, ${PRIMITIVE_LITTLE_ENDIANS[type]})`;
+  }
+}
 
 // Encodings that TextDecoder doesn't support, decoded like Node.js Buffer
 const BYTE_ENCODINGS = ["hex", "binary", "base64", "base64url"];
@@ -323,12 +385,8 @@ export class Parser {
   }
 
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
-    const typeName = PRIMITIVE_NAMES[type];
-    const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type];
     ctx.pushCode(
-      `${ctx.generateVariable(
-        this.varName,
-      )} = dataView.get${typeName}(offset, ${littleEndian});`,
+      `${ctx.generateVariable(this.varName)} = ${readPrimitive(type)};`,
     );
     ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type]};`);
   }
@@ -361,6 +419,18 @@ export class Parser {
     return this.primitiveN("uint16be", varName, options);
   }
 
+  uint24(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("uint24"), varName, options);
+  }
+
+  uint24le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint24le", varName, options);
+  }
+
+  uint24be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint24be", varName, options);
+  }
+
   uint32(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("uint32"), varName, options);
   }
@@ -371,6 +441,18 @@ export class Parser {
 
   uint32be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint32be", varName, options);
+  }
+
+  uint48(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("uint48"), varName, options);
+  }
+
+  uint48le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint48le", varName, options);
+  }
+
+  uint48be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint48be", varName, options);
   }
 
   int8(varName: string, options: ParserOptions = {}): this {
@@ -389,6 +471,18 @@ export class Parser {
     return this.primitiveN("int16be", varName, options);
   }
 
+  int24(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("int24"), varName, options);
+  }
+
+  int24le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int24le", varName, options);
+  }
+
+  int24be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int24be", varName, options);
+  }
+
   int32(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN(this.useThisEndian("int32"), varName, options);
   }
@@ -399,6 +493,18 @@ export class Parser {
 
   int32be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int32be", varName, options);
+  }
+
+  int48(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("int48"), varName, options);
+  }
+
+  int48le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int48le", varName, options);
+  }
+
+  int48be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int48be", varName, options);
   }
 
   int64(varName: string, options: ParserOptions = {}): this {
@@ -1025,11 +1131,19 @@ export class Parser {
         case "uint8":
         case "uint16le":
         case "uint16be":
+        case "uint24le":
+        case "uint24be":
         case "uint32le":
         case "uint32be":
         case "int8":
         case "int16le":
         case "int16be":
+        case "int24le":
+        case "int24be":
+        case "uint48le":
+        case "uint48be":
+        case "int48le":
+        case "int48be":
         case "int32le":
         case "int32be":
         case "int64be":
@@ -1384,11 +1498,7 @@ export class Parser {
 
     if (typeof type === "string") {
       if (!aliasRegistry.get(type)) {
-        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-        ctx.pushCode(
-          `var ${item} = dataView.get${typeName}(offset, ${littleEndian});`,
-        );
+        ctx.pushCode(`var ${item} = ${readPrimitive(type as PrimitiveTypes)};`);
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1467,11 +1577,7 @@ export class Parser {
     if (typeof type === "string") {
       const fieldVar = ctx.generateVariable(this.varName);
       if (!aliasRegistry.has(type)) {
-        const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-        const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-        ctx.pushCode(
-          `${fieldVar} = dataView.get${typeName}(offset, ${littleEndian});`,
-        );
+        ctx.pushCode(`${fieldVar} = ${readPrimitive(type as PrimitiveTypes)};`);
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
@@ -1698,11 +1804,7 @@ export class Parser {
         ctx.addReference(this.options.type!);
       }
     } else if (Object.keys(PRIMITIVE_SIZES).indexOf(this.options.type!) >= 0) {
-      const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
-      const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
-      ctx.pushCode(
-        `${nestVar} = dataView.get${typeName}(offset, ${littleEndian});`,
-      );
+      ctx.pushCode(`${nestVar} = ${readPrimitive(type as PrimitiveTypes)};`);
       ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]};`);
     }
 
