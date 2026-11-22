@@ -88,6 +88,49 @@ function primitiveParserTests(
           expect(parser.sizeOf()).toBe(12);
         });
       });
+      describe("48-bit integer parsers", () => {
+        const buf = hexToBuf("f959a61a57c80fd3004801a9");
+
+        it("should parse big endian 48-bit integers", () => {
+          const parser = Parser.start().int48be("a").uint48be("b");
+          expect(parser.parse(buf)).toStrictEqual({
+            a: -7311542560824,
+            b: 17398917235113,
+          });
+        });
+
+        it("should parse little endian 48-bit integers", () => {
+          const parser = Parser.start().int48le("a").uint48le("b");
+          expect(parser.parse(buf)).toStrictEqual({
+            a: -61198541891079,
+            b: 185822968075023,
+          });
+        });
+
+        it("should follow endianness()", () => {
+          const be = Parser.start().int48("a").uint48("b");
+          const le = Parser.start().endianness("little").int48("a").uint48("b");
+          expect(be.parse(buf)).toStrictEqual({
+            a: -7311542560824,
+            b: 17398917235113,
+          });
+          expect(le.parse(buf)).toStrictEqual({
+            a: -61198541891079,
+            b: 185822968075023,
+          });
+        });
+
+        it("should parse arrays of 48-bit integers", () => {
+          const parser = Parser.start()
+            .array("a", { type: "uint48be", length: 1 })
+            .array("b", { type: "int48le", length: 1 });
+          expect(parser.parse(buf)).toStrictEqual({
+            a: [274163434149832],
+            b: [-95652008635633],
+          });
+          expect(parser.sizeOf()).toBe(12);
+        });
+      });
       describe("BigInt64 parsers", () => {
         it("should parse uint64", () => {
           const parser = Parser.start().uint64be("a").uint64le("b");

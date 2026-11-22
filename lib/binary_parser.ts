@@ -166,6 +166,8 @@ type PrimitiveTypes =
   | "uint24be"
   | "uint32le"
   | "uint32be"
+  | "uint48le"
+  | "uint48be"
   | "uint64le"
   | "uint64be"
   | "int8"
@@ -175,6 +177,8 @@ type PrimitiveTypes =
   | "int24be"
   | "int32le"
   | "int32be"
+  | "int48le"
+  | "int48be"
   | "int64le"
   | "int64be"
   | "floatle"
@@ -191,6 +195,8 @@ type PrimitiveTypesWithoutEndian =
   | "int16"
   | "int24"
   | "int32"
+  | "int48"
+  | "uint48"
   | "int64"
   | "uint64";
 
@@ -243,6 +249,10 @@ const PRIMITIVE_SIZES: { [key in PrimitiveTypes]: number } = {
   int24be: 3,
   int32le: 4,
   int32be: 4,
+  int48be: 6,
+  int48le: 6,
+  uint48be: 6,
+  uint48le: 6,
   int64be: 8,
   int64le: 8,
   uint64be: 8,
@@ -268,6 +278,10 @@ const PRIMITIVE_NAMES: { [key in PrimitiveTypes]: string } = {
   int24be: "Int24",
   int32le: "Int32",
   int32be: "Int32",
+  int48be: "Int48",
+  int48le: "Int48",
+  uint48be: "Uint48",
+  uint48le: "Uint48",
   int64be: "BigInt64",
   int64le: "BigInt64",
   uint64be: "BigUint64",
@@ -293,6 +307,10 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   int24be: false,
   int32le: true,
   int32be: false,
+  int48be: false,
+  int48le: true,
+  uint48be: false,
+  uint48le: true,
   int64be: false,
   int64le: true,
   uint64be: false,
@@ -304,9 +322,18 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
 };
 
 // Returns an expression that reads a value of the given type at offset.
-// DataView has no 24-bit getters, so compose them from 16- and 8-bit reads.
+// DataView has no 24/48-bit getters, so compose them from narrower reads.
+// 48-bit values fit in a safe integer, so they are returned as number.
 function readPrimitive(type: PrimitiveTypes): string {
   switch (type) {
+    case "uint48be":
+      return "(dataView.getUint16(offset) * 0x100000000 + dataView.getUint32(offset + 2))";
+    case "int48be":
+      return "(dataView.getInt16(offset) * 0x100000000 + dataView.getUint32(offset + 2))";
+    case "uint48le":
+      return "(dataView.getUint32(offset, true) + dataView.getUint16(offset + 4, true) * 0x100000000)";
+    case "int48le":
+      return "(dataView.getUint32(offset, true) + dataView.getInt16(offset + 4, true) * 0x100000000)";
     case "uint24be":
       return "(dataView.getUint16(offset) << 8 | dataView.getUint8(offset + 2))";
     case "int24be":
@@ -414,6 +441,18 @@ export class Parser {
     return this.primitiveN("uint32be", varName, options);
   }
 
+  uint48(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("uint48"), varName, options);
+  }
+
+  uint48le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint48le", varName, options);
+  }
+
+  uint48be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("uint48be", varName, options);
+  }
+
   int8(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int8", varName, options);
   }
@@ -452,6 +491,18 @@ export class Parser {
 
   int32be(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("int32be", varName, options);
+  }
+
+  int48(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN(this.useThisEndian("int48"), varName, options);
+  }
+
+  int48le(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int48le", varName, options);
+  }
+
+  int48be(varName: string, options: ParserOptions = {}): this {
+    return this.primitiveN("int48be", varName, options);
   }
 
   int64(varName: string, options: ParserOptions = {}): this {
@@ -1079,6 +1130,10 @@ export class Parser {
         case "int16be":
         case "int24le":
         case "int24be":
+        case "uint48le":
+        case "uint48be":
+        case "int48le":
+        case "int48be":
         case "int32le":
         case "int32be":
         case "int64be":
