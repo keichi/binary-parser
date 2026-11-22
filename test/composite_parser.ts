@@ -14,6 +14,20 @@ function compositeParserTests(
 
   describe(`Composite parser (${name})`, () => {
     describe("Array parser", () => {
+      it("should resolve element type without endian suffix by endianness()", () => {
+        const buffer = factory([0x01, 0x00, 0x00, 0x02]);
+        expect(
+          Parser.start()
+            .array("a", { type: "uint16", length: 2 })
+            .parse(buffer),
+        ).toStrictEqual({ a: [0x0100, 0x0002] });
+        expect(
+          Parser.start()
+            .endianness("little")
+            .array("a", { type: "uint16", length: 2 })
+            .parse(buffer),
+        ).toStrictEqual({ a: [0x0001, 0x0200] });
+      });
       it("should parse array with length 0", () => {
         const parser = Parser.start()
           .array("a", { length: 0, type: "uint8" })
@@ -531,6 +545,24 @@ function compositeParserTests(
     });
 
     describe("Choice parser", () => {
+      it("should resolve choice types without endian suffix by endianness()", () => {
+        const parser = Parser.start()
+          .endianness("little")
+          .uint8("tag")
+          .choice("data", {
+            tag: "tag",
+            choices: { 0: "uint16" },
+            defaultChoice: "int32",
+          });
+
+        expect(parser.parse(factory([0x0, 0x01, 0x00]))).toStrictEqual({
+          tag: 0,
+          data: 1,
+        });
+        expect(
+          parser.parse(factory([0x1, 0xff, 0xff, 0xff, 0xff])),
+        ).toStrictEqual({ tag: 1, data: -1 });
+      });
       it("should parse choices of primitive types", () => {
         const parser = Parser.start()
           .uint8("tag1")
@@ -1165,6 +1197,16 @@ function compositeParserTests(
     });
 
     describe("Pointer parser", () => {
+      it("should resolve type without endian suffix by endianness()", () => {
+        const parser = Parser.start()
+          .endianness("little")
+          .pointer("x", { type: "uint16", offset: 1 });
+
+        expect(parser.parse(factory([0x0, 0x01, 0x00]))).toStrictEqual({
+          x: 1,
+        });
+      });
+
       it("should move pointer to specified offset", () => {
         const parser = Parser.start().pointer("x", {
           type: "uint8",

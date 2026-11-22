@@ -403,6 +403,20 @@ export class Parser {
     return (type + this.endian.toLowerCase()) as PrimitiveTypes;
   }
 
+  // Appends this parser's endianness to type names without an endian suffix
+  // (e.g. "int32" -> "int32be"). Aliases and other values are left as is.
+  private resolveEndian<T>(type: T): T {
+    if (
+      typeof type === "string" &&
+      !aliasRegistry.has(type) &&
+      !(type in PRIMITIVE_SIZES) &&
+      type + this.endian in PRIMITIVE_SIZES
+    ) {
+      return (type + this.endian) as T;
+    }
+    return type;
+  }
+
   uint8(varName: string, options: ParserOptions = {}): this {
     return this.primitiveN("uint8", varName, options);
   }
@@ -805,6 +819,8 @@ export class Parser {
       throw new Error("type is required for array.");
     }
 
+    options = { ...options, type: this.resolveEndian(options.type) };
+
     if (
       typeof options.type === "string" &&
       !aliasRegistry.has(options.type) &&
@@ -833,6 +849,17 @@ export class Parser {
     if (!options.choices) {
       throw new Error("choices is required for choice.");
     }
+
+    options = {
+      ...options,
+      choices: Object.fromEntries(
+        Object.entries(options.choices).map(([k, v]) => [
+          k,
+          this.resolveEndian(v),
+        ]),
+      ),
+      defaultChoice: this.resolveEndian(options.defaultChoice),
+    };
 
     for (const keyString in options.choices) {
       const key = parseInt(keyString, 10);
@@ -897,6 +924,8 @@ export class Parser {
     if (options.type == null) {
       throw new Error("type is required for pointer.");
     }
+
+    options = { ...options, type: this.resolveEndian(options.type) };
 
     if (
       typeof options.type === "string" &&
