@@ -1162,6 +1162,61 @@ function compositeParserTests(
         expect(person instanceof Person).toBeTruthy();
         expect(person.name).toStrictEqual("John Doe");
       });
+
+      it("should create custom object types for nested parsers", () => {
+        class Person {
+          name: string = "";
+        }
+        class Team {
+          tag: number = 0;
+        }
+
+        const person = Parser.start().create(Person).string("name", {
+          zeroTerminated: true,
+        });
+        Parser.start()
+          .namely("issue92_person")
+          .create(Person)
+          .string("name", { zeroTerminated: true });
+
+        const parser = Parser.start()
+          .create(Team)
+          .nest("a", { type: person })
+          .nest("b", { type: "issue92_person" })
+          .array("c", { type: person, length: 1 })
+          .array("d", { type: "issue92_person", length: 1 })
+          .uint8("tag")
+          .choice("e", { tag: "tag", choices: { 1: person } })
+          .choice("f", { tag: "tag", choices: { 1: "issue92_person" } })
+          .pointer("g", { type: person, offset: 0 })
+          .pointer("h", { type: "issue92_person", offset: 0 })
+          .wrapped("i", {
+            length: 2,
+            wrapper: (x: Uint8Array) => x,
+            type: person,
+          });
+
+        const buffer = factory(
+          new TextEncoder().encode("A\0B\0C\0D\0\x01E\0F\0I\0"),
+        );
+        const team = parser.parse(buffer);
+        expect(team instanceof Team).toBeTruthy();
+        for (const p of [
+          team.a,
+          team.b,
+          team.c[0],
+          team.d[0],
+          team.e,
+          team.f,
+          team.g,
+          team.h,
+          team.i,
+        ]) {
+          expect(p instanceof Person).toBeTruthy();
+        }
+        expect(team.e.name).toStrictEqual("E");
+        expect(team.i.name).toStrictEqual("I");
+      });
     });
 
     describe("Pointer parser", () => {

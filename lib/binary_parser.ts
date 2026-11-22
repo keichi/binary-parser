@@ -948,6 +948,12 @@ export class Parser {
     return this;
   }
 
+  private newObject(ctx: Context): string {
+    return this.constructorFn
+      ? `new ${ctx.addImport(this.constructorFn)}()`
+      : "{}";
+  }
+
   private getContext(importPath: string): Context {
     const ctx = new Context(importPath, this.useContextVariables);
 
@@ -972,9 +978,7 @@ export class Parser {
 
   private addRawCode(ctx: Context) {
     ctx.pushCode("var offset = 0;");
-    ctx.pushCode(
-      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
-    );
+    ctx.pushCode(`var vars = ${this.newObject(ctx)};`);
 
     ctx.pushCode("vars.$parent = null;");
     ctx.pushCode("vars.$root = vars;");
@@ -990,9 +994,7 @@ export class Parser {
 
   private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
-    ctx.pushCode(
-      `var vars = ${this.constructorFn ? "new constructorFn()" : "{}"};`,
-    );
+    ctx.pushCode(`var vars = ${this.newObject(ctx)};`);
     ctx.pushCode(
       "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
     );
@@ -1025,7 +1027,7 @@ export class Parser {
     const ctx = this.getContext(importPath);
     this.compiled = new Function(
       importPath,
-      `return function (buffer, constructorFn) { ${ctx.code} };`,
+      `return function (buffer) { ${ctx.code} };`,
     )(ctx.imports);
   }
 
@@ -1091,7 +1093,7 @@ export class Parser {
       this.compile();
     }
 
-    return this.compiled!(buffer, this.constructorFn);
+    return this.compiled!(buffer);
   }
 
   private setNextParser(
@@ -1386,8 +1388,11 @@ export class Parser {
           return latin1(bytes);
         case "base64":
           return `btoa(${latin1(bytes)})`;
-        default: // base64url
-          return `btoa(${latin1(bytes)}).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')`;
+        default:
+          // base64url
+          return `btoa(${latin1(
+            bytes,
+          )}).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')`;
       }
     };
 
@@ -1518,7 +1523,7 @@ export class Parser {
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
-      ctx.pushCode(`var ${item} = {};`);
+      ctx.pushCode(`var ${item} = ${type.newObject(ctx)};`);
       const parentVar = ctx.generateVariable();
       ctx.pushScope(item);
 
@@ -1593,6 +1598,12 @@ export class Parser {
         if (type !== this.alias) ctx.addReference(type);
       }
     } else if (type instanceof Parser) {
+      if (varName && type.constructorFn) {
+        const fieldVar = ctx.generateVariable(varName);
+        ctx.pushCode(
+          `${fieldVar} = Object.assign(${type.newObject(ctx)}, ${fieldVar});`,
+        );
+      }
       ctx.pushPath(varName);
       type.generate(ctx);
       ctx.popPath(varName);
@@ -1640,7 +1651,7 @@ export class Parser {
 
     if (this.options.type instanceof Parser) {
       if (this.varName) {
-        ctx.pushCode(`${nestVar} = {};`);
+        ctx.pushCode(`${nestVar} = ${this.options.type.newObject(ctx)};`);
 
         if (ctx.useContextVariables) {
           const parentVar = ctx.generateVariable();
@@ -1725,7 +1736,7 @@ export class Parser {
     );
     if (this.options.type instanceof Parser) {
       if (this.varName) {
-        ctx.pushCode(`${wrapperVar} = {};`);
+        ctx.pushCode(`${wrapperVar} = ${this.options.type.newObject(ctx)};`);
       }
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
@@ -1770,7 +1781,7 @@ export class Parser {
     ctx.pushCode(`offset = ${offset};`);
 
     if (this.options.type instanceof Parser) {
-      ctx.pushCode(`${nestVar} = {};`);
+      ctx.pushCode(`${nestVar} = ${this.options.type.newObject(ctx)};`);
 
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
