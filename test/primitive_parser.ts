@@ -354,7 +354,7 @@ function primitiveParserTests(
           expected[`text${i}`] = String.fromCharCode(65 + i);
         }
         const bytes = [
-          ...new Array(150).fill(0x55),
+          ...Array.from({ length: 150 }, () => 0x55),
           ...Array.from({ length: 50 }, (_, i) => i),
           ...Array.from({ length: 20 }, (_, i) => 65 + i),
         ];
