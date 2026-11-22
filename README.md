@@ -100,7 +100,8 @@ associated parser code is compiled on-the-fly and internally cached.
 
 ### create(constructorFunction)
 Set the constructor function that should be called to create the object
-returned from the `parse` method.
+returned from the `parse` method. The constructor is also used when the
+parser is nested in another parser (e.g. via `nest`, `array` or `choice`).
 
 ### [u]int{8, 16, 32, 64}{le, be}(name[, options])
 Parse bytes as an integer and store it in a variable named `name`. `name`
