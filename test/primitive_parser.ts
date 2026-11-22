@@ -4,11 +4,23 @@ function primitiveParserTests(
   name: string,
   factory: (array: Uint8Array | number[]) => Uint8Array,
 ) {
-  describe(`Primitive parser (${name})`, () => {
-    function hexToBuf(hex: string): Uint8Array {
-      return factory(hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  function hexToBuf(hex: string): Uint8Array {
+    return factory(hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  }
+
+  function binaryLiteral(s: string): Uint8Array {
+    const bytes = Array<number>();
+
+    s = s.replace(/\s/g, "");
+    expect(s.length % 8).toStrictEqual(0);
+    for (let i = 0; i < s.length; i += 8) {
+      bytes.push(parseInt(s.slice(i, i + 8), 2));
     }
 
+    return factory(bytes);
+  }
+
+  describe(`Primitive parser (${name})`, () => {
     describe("Primitive parsers", () => {
       it("should nothing", () => {
         const parser = Parser.start();
@@ -115,18 +127,6 @@ function primitiveParserTests(
     });
 
     describe("Bit field parsers", () => {
-      function binaryLiteral(s: string): Uint8Array {
-        const bytes = Array<number>();
-
-        s = s.replace(/\s/g, "");
-        expect(s.length % 8).toStrictEqual(0);
-        for (let i = 0; i < s.length; i += 8) {
-          bytes.push(parseInt(s.slice(i, i + 8), 2));
-        }
-
-        return factory(bytes);
-      }
-
       it("binary literal helper should work", () => {
         expect(binaryLiteral("11110000")).toStrictEqual(factory([0xf0]));
         expect(binaryLiteral("11110000 10100101")).toStrictEqual(

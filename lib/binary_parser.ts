@@ -38,7 +38,7 @@ class Context {
         return val.toString();
       case "string":
         return this.generateVariable(sanitizeReference(val));
-      case "function":
+      default:
         return `${this.addImport(val)}.call(${this.generateVariable()}, vars)`;
     }
   }
@@ -296,8 +296,6 @@ export class Parser {
   alias?: string;
   useContextVariables = false;
 
-  constructor() {}
-
   static start() {
     return new Parser();
   }
@@ -342,7 +340,7 @@ export class Parser {
     varName: string,
     options: ParserOptions,
   ): this {
-    return this.setNextParser(type as Types, varName, options);
+    return this.setNextParser(type, varName, options);
   }
 
   private useThisEndian(type: PrimitiveTypesWithoutEndian): PrimitiveTypes {
@@ -734,7 +732,7 @@ export class Parser {
       if (
         typeof value === "string" &&
         !aliasRegistry.has(value) &&
-        !((value as string) in PRIMITIVE_SIZES)
+        !(value in PRIMITIVE_SIZES)
       ) {
         throw new Error(`Choice type "${value}" is unknown.`);
       }
@@ -828,7 +826,7 @@ export class Parser {
   }
 
   create(constructorFn: Function): this {
-    if (!(constructorFn instanceof Function)) {
+    if (typeof constructorFn !== "function") {
       throw new Error("Constructor must be a Function object.");
     }
 
@@ -1192,14 +1190,14 @@ export class Parser {
       let sum = 0;
       let rem = 0;
 
-      ctx.bitFields.forEach((parser, i) => {
-        let length = parser.options.length as number;
+      ctx.bitFields.forEach((field, i) => {
+        let length = field.options.length as number;
         if (length > rem) {
           if (rem > 0) {
-            if (!parser.options.skip) {
+            if (!field.options.skip) {
               const mask = -1 >>> (32 - rem);
               ctx.pushCode(
-                `${parser.varName} = (${val} & 0x${mask.toString(16)}) << ${
+                `${field.varName} = (${val} & 0x${mask.toString(16)}) << ${
                   length - rem
                 };`,
               );
@@ -1210,32 +1208,32 @@ export class Parser {
           rem = sum = getBytes(getMaxBits(i) - rem);
         }
 
-        if (!parser.options.skip) {
+        if (!field.options.skip) {
           const offset = isBigEndian ? sum - bitOffset - length : bitOffset;
           const mask = -1 >>> (32 - length);
 
           ctx.pushCode(
-            `${parser.varName} ${
-              length < (parser.options.length as number) ? "|=" : "="
+            `${field.varName} ${
+              length < (field.options.length as number) ? "|=" : "="
             } ${val} >> ${offset} & 0x${mask.toString(16)};`,
           );
 
           // Ensure value is unsigned
-          if ((parser.options.length as number) === 32) {
-            ctx.pushCode(`${parser.varName} >>>= 0`);
+          if ((field.options.length as number) === 32) {
+            ctx.pushCode(`${field.varName} >>>= 0`);
           }
 
-          if (parser.options.assert != null) {
+          if (field.options.assert != null) {
             // Bit fields may be flushed inside a nested scope, so use the
             // variable name resolved when the field was queued.
-            parser.generateAssert(ctx, parser.varName);
+            field.generateAssert(ctx, field.varName);
           }
 
-          if (parser.options.formatter) {
-            parser.generateFormatter(
+          if (field.options.formatter) {
+            field.generateFormatter(
               ctx,
-              parser.varName,
-              parser.options.formatter,
+              field.varName,
+              field.options.formatter,
             );
           }
         }
@@ -1445,24 +1443,24 @@ export class Parser {
     type: string | Parser,
   ) {
     if (typeof type === "string") {
-      const varName = ctx.generateVariable(this.varName);
+      const fieldVar = ctx.generateVariable(this.varName);
       if (!aliasRegistry.has(type)) {
         const typeName = PRIMITIVE_NAMES[type as PrimitiveTypes];
         const littleEndian = PRIMITIVE_LITTLE_ENDIANS[type as PrimitiveTypes];
         ctx.pushCode(
-          `${varName} = dataView.get${typeName}(offset, ${littleEndian});`,
+          `${fieldVar} = dataView.get${typeName}(offset, ${littleEndian});`,
         );
         ctx.pushCode(`offset += ${PRIMITIVE_SIZES[type as PrimitiveTypes]}`);
       } else {
         const tempVar = ctx.generateTmpVariable();
         ctx.pushCode(`var ${tempVar} = ${FUNCTION_PREFIX + type}(offset, {`);
         if (ctx.useContextVariables) {
-          ctx.pushCode(`$parent: ${varName}.$parent,`);
-          ctx.pushCode(`$root: ${varName}.$root,`);
+          ctx.pushCode(`$parent: ${fieldVar}.$parent,`);
+          ctx.pushCode(`$root: ${fieldVar}.$root,`);
         }
         ctx.pushCode(`});`);
         ctx.pushCode(
-          `${varName} = ${tempVar}.result; offset = ${tempVar}.offset;`,
+          `${fieldVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
         );
         if (type !== this.alias) ctx.addReference(type);
       }
@@ -1488,10 +1486,10 @@ export class Parser {
     }
     ctx.pushCode(`switch(${tag}) {`);
     for (const tagString in this.options.choices) {
-      const tag = parseInt(tagString, 10);
-      const type = this.options.choices[tag];
+      const key = parseInt(tagString, 10);
+      const type = this.options.choices[key];
 
-      ctx.pushCode(`case ${tag}:`);
+      ctx.pushCode(`case ${key}:`);
       this.generateChoiceCase(ctx, this.varName, type);
       ctx.pushCode("break;");
     }
@@ -1661,9 +1659,9 @@ export class Parser {
         ctx.pushCode(`delete ${nestVar}.$root;`);
       }
     } else if (aliasRegistry.has(this.options.type!)) {
-      const tempVar = ctx.generateTmpVariable();
+      const resultVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
+        `var ${resultVar} = ${FUNCTION_PREFIX + this.options.type}(offset, {`,
       );
       if (ctx.useContextVariables) {
         const parentVar = ctx.generateVariable();
@@ -1672,7 +1670,7 @@ export class Parser {
       }
       ctx.pushCode(`});`);
       ctx.pushCode(
-        `${nestVar} = ${tempVar}.result; offset = ${tempVar}.offset;`,
+        `${nestVar} = ${resultVar}.result; offset = ${resultVar}.offset;`,
       );
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
