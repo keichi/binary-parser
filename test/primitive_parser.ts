@@ -38,6 +38,56 @@ function primitiveParserTests(
           c: 12345678,
         });
       });
+      describe("24-bit integer parsers", () => {
+        // https://github.com/keichi/binary-parser/issues/93
+        const buf = hexToBuf("f959a61a57c80fd3004801a9");
+
+        it("should parse big endian 24-bit integers", () => {
+          const parser = Parser.start()
+            .int24be("a")
+            .uint24be("b")
+            .int24be("c")
+            .uint24be("d");
+          expect(parser.parse(buf)).toStrictEqual({
+            a: -435802,
+            b: 1726408,
+            c: 1037056,
+            d: 4719017,
+          });
+        });
+
+        it("should parse little endian 24-bit integers", () => {
+          const parser = Parser.start()
+            .int24le("a")
+            .uint24le("b")
+            .int24le("c")
+            .uint24le("d");
+          expect(parser.parse(buf)).toStrictEqual({
+            a: -5875207,
+            b: 13129498,
+            c: 54031,
+            d: 11075912,
+          });
+        });
+
+        it("should follow endianness()", () => {
+          const be = Parser.start().int24("a").uint24("b");
+          const le = Parser.start().endianness("little").int24("a").uint24("b");
+          expect(be.parse(buf)).toStrictEqual({ a: -435802, b: 1726408 });
+          expect(le.parse(buf)).toStrictEqual({ a: -5875207, b: 13129498 });
+        });
+
+        it("should parse arrays of 24-bit integers", () => {
+          const parser = Parser.start()
+            .array("a", { type: "int24be", length: 2 })
+            .array("b", { type: "uint24le", length: 2 });
+          expect(parser.parse(buf)).toStrictEqual({
+            a: [-435802, 1726408],
+            b: [54031, 11075912],
+          });
+          expect(parser.sizeOf()).toBe(12);
+        });
+      });
       describe("BigInt64 parsers", () => {
         it("should parse uint64", () => {
           const parser = Parser.start().uint64be("a").uint64le("b");

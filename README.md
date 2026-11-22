@@ -12,7 +12,7 @@ data. Binary-parser dynamically generates and compiles the parser code
 on-the-fly, which runs as fast as a hand-written parser (which takes much more
 time and effort to write). Supported data types are:
 
-- [Integers](#uint8-16-32-64le-bename-options) (8, 16, 32 and 64 bit signed
+- [Integers](#uint8-16-24-32-64le-bename-options) (8, 16, 24, 32 and 64 bit signed
   and unsigned integers)
 - [Floating point numbers](#float-doublele-bename-options) (32 and 64 bit
   floating point values)
@@ -102,13 +102,13 @@ associated parser code is compiled on-the-fly and internally cached.
 Set the constructor function that should be called to create the object
 returned from the `parse` method.
 
-### [u]int{8, 16, 32, 64}{le, be}(name[, options])
+### [u]int{8, 16, 24, 32, 64}{le, be}(name[, options])
 Parse bytes as an integer and store it in a variable named `name`. `name`
 should consist only of alphanumeric characters and start with an alphabet.
-Number of bits can be chosen from 8, 16, 32 and 64. Byte-ordering can be either
-`le` for little endian or `be` for big endian. With no prefix, it parses as a
-signed number, with `u` prefix as an unsigned number. The runtime type
-returned by the 8, 16, 32 bit methods is `number` while the type
+Number of bits can be chosen from 8, 16, 24, 32 and 64. Byte-ordering can be
+either `le` for little endian or `be` for big endian. With no prefix, it parses
+as a signed number, with `u` prefix as an unsigned number. The runtime type
+returned by the 8, 16, 24, 32 bit methods is `number` while the type
 returned by the 64 bit is `bigint`.
 
 ```javascript
