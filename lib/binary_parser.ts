@@ -318,6 +318,9 @@ export class Parser {
       "latin1",
       "binary",
     ];
+    if (typeof encoding !== "string") {
+      throw new Error("Invalid encoding: must be a string");
+    }
     if (!allowed.includes(encoding.toLowerCase())) {
       throw new Error(`Invalid encoding: ${encoding}`);
     }

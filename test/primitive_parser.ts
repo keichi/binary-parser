@@ -638,6 +638,19 @@ function primitiveParserTests(
         }
       });
 
+      it("should throw an error on non-string encoding", () => {
+        const encoding: any = {
+          toLowerCase: () => "utf8",
+          toString: () => "utf8'); globalThis.PWNED_ENCODING=1; ('",
+        };
+        expect(() =>
+          new Parser()
+            .string("s", { length: 1, encoding })
+            .parse(new Uint8Array([0x61])),
+        ).toThrow("Invalid encoding");
+        expect((globalThis as any).PWNED_ENCODING).toBeUndefined();
+      });
+
       it("should throw an error on invalid references in options", () => {
         const payload = "x+(globalThis.INJECTED=1,0)";
         const parsers = [
