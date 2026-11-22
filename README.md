@@ -583,6 +583,19 @@ These options can be used in all parsers.
       });
     ```
 
+- `hidden` - If `true`, the field can be referenced by later fields (e.g. as
+  `length`) but is removed from the result once the parser that defines it
+  finishes. Fields of a nested parser that defines it can still reach it via
+  `$parent`, but it is gone by the time a field outside that parser runs.
+
+    ```javascript
+    // Use the length prefix to read the array, but don't keep it
+    const parser = new Parser()
+      .uint8("length", { hidden: true })
+      .array("data", { type: "uint8", length: "length" });
+    // => { data: [...] }
+    ```
+
 ### Context variables
 You can use some special fields while parsing to traverse your structure.
 These context variables will be removed after the parsing process.
