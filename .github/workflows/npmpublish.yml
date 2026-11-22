@@ -1,4 +1,4 @@
-# This workflow runs tests using node and then publishes the package to npm (with provenance) when a release is created
+# This workflow runs tests using node and then publishes the package to npm via trusted publishing (OIDC, with provenance) when a release is created
 # For more information see: https://docs.github.com/actions/publishing-packages/publishing-nodejs-packages
 
 name: publish
@@ -32,5 +32,3 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
