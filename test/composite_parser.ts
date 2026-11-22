@@ -1444,6 +1444,59 @@ function compositeParserTests(
       });
     });
 
+    describe("Hidden fields", () => {
+      it("should drop hidden fields after they are used", () => {
+        const parser = new Parser()
+          .uint8("len", { hidden: true })
+          .array("xs", { type: "uint8", length: "len" });
+        expect(parser.parse(factory([2, 7, 8]))).toStrictEqual({ xs: [7, 8] });
+      });
+
+      it("should drop hidden fields in nested parsers and array items", () => {
+        const item = new Parser()
+          .uint8("len", { hidden: true })
+          .string("s", { length: "len" });
+        const parser = new Parser()
+          .nest("n", { type: item })
+          .array("items", { type: item, length: 2 });
+        expect(
+          parser.parse(factory([1, 0x61, 1, 0x62, 2, 0x63, 0x64])),
+        ).toStrictEqual({ n: { s: "a" }, items: [{ s: "b" }, { s: "cd" }] });
+      });
+
+      it("should keep hidden fields visible to children via $parent", () => {
+        const parser = new Parser()
+          .useContextVars()
+          .uint8("len", { hidden: true })
+          .nest("n", {
+            type: new Parser().array("xs", {
+              type: "uint8",
+              length: function (this: { $parent: { len: number } }) {
+                return this.$parent.len;
+              },
+            }),
+          });
+        expect(parser.parse(factory([2, 7, 8]))).toStrictEqual({
+          n: { xs: [7, 8] },
+        });
+      });
+
+      it("should drop hidden bit fields and nested objects", () => {
+        const parser = new Parser()
+          .bit4("flags", { hidden: true })
+          .bit4("x")
+          .nest("header", {
+            type: new Parser().uint8("len"),
+            hidden: true,
+          })
+          .array("xs", { type: "uint8", length: "header.len" });
+        expect(parser.parse(factory([0xa5, 1, 9]))).toStrictEqual({
+          x: 5,
+          xs: [9],
+        });
+      });
+    });
+
     describe("Parse other fields after bit", () => {
       it("Parse uint8", () => {
         const buffer = factory([0, 1, 0, 4]);

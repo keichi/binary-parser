@@ -139,6 +139,7 @@ interface ParserOptions {
   offset?: number | string | ((item: any) => number);
   wrapper?: (buffer: Buffer) => Buffer;
   skip?: boolean;
+  hidden?: boolean;
 }
 
 type Types = PrimitiveTypes | ComplexTypes;
@@ -1149,10 +1150,17 @@ export class Parser {
 
   // Generate consecutive fields without consuming one stack frame per field.
   private generate(ctx: Context) {
-    this.generateField(ctx);
+    const fields: Parser[] = [this];
     for (let parser = this.next; parser; parser = parser.next) {
-      parser.generateField(ctx);
+      fields.push(parser);
     }
+    fields.forEach((field) => field.generateField(ctx));
+    // Hidden fields stay readable by later fields of this parser, then go.
+    fields.forEach((field) => {
+      if (field.options.hidden && field.varName) {
+        ctx.pushCode(`delete ${ctx.generateVariable(field.varName)};`);
+      }
+    });
     return ctx;
   }
 
