@@ -8,11 +8,11 @@ function compositeParserTests(
   name: string,
   factory: (array: Uint8Array | number[]) => Uint8Array,
 ) {
-  describe(`Composite parser (${name})`, () => {
-    function hexToBuf(hex: string): Uint8Array {
-      return factory(hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
-    }
+  function hexToBuf(hex: string): Uint8Array {
+    return factory(hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  }
 
+  describe(`Composite parser (${name})`, () => {
     describe("Array parser", () => {
       it("should parse array with length 0", () => {
         const parser = Parser.start()
@@ -953,9 +953,9 @@ function compositeParserTests(
             type: infoParser,
           });
 
-        const name = Array.from(new TextEncoder().encode("John\0Doe\0"));
+        const nameBytes = Array.from(new TextEncoder().encode("John\0Doe\0"));
         const age = [0x20];
-        const buffer = [...name, ...age];
+        const buffer = [...nameBytes, ...age];
 
         expect(personParser.parse(factory(buffer))).toStrictEqual({
           name: {
@@ -978,8 +978,8 @@ function compositeParserTests(
           });
         const personParser = new Parser().nest("name", {
           type: nameParser,
-          formatter: (name: { firstName: string; lastName: string }) =>
-            name.firstName + " " + name.lastName,
+          formatter: (n: { firstName: string; lastName: string }) =>
+            n.firstName + " " + n.lastName,
         });
 
         const buffer = factory(new TextEncoder().encode("John\0Doe\0"));
