@@ -1269,6 +1269,12 @@ function compositeParserTests(
 
         expect(parser.sizeOf()).toStrictEqual(1 + 4 + 10 + 2 + 3 + 8);
       });
+      it("should count size for long parser chains", () => {
+        const parser = new Parser();
+        for (let i = 0; i < 20000; ++i) parser.uint8(`a${i}`);
+
+        expect(parser.sizeOf()).toStrictEqual(20000);
+      });
       it("should assert parsed values", () => {
         const parser1 = Parser.start().string("msg", {
           encoding: "utf8",

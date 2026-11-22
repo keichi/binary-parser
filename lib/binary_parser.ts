@@ -919,7 +919,16 @@ export class Parser {
     )(ctx.imports, TextDecoder);
   }
 
+  // Sum consecutive fields without consuming one stack frame per field.
   sizeOf(): number {
+    let size = 0;
+    for (let p: Parser | undefined = this; p; p = p.next) {
+      size += p.fieldSizeOf();
+    }
+    return size;
+  }
+
+  private fieldSizeOf(): number {
     let size = NaN;
 
     if (Object.keys(PRIMITIVE_SIZES).indexOf(this.type) >= 0) {
@@ -961,10 +970,6 @@ export class Parser {
       size = (this.options.type as Parser).sizeOf();
     } else if (!this.type) {
       size = 0;
-    }
-
-    if (this.next) {
-      size += this.next.sizeOf();
     }
 
     return size;
