@@ -97,6 +97,61 @@ function primitiveParserTests(
         expect(Math.abs(result.a - 12.345) < FLT_EPSILON).toBeTruthy();
         expect(Math.abs(result.b - -0.0678) < FLT_EPSILON).toBeTruthy();
       });
+      it("should parse floating point types with parser endianness", () => {
+        const parser = Parser.start()
+          .endianess("little")
+          .int32("sampleTimeSec")
+          .uint16("sampleTimeMS")
+          .uint16("gpsFixFlags")
+          .double("lat")
+          .double("lng")
+          .float("ele")
+          .float("speed")
+          .uint16("pdop")
+          .uint16("hdop")
+          .uint16("vdop")
+          .skip(1)
+          .uint8("sat")
+          .uint16("bearing");
+
+        const view = new DataView(new ArrayBuffer(42));
+        view.setInt32(0, -123456, true);
+        view.setUint16(4, 789, true);
+        view.setUint16(6, 3, true);
+        view.setFloat64(8, 35.5, true);
+        view.setFloat64(16, -139.25, true);
+        view.setFloat32(24, 12.5, true);
+        view.setFloat32(28, 0.75, true);
+        view.setUint16(32, 1, true);
+        view.setUint16(34, 2, true);
+        view.setUint16(36, 3, true);
+        view.setUint8(39, 9);
+        view.setUint16(40, 270, true);
+
+        expect(
+          parser.parse(factory(new Uint8Array(view.buffer))),
+        ).toStrictEqual({
+          sampleTimeSec: -123456,
+          sampleTimeMS: 789,
+          gpsFixFlags: 3,
+          lat: 35.5,
+          lng: -139.25,
+          ele: 12.5,
+          speed: 0.75,
+          pdop: 1,
+          hdop: 2,
+          vdop: 3,
+          sat: 9,
+          bearing: 270,
+        });
+
+        const be = Parser.start().float("a").double("b");
+        expect(
+          be.parse(
+            factory([0x41, 0x48, 0, 0, 0xc0, 0x61, 0x68, 0, 0, 0, 0, 0]),
+          ),
+        ).toStrictEqual({ a: 12.5, b: -139.25 });
+      });
       it("should handle endianness", () => {
         const parser = Parser.start().int32le("little").int32be("big");
 
