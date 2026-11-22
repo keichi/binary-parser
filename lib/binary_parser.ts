@@ -1073,12 +1073,13 @@ export class Parser {
     }
   }
 
-  private generateAssert(ctx: Context) {
+  private generateAssert(
+    ctx: Context,
+    varName = ctx.generateVariable(this.varName),
+  ) {
     if (this.options.assert == null) {
       return;
     }
-
-    const varName = ctx.generateVariable(this.varName);
 
     switch (typeof this.options.assert) {
       case "function":
@@ -1216,7 +1217,9 @@ export class Parser {
           }
 
           if (parser.options.assert != null) {
-            parser.generateAssert(ctx);
+            // Bit fields may be flushed inside a nested scope, so use the
+            // variable name resolved when the field was queued.
+            parser.generateAssert(ctx, parser.varName);
           }
 
           if (parser.options.formatter) {

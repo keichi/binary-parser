@@ -363,6 +363,20 @@ function primitiveParserTests(
         expect(() => parser.parse(factory(bytes))).toThrow("Assertion error");
       });
 
+      it("should assert bit fields that continue into a nested parser", () => {
+        const parser = new Parser()
+          .bit4("x", { assert: 3 })
+          .nest("n", { type: new Parser().bit4("y") });
+
+        expect(parser.parse(factory([0x35]))).toStrictEqual({
+          x: 3,
+          n: { y: 5 },
+        });
+        expect(() => parser.parse(factory([0x45]))).toThrow(
+          "Assertion error: vars.x is 3",
+        );
+      });
+
       it("should preserve reusable nested bit parsers and callbacks", () => {
         const nibble = new Parser().bit4("value", {
           assert: (value) => value > 0,
