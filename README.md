@@ -142,7 +142,8 @@ const parser = new Parser()
 
 ### {float, double}{le, be}(name[, options])
 Parse bytes as a floating-point value and stores it to a variable named
-`name`.
+`name`. Without the `le`/`be` suffix (`float` and `double`), the byte-ordering
+set by [`endianness()`](#endiannessendianness) is used.
 
 ```javascript
 const parser = new Parser()
