@@ -1003,10 +1003,9 @@ export class Parser {
 
   // Generate consecutive fields without consuming one stack frame per field.
   private generate(ctx: Context) {
-    let parser: Parser | undefined = this;
-    while (parser) {
+    this.generateField(ctx);
+    for (let parser = this.next; parser; parser = parser.next) {
       parser.generateField(ctx);
-      parser = parser.next;
     }
     return ctx;
   }
