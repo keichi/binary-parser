@@ -921,9 +921,9 @@ export class Parser {
 
   // Sum consecutive fields without consuming one stack frame per field.
   sizeOf(): number {
-    let size = 0;
-    for (let p: Parser | undefined = this; p; p = p.next) {
-      size += p.fieldSizeOf();
+    let size = this.fieldSizeOf();
+    for (let parser = this.next; parser; parser = parser.next) {
+      size += parser.fieldSizeOf();
     }
     return size;
   }
