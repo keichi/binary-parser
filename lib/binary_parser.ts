@@ -1009,14 +1009,18 @@ export class Parser {
     ctx.pushCode("var offset = 0;");
     ctx.pushCode(`var vars = ${this.newObject(ctx)};`);
 
-    ctx.pushCode("vars.$parent = null;");
-    ctx.pushCode("vars.$root = vars;");
+    if (ctx.useContextVariables) {
+      ctx.pushCode("vars.$parent = null;");
+      ctx.pushCode("vars.$root = vars;");
+    }
 
     this.generate(ctx);
     this.resolveReferences(ctx);
 
-    ctx.pushCode("delete vars.$parent;");
-    ctx.pushCode("delete vars.$root;");
+    if (ctx.useContextVariables) {
+      ctx.pushCode("delete vars.$parent;");
+      ctx.pushCode("delete vars.$root;");
+    }
 
     ctx.pushCode("return vars;");
   }
