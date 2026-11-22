@@ -1024,19 +1024,23 @@ export class Parser {
   private addAliasedCode(ctx: Context) {
     ctx.pushCode(`function ${FUNCTION_PREFIX + this.alias}(offset, context) {`);
     ctx.pushCode(`var vars = ${this.newObject(ctx)};`);
-    ctx.pushCode(
-      "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
-    );
-    ctx.pushCode(`vars = Object.assign(vars, ctx);`);
+    if (ctx.useContextVariables) {
+      ctx.pushCode(
+        "var ctx = Object.assign({$parent: null, $root: vars}, context || {});",
+      );
+      ctx.pushCode(`vars = Object.assign(vars, ctx);`);
+    }
 
     this.generate(ctx);
 
     ctx.markResolved(this.alias!);
     this.resolveReferences(ctx);
 
-    ctx.pushCode(
-      "Object.keys(ctx).forEach(function (item) { delete vars[item]; });",
-    );
+    if (ctx.useContextVariables) {
+      ctx.pushCode(
+        "Object.keys(ctx).forEach(function (item) { delete vars[item]; });",
+      );
+    }
     ctx.pushCode("return { offset: offset, result: vars };");
     ctx.pushCode("}");
 
