@@ -395,6 +395,23 @@ function primitiveParserTests(
           second: { value: 140 },
         });
       });
+
+      it("should call formatters of bit fields continuing into a nested parser with the outer scope", () => {
+        const parser = new Parser()
+          .uint8("a")
+          .bit4("x", {
+            formatter: function (this: { a: number }, x: number) {
+              return this.a + x;
+            },
+          })
+          .nest("n", { type: new Parser().bit4("y") });
+
+        expect(parser.parse(factory([10, 0x35]))).toStrictEqual({
+          a: 10,
+          x: 13,
+          n: { y: 5 },
+        });
+      });
     });
 
     describe("String parser", () => {
