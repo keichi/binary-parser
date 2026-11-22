@@ -1137,7 +1137,11 @@ export class Parser {
     const parser = new Parser();
     parser.options = this.options;
     parser.generateAssert = this.generateAssert.bind(this);
-    parser.generateFormatter = this.generateFormatter.bind(this);
+    // Bit fields may be flushed inside a nested scope, so bind the formatter's
+    // `this` to the scope the field was declared in.
+    const thisVar = ctx.generateVariable();
+    parser.generateFormatter = (c: Context, v: string, f: Function) =>
+      this.generateFormatter(c, v, f, thisVar);
     parser.varName = ctx.generateVariable(this.varName);
     ctx.bitFields.push(parser);
 
@@ -1611,12 +1615,11 @@ export class Parser {
     ctx: Context,
     varName: string,
     formatter: Function,
+    thisVar = ctx.generateVariable(),
   ) {
     if (typeof formatter === "function") {
       const func = ctx.addImport(formatter);
-      ctx.pushCode(
-        `${varName} = ${func}.call(${ctx.generateVariable()}, ${varName});`,
-      );
+      ctx.pushCode(`${varName} = ${func}.call(${thisVar}, ${varName});`);
     }
   }
 
