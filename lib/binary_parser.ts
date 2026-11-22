@@ -399,38 +399,27 @@ export class Parser {
     return this.primitiveN("int32be", varName, options);
   }
 
-  private bigIntVersionCheck() {
-    if (!("getBigInt64" in DataView.prototype))
-      throw new Error("BigInt64 is unsupported on this runtime");
-  }
-
   int64(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian("int64"), varName, options);
   }
 
   int64be(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN("int64be", varName, options);
   }
 
   int64le(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN("int64le", varName, options);
   }
 
   uint64(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN(this.useThisEndian("uint64"), varName, options);
   }
 
   uint64be(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN("uint64be", varName, options);
   }
 
   uint64le(varName: string, options: ParserOptions = {}): this {
-    this.bigIntVersionCheck();
     return this.primitiveN("uint64le", varName, options);
   }
 
@@ -646,8 +635,8 @@ export class Parser {
         decoder = new TextDecoder(encoding);
       } catch (e) {
         if (!(e instanceof RangeError)) throw e;
+        throw new Error(`Invalid encoding: ${encoding}`, { cause: e });
       }
-      if (!decoder) throw new Error(`Invalid encoding: ${encoding}`);
     }
     options = { ...options, encoding, decoder };
 
