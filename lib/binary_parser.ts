@@ -285,6 +285,18 @@ const PRIMITIVE_LITTLE_ENDIANS: { [key in PrimitiveTypes]: boolean } = {
   doublebe: false,
 };
 
+// Encodings that TextDecoder doesn't support, decoded like Node.js Buffer
+const BYTE_ENCODINGS = ["hex", "binary", "base64", "base64url"];
+
+// Must not reference outer scope (see Context#addImport).
+function bytesToLatin1(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192) as any);
+  }
+  return s;
+}
+
 export class Parser {
   varName = "";
   type: Types = "";
@@ -629,7 +641,7 @@ export class Parser {
       throw new Error("Invalid encoding: must be a string");
     }
     let decoder: TextDecoder | undefined;
-    if (encoding.toLowerCase() !== "hex") {
+    if (!BYTE_ENCODINGS.includes(encoding.toLowerCase())) {
       try {
         decoder = new TextDecoder(encoding);
       } catch (e) {
@@ -1250,9 +1262,21 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const decoder = this.options.decoder;
-    const isHex = decoder === undefined;
-    const decode = isHex ? "" : `${ctx.addImport(decoder)}.decode`;
-    const toHex = 'b => b.toString(16).padStart(2, "0")';
+    const latin1 = (bytes: string) =>
+      `${ctx.addImport(bytesToLatin1)}(${bytes})`;
+    const decode = (bytes: string) => {
+      if (decoder) return `${ctx.addImport(decoder)}.decode(${bytes})`;
+      switch (this.options.encoding!.toLowerCase()) {
+        case "hex":
+          return `Array.from(${bytes}, b => b.toString(16).padStart(2, "0")).join('')`;
+        case "binary":
+          return latin1(bytes);
+        case "base64":
+          return `btoa(${latin1(bytes)})`;
+        default: // base64url
+          return `btoa(${latin1(bytes)}).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')`;
+      }
+    };
 
     if (this.options.length != null && this.options.zeroTerminated) {
       const len = ctx.generateTmpVariable();
@@ -1261,36 +1285,24 @@ export class Parser {
       ctx.pushCode(
         `while(offset - ${start} < ${len} && dataView.getUint8(offset) !== 0) offset++;`,
       );
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = ${decode}(buffer.subarray(${start}, offset));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
       ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
     } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
-          : `${name} = ${decode}(buffer.subarray(offset, offset + ${len}));`,
+        `${name} = ${decode(`buffer.subarray(offset, offset + ${len})`)};`,
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("while(dataView.getUint8(offset++) !== 0);");
       ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
-          : `${name} = ${decode}(buffer.subarray(${start}, offset - 1));`,
+        `${name} = ${decode(`buffer.subarray(${start}, offset - 1)`)};`,
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("offset = buffer.length;");
-      ctx.pushCode(
-        isHex
-          ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = ${decode}(buffer.subarray(${start}, offset));`,
-      );
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
     }
     if (this.options.stripNull) {
       ctx.pushCode(`${name} = ${name}.replace(/\\x00+$/g, '')`);
