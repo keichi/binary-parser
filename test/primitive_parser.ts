@@ -468,6 +468,33 @@ function primitiveParserTests(
 
         expect(parser.parse(buffer).msg).toStrictEqual("hあ𠮷");
       });
+      it("should parse binary and base64 encoded strings", () => {
+        // 6-byte pattern, so base64 of n copies is n copies of its base64
+        const pattern = [0x41, 0x80, 0xff, 0xfb, 0xef, 0x00];
+        const expected = {
+          binary: "A\x80\xff\xfb\xef\x00",
+          base64: "QYD/++8A",
+          Base64URL: "QYD_--8A",
+        };
+        // 4000 copies (24000 bytes) span several 8192-byte chunks
+        for (const n of [1, 4000]) {
+          const buffer = factory(
+            new Uint8Array(6 * n).map((_, i) => pattern[i % 6]),
+          );
+          for (const [encoding, msg] of Object.entries(expected)) {
+            const parser = Parser.start().string("msg", {
+              length: buffer.length,
+              encoding,
+            });
+            expect(parser.parse(buffer).msg).toStrictEqual(msg.repeat(n));
+          }
+        }
+        const padded = Parser.start().string("msg", {
+          length: 1,
+          encoding: "base64url",
+        });
+        expect(padded.parse(factory([0xfb])).msg).toStrictEqual("-w");
+      });
       it("should parse variable length string", () => {
         const buffer = hexToBuf("0c68656c6c6f2c20776f726c64");
         const parser = Parser.start()
