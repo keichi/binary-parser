@@ -158,8 +158,11 @@ characters and start with an alphabet. `options` is an object which can have
 the following keys:
 
 - `encoding` - (Optional, defaults to `utf8`) Specify which encoding to use.
-  Supported encodings include `"hex"` and all encodings supported by
-  [`TextDecoder`](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/encoding).
+  Accepts `"hex"` (case-insensitive) and any label accepted by
+  [`TextDecoder`](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/encoding)
+  (e.g. `"utf-8"`, `"utf-16le"`, `"shift_jis"`). Other values throw when the
+  parser is defined. Note that `TextDecoder` treats `"latin1"` and `"ascii"`
+  as `windows-1252`.
 - `length ` - (Optional) Length of the string. Can be a number, string or a
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
