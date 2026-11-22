@@ -634,8 +634,8 @@ export class Parser {
         decoder = new TextDecoder(encoding);
       } catch (e) {
         if (!(e instanceof RangeError)) throw e;
+        throw new Error(`Invalid encoding: ${encoding}`, { cause: e });
       }
-      if (!decoder) throw new Error(`Invalid encoding: ${encoding}`);
     }
     options = { ...options, encoding, decoder };
 
