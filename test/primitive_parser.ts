@@ -459,6 +459,15 @@ function primitiveParserTests(
 
         expect(parser.parse(buffer).msg).toStrictEqual(text);
       });
+      it("should parse string with a TextDecoder encoding (utf-16le)", () => {
+        const buffer = hexToBuf("6800423042d8b7df");
+        const parser = Parser.start().string("msg", {
+          length: buffer.length,
+          encoding: "utf-16le",
+        });
+
+        expect(parser.parse(buffer).msg).toStrictEqual("hあ𠮷");
+      });
       it("should parse variable length string", () => {
         const buffer = hexToBuf("0c68656c6c6f2c20776f726c64");
         const parser = Parser.start()
@@ -636,6 +645,19 @@ function primitiveParserTests(
         } catch (e: any) {
           expect(e.message.includes("Invalid encoding")).toBeTruthy();
         }
+      });
+
+      it("should throw an error on non-string encoding", () => {
+        const encoding: any = {
+          toLowerCase: () => "utf8",
+          toString: () => "utf8'); globalThis.PWNED_ENCODING=1; ('",
+        };
+        expect(() =>
+          new Parser()
+            .string("s", { length: 1, encoding })
+            .parse(new Uint8Array([0x61])),
+        ).toThrow("Invalid encoding");
+        expect((globalThis as any).PWNED_ENCODING).toBeUndefined();
       });
 
       it("should throw an error on invalid references in options", () => {

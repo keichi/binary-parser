@@ -126,6 +126,7 @@ interface ParserOptions {
   type?: string | Parser;
   formatter?: (item: any) => any;
   encoding?: string;
+  decoder?: TextDecoder;
   readUntil?: "eof" | ((item: any, buffer: Buffer) => boolean);
   greedy?: boolean;
   choices?: { [key: number]: string | Parser };
@@ -305,23 +306,6 @@ export class Parser {
       throw new Error(`Invalid field name: ${name}`);
     }
     return name;
-  }
-
-  private sanitizeEncoding(encoding: string): string {
-    const allowed = [
-      "utf8",
-      "utf-8",
-      "ascii",
-      "hex",
-      "base64",
-      "base64url",
-      "latin1",
-      "binary",
-    ];
-    if (!allowed.includes(encoding.toLowerCase())) {
-      throw new Error(`Invalid encoding: ${encoding}`);
-    }
-    return encoding;
   }
 
   private primitiveGenerateN(type: PrimitiveTypes, ctx: Context) {
@@ -640,8 +624,20 @@ export class Parser {
       );
     }
 
-    options = { ...options, encoding: options.encoding || "utf8" };
-    this.sanitizeEncoding(options.encoding!);
+    const encoding = options.encoding || "utf8";
+    if (typeof encoding !== "string") {
+      throw new Error("Invalid encoding: must be a string");
+    }
+    let decoder: TextDecoder | undefined;
+    if (encoding.toLowerCase() !== "hex") {
+      try {
+        decoder = new TextDecoder(encoding);
+      } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+      }
+      if (!decoder) throw new Error(`Invalid encoding: ${encoding}`);
+    }
+    options = { ...options, encoding, decoder };
 
     return this.setNextParser("string", varName, options);
   }
@@ -912,9 +908,8 @@ export class Parser {
     const ctx = this.getContext(importPath);
     this.compiled = new Function(
       importPath,
-      "TextDecoder",
       `return function (buffer, constructorFn) { ${ctx.code} };`,
-    )(ctx.imports, TextDecoder);
+    )(ctx.imports);
   }
 
   // Sum consecutive fields without consuming one stack frame per field.
@@ -1254,8 +1249,9 @@ export class Parser {
   private generateString(ctx: Context) {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
-    const encoding = this.options.encoding!;
-    const isHex = encoding.toLowerCase() === "hex";
+    const decoder = this.options.decoder;
+    const isHex = decoder === undefined;
+    const decode = isHex ? "" : `${ctx.addImport(decoder)}.decode`;
     const toHex = 'b => b.toString(16).padStart(2, "0")';
 
     if (this.options.length != null && this.options.zeroTerminated) {
@@ -1268,7 +1264,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
+          : `${name} = ${decode}(buffer.subarray(${start}, offset));`,
       );
       ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
     } else if (this.options.length != null) {
@@ -1276,7 +1272,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(offset, offset + ${len}), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(offset, offset + ${len}));`,
+          : `${name} = ${decode}(buffer.subarray(offset, offset + ${len}));`,
       );
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
@@ -1285,7 +1281,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset - 1), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset - 1));`,
+          : `${name} = ${decode}(buffer.subarray(${start}, offset - 1));`,
       );
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
@@ -1293,7 +1289,7 @@ export class Parser {
       ctx.pushCode(
         isHex
           ? `${name} = Array.from(buffer.subarray(${start}, offset), ${toHex}).join('');`
-          : `${name} = new TextDecoder('${encoding}').decode(buffer.subarray(${start}, offset));`,
+          : `${name} = ${decode}(buffer.subarray(${start}, offset));`,
       );
     }
     if (this.options.stripNull) {
