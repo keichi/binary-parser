@@ -202,8 +202,9 @@ keys:
 
 - `type` - (Required) Type of the array element. Can be a string or a user
   defined `Parser` object. If it's a string, you have to choose from
-  [u]int{8, 16, 32, 64}{le, be}, {float, double}{le, be}, or an alias defined
-  with `namely()`.
+  [u]int{8, 16, 24, 32, 48, 64}{le, be}, {float, double}{le, be}, or an alias
+  defined with `namely()`. Without the `le`/`be` suffix, the byte-ordering set
+  by [`endianness()`](#endiannessendianness) is used.
 - `length` - (either `length`, `lengthInBytes`, or `readUntil` is required)
   Length of the array. Can be a number, string or a function. Use number for
   statically sized arrays.
@@ -328,7 +329,8 @@ Useful for parsing binary formats such as ELF where the offset of a field is
 pointed by another field.
 
 - `type` - (Required) Can be a string `[u]int{8, 16, 32, 64}{le, be}`
-   or a user defined `Parser` object.
+   or a user defined `Parser` object. Without the `le`/`be` suffix, the
+   byte-ordering set by [`endianness()`](#endiannessendianness) is used.
 - `offset` - (Required) Indicates absolute offset from the beginning of the
   input buffer. Can be a number, string or a function.
 
