@@ -564,7 +564,8 @@ These options can be used in all parsers.
   result will be compared with it with `===` (strict equality check), and an
   exception is thrown if they mismatch. On the other hand, if `assert` is a
   function, that function is executed with one argument (the parsed result)
-  and if it returns false, an exception is thrown.
+  and if it returns false, an exception is thrown. Inside the function, `this`
+  is the object that the field belongs to (the same as in `formatter`).
 
     ```javascript
     // simple magic number validation

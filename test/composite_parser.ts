@@ -1442,6 +1442,42 @@ function compositeParserTests(
           parser3.parse(buffer6);
         }).toThrow();
       });
+
+      it("should call assert with the enclosing object as this", () => {
+        const sumOfAB = {
+          assert(this: { a: number; b: number }, x: number | string) {
+            return this.a + this.b === x;
+          },
+        };
+        const item = new Parser().uint8("a").uint8("b").uint8("c", sumOfAB);
+        const bits = new Parser().bit4("a").bit2("b").bit2("c", sumOfAB);
+
+        const nested = new Parser().nest("n", { type: item });
+        expect(nested.parse(factory([1, 2, 3]))).toStrictEqual({
+          n: { a: 1, b: 2, c: 3 },
+        });
+        expect(() => nested.parse(factory([1, 2, 4]))).toThrow(
+          "Assertion error",
+        );
+
+        const array = new Parser().array("items", { type: item, length: 2 });
+        expect(array.parse(factory([1, 2, 3, 4, 5, 9]))).toStrictEqual({
+          items: [
+            { a: 1, b: 2, c: 3 },
+            { a: 4, b: 5, c: 9 },
+          ],
+        });
+        expect(() => array.parse(factory([1, 2, 3, 4, 5, 6]))).toThrow(
+          "Assertion error",
+        );
+
+        // a=1, b=2, c=3
+        const bitNest = new Parser().nest("n", { type: bits });
+        expect(bitNest.parse(factory([0x1b]))).toStrictEqual({
+          n: { a: 1, b: 2, c: 3 },
+        });
+        expect(() => bitNest.parse(factory([0x1a]))).toThrow("Assertion error");
+      });
     });
 
     describe("Parse other fields after bit", () => {

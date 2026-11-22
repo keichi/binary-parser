@@ -1230,6 +1230,7 @@ export class Parser {
   private generateAssert(
     ctx: Context,
     varName = ctx.generateVariable(this.varName),
+    thisVar = ctx.generateVariable(),
   ) {
     if (this.options.assert == null) {
       return;
@@ -1239,7 +1240,7 @@ export class Parser {
       case "function":
         {
           const func = ctx.addImport(this.options.assert);
-          ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
+          ctx.pushCode(`if (!${func}.call(${thisVar}, ${varName})) {`);
         }
         break;
       case "number":
@@ -1291,10 +1292,11 @@ export class Parser {
     // Retain only this field's metadata, not the rest of the parser chain.
     const parser = new Parser();
     parser.options = this.options;
-    parser.generateAssert = this.generateAssert.bind(this);
-    // Bit fields may be flushed inside a nested scope, so bind the formatter's
-    // `this` to the scope the field was declared in.
+    // Bit fields may be flushed inside a nested scope, so bind the assert's and
+    // formatter's `this` to the scope the field was declared in.
     const thisVar = ctx.generateVariable();
+    parser.generateAssert = (c: Context, v?: string) =>
+      this.generateAssert(c, v, thisVar);
     parser.generateFormatter = (c: Context, v: string, f: Function) =>
       this.generateFormatter(c, v, f, thisVar);
     parser.varName = ctx.generateVariable(this.varName);
