@@ -388,6 +388,33 @@ If you need big-endian bit ordering while using little-endian
 byte ordering, you can parse bit fields in a separate `Parser` with
 `.endianness("big")` and embed it using `.nest()`.
 
+#### Packed little-endian words
+
+Bit-field extraction order and byte order are separate: the bit-field parser
+assembles a multi-byte group in big-endian byte order, even when
+`.endianness("little")` selects fields from its least significant end. Setting
+that option alone does not byte-swap a little-endian packed integer.
+
+For a 16-bit date with month in bits 15–12, day in bits 11–7 and year minus
+2000 in bits 6–0, first reverse the two encoded bytes with `wrapped`, then
+read the fields in their most-significant-first order:
+
+```javascript
+const parser = new Parser().wrapped("date", {
+  length: 2,
+  wrapper: buffer => Uint8Array.from(buffer).reverse(),
+  type: new Parser()
+    .bit4("month")
+    .bit5("day")
+    .bit7("year", { formatter: year => year + 2000 })
+});
+```
+
+For input `Uint8Array.of(0x91, 0x13)` (the little-endian encoding of `0x1391`),
+this returns `{ date: { month: 1, day: 7, year: 2017 } }`. The wrapper copies
+the bytes before reversing them, leaving the input buffer unchanged. Reverse
+each packed word separately, not an entire packet containing multiple words.
+
 ### namely(alias)
 Set an alias to this parser, so that it can be referred to by name in methods
 like `.array`, `.nest` and `.choice`, without the requirement to have an
