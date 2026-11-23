@@ -14,6 +14,31 @@ function compositeParserTests(
 
   describe(`Composite parser (${name})`, () => {
     describe("Array parser", () => {
+      it("should pass the input buffer to assertions in array elements", () => {
+        const input = factory([3, 4, 7, 5, 6, 11]);
+        let index = 0;
+        const element = new Parser()
+          .uint8("a")
+          .uint8("b")
+          .uint8("checksum", {
+            assert: (value, buffer) => {
+              expect(buffer).toBe(input);
+              const offset = index++ * 3;
+              return value === buffer[offset] + buffer[offset + 1];
+            },
+          });
+        const parser = new Parser().array("items", {
+          type: element,
+          length: 2,
+        });
+        expect(parser.parse(input)).toStrictEqual({
+          items: [
+            { a: 3, b: 4, checksum: 7 },
+            { a: 5, b: 6, checksum: 11 },
+          ],
+        });
+        expect(index).toBe(2);
+      });
       it("should resolve element type without endian suffix by endianness()", () => {
         const buffer = factory([0x01, 0x00, 0x00, 0x02]);
         expect(

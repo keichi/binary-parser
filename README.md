@@ -563,8 +563,10 @@ These options can be used in all parsers.
   numbers and so on). If `assert` is a `string` or `number`, the actual parsed
   result will be compared with it with `===` (strict equality check), and an
   exception is thrown if they mismatch. On the other hand, if `assert` is a
-  function, that function is executed with one argument (the parsed result)
-  and if it returns false, an exception is thrown.
+  function, that function receives the parsed result and the buffer currently
+  being parsed (`Buffer` or `Uint8Array`). If it returns false, an exception is
+  thrown. The second argument allows checksums to inspect the encoded bytes;
+  existing predicates that only use the first argument continue to work.
 
     ```javascript
     // simple magic number validation
@@ -582,6 +584,20 @@ These options can be used in all parsers.
         }
       });
     ```
+
+  For example, validate a byte checksum over two preceding bytes:
+
+    ```javascript
+    const packet = new Parser()
+      .uint8("a")
+      .uint8("b")
+      .uint8("checksum", {
+        assert: (checksum, buffer) => checksum === ((buffer[0] + buffer[1]) & 0xff)
+      });
+    ```
+
+  The buffer is the supplied view, not its underlying `ArrayBuffer`. In a
+  wrapped parser it is the buffer returned by the wrapper.
 
 ### Context variables
 You can use some special fields while parsing to traverse your structure.

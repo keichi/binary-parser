@@ -28,6 +28,33 @@ function primitiveParserTests(
 
         expect(parser.parse(buffer)).toStrictEqual({});
       });
+
+      it("should pass the original input view to checksum assertions", () => {
+        const input = factory([255, 3, 4, 7, 255]).subarray(1, 4);
+        const parser = new Parser()
+          .uint8("a")
+          .uint8("b")
+          .uint8("checksum", {
+            assert: function (this: { a: number }, value, buffer) {
+              expect(buffer).toBe(input);
+              expect(this.a).toBe(3);
+              return value === buffer[0] + buffer[1];
+            },
+          });
+        expect(parser.parse(input)).toStrictEqual({ a: 3, b: 4, checksum: 7 });
+        input[2] = 8;
+        expect(() => parser.parse(input)).toThrow("Assertion error");
+      });
+
+      it("should pass the input buffer to bit field assertions", () => {
+        const input = factory([0x12]);
+        const parser = new Parser()
+          .bit4("high", {
+            assert: (value, buffer) => value === buffer[0] >> 4,
+          })
+          .bit4("low");
+        expect(parser.parse(input)).toStrictEqual({ high: 1, low: 2 });
+      });
       it("should parse integer types", () => {
         const parser = Parser.start().uint8("a").int16le("b").uint32be("c");
 

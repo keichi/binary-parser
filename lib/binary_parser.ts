@@ -121,7 +121,10 @@ const FUNCTION_PREFIX = "___parser_";
 
 interface ParserOptions {
   length?: number | string | ((item: any) => number);
-  assert?: number | string | ((item: number | string) => boolean);
+  assert?:
+    | number
+    | string
+    | ((item: number | string, buffer: Uint8Array) => boolean);
   lengthInBytes?: number | string | ((item: any) => number);
   type?: string | Parser;
   formatter?: (item: any) => any;
@@ -1239,7 +1242,7 @@ export class Parser {
       case "function":
         {
           const func = ctx.addImport(this.options.assert);
-          ctx.pushCode(`if (!${func}.call(vars, ${varName})) {`);
+          ctx.pushCode(`if (!${func}.call(vars, ${varName}, buffer)) {`);
         }
         break;
       case "number":
