@@ -409,8 +409,8 @@ export class Parser {
     if (
       typeof type === "string" &&
       !aliasRegistry.has(type) &&
-      !(type in PRIMITIVE_SIZES) &&
-      type + this.endian in PRIMITIVE_SIZES
+      !Object.hasOwn(PRIMITIVE_SIZES, type) &&
+      Object.hasOwn(PRIMITIVE_SIZES, type + this.endian)
     ) {
       return (type + this.endian) as T;
     }
@@ -824,7 +824,7 @@ export class Parser {
     if (
       typeof options.type === "string" &&
       !aliasRegistry.has(options.type) &&
-      !(options.type in PRIMITIVE_SIZES)
+      !Object.hasOwn(PRIMITIVE_SIZES, options.type)
     ) {
       throw new Error(`Array element type "${options.type}" is unknown.`);
     }
@@ -872,7 +872,7 @@ export class Parser {
       if (
         typeof value === "string" &&
         !aliasRegistry.has(value) &&
-        !(value in PRIMITIVE_SIZES)
+        !Object.hasOwn(PRIMITIVE_SIZES, value)
       ) {
         throw new Error(`Choice type "${value}" is unknown.`);
       }
@@ -929,7 +929,7 @@ export class Parser {
 
     if (
       typeof options.type === "string" &&
-      !(options.type in PRIMITIVE_SIZES) &&
+      !Object.hasOwn(PRIMITIVE_SIZES, options.type) &&
       !aliasRegistry.has(options.type)
     ) {
       throw new Error(`Pointer type "${options.type}" is unknown.`);
