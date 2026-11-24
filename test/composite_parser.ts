@@ -1150,6 +1150,47 @@ function compositeParserTests(
         expect(result.nested.three).toStrictEqual(0x45);
       });
 
+      it("should flush bits before an empty nest at the end", () => {
+        const parser = new Parser()
+          .bit4("value")
+          .nest("empty", { type: new Parser() });
+
+        expect(parser.parse(factory([0xf0]))).toStrictEqual({
+          value: 15,
+          empty: {},
+        });
+      });
+
+      it("should flush bits before empty nests followed by a byte", () => {
+        const parser = new Parser()
+          .bit4("value")
+          .nest("first", { type: new Parser() })
+          .nest("second", { type: new Parser() })
+          .uint8("tail");
+
+        expect(parser.parse(factory([0xf0, 42]))).toStrictEqual({
+          value: 15,
+          first: {},
+          second: {},
+          tail: 42,
+        });
+      });
+
+      it("should keep bits packed across an empty nest", () => {
+        const parser = new Parser()
+          .bit4("high")
+          .nest("empty", { type: new Parser() })
+          .bit4("low")
+          .uint8("tail");
+
+        expect(parser.parse(factory([0xf5, 42]))).toStrictEqual({
+          high: 15,
+          empty: {},
+          low: 5,
+          tail: 42,
+        });
+      });
+
       it("bit before nest should work", () => {
         const parser = Parser.start()
           .useContextVars()
