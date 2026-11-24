@@ -1492,6 +1492,43 @@ function compositeParserTests(
     });
 
     describe("Wrapper", () => {
+      it("should advance to the original EOF after transforming the remainder", () => {
+        const makeParser = () =>
+          new Parser()
+            .uint8("prefix")
+            .wrapped("body", {
+              readUntil: "eof",
+              wrapper: (buffer: Uint8Array) => factory([buffer[0]]),
+              type: new Parser().uint8("value").saveOffset("innerOffset"),
+            })
+            .saveOffset("outerOffset");
+        const buffer = factory([99, 7, 8, 9, 100]).subarray(1, 4);
+        expect(makeParser().parse(buffer)).toStrictEqual({
+          prefix: 7,
+          body: { value: 8, innerOffset: 1 },
+          outerOffset: 3,
+        });
+        expect(() => makeParser().uint8("pastEnd").parse(buffer)).toThrow(
+          RangeError,
+        );
+      });
+
+      it("should consume an EOF wrapper inside an EOF array", () => {
+        const parser = new Parser().array("items", {
+          readUntil: "eof",
+          type: new Parser().wrapped("body", {
+            readUntil: "eof",
+            clone: true,
+            wrapper: (buffer: Uint8Array) => buffer,
+            type: new Parser().uint8("value"),
+          }),
+        });
+        expect(parser.parse(factory([7, 8, 9]))).toStrictEqual({
+          items: [{ body: { value: 7 } }],
+        });
+        expect(parser.parse(factory([]))).toStrictEqual({ items: [] });
+      });
+
       it.skipIf(!isNode)(
         "should parse deflated then inflated data",
         async () => {
