@@ -1766,15 +1766,30 @@ export class Parser {
     if (this.options.type instanceof Parser) {
       if (this.varName) {
         ctx.pushCode(`${wrapperVar} = ${this.options.type.newObject(ctx)};`);
+        if (ctx.useContextVariables) {
+          const parentVar = ctx.generateVariable();
+          ctx.pushCode(`${wrapperVar}.$parent = ${parentVar};`);
+          ctx.pushCode(`${wrapperVar}.$root = ${parentVar}.$root;`);
+        }
       }
       ctx.pushPath(this.varName);
       this.options.type.generate(ctx);
       ctx.popPath(this.varName);
+      if (this.varName && ctx.useContextVariables) {
+        ctx.pushCode(`delete ${wrapperVar}.$parent;`);
+        ctx.pushCode(`delete ${wrapperVar}.$root;`);
+      }
     } else if (aliasRegistry.has(this.options.type!)) {
       const tempVar = ctx.generateTmpVariable();
       ctx.pushCode(
-        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0);`,
+        `var ${tempVar} = ${FUNCTION_PREFIX + this.options.type}(0, {`,
       );
+      if (ctx.useContextVariables) {
+        const parentVar = ctx.generateVariable();
+        ctx.pushCode(`$parent: ${parentVar},`);
+        ctx.pushCode(`$root: ${parentVar}.$root,`);
+      }
+      ctx.pushCode("});");
       ctx.pushCode(`${wrapperVar} = ${tempVar}.result;`);
       if (this.options.type !== this.alias) {
         ctx.addReference(this.options.type!);
