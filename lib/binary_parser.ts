@@ -1477,6 +1477,7 @@ export class Parser {
       ctx.pushCode(`${varName} = buffer.subarray(${start}, offset);`);
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${varName} = buffer.subarray(offset);`);
+      ctx.pushCode("offset = buffer.length;");
     } else {
       const len = ctx.generateOption(this.options.length!);
 

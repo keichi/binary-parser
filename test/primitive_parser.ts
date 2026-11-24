@@ -798,6 +798,45 @@ function primitiveParserTests(
         const buffer = factory(new TextEncoder().encode("John\0Doe\0"));
         expect(bufferParser.parse(buffer)).toStrictEqual({ buf: buffer });
       });
+
+      it("should advance the offset after reading a buffer to eof", () => {
+        const parser = new Parser()
+          .uint8("header")
+          .buffer("data", { readUntil: "eof" })
+          .saveOffset("end");
+        const input = factory([0xff, 1, 2, 3, 0xff]).subarray(1, 4);
+
+        expect(parser.parse(input)).toStrictEqual({
+          header: 1,
+          data: factory([2, 3]),
+          end: 3,
+        });
+        expect(parser.parse(factory([1]))).toStrictEqual({
+          header: 1,
+          data: factory([]),
+          end: 1,
+        });
+      });
+
+      it("should consume an eof buffer inside an array element", () => {
+        const parser = new Parser().array("items", {
+          type: new Parser().buffer("data", { readUntil: "eof", clone: true }),
+          readUntil: "eof",
+        });
+
+        expect(parser.parse(factory([1, 2]))).toStrictEqual({
+          items: [{ data: factory([1, 2]) }],
+        });
+        expect(parser.parse(factory([]))).toStrictEqual({ items: [] });
+      });
+
+      it("should not reread consumed bytes after an eof buffer", () => {
+        const parser = new Parser()
+          .buffer("data", { readUntil: "eof" })
+          .uint8("after");
+
+        expect(() => parser.parse(factory([1, 2]))).toThrow(RangeError);
+      });
     });
 
     describe("Security", () => {
