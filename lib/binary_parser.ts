@@ -1264,27 +1264,15 @@ export class Parser {
   }
 
   private nextNotBit() {
-    // Used to test if next type is a bitN or not
-    if (this.next) {
-      if (this.next.type === "nest") {
-        // For now consider a nest as a bit
-        if (this.next.options.type instanceof Parser) {
-          // Something in the nest
-          if (this.next.options.type.next) {
-            return this.next.options.type.next.type !== "bit";
-          }
-          return false;
-        } else {
-          // Nest is empty. For now assume this means bit is not next. However what if something comes after the nest?
-          return true;
-        }
-      } else {
-        return this.next.type !== "bit";
+    let next = this.next;
+    while (next?.type === "nest" && next.options.type instanceof Parser) {
+      if (next.options.type.next) {
+        return next.options.type.next.type !== "bit";
       }
-    } else {
-      // Nothing else so next can't be bits
-      return true;
+      // Empty nests consume no bits; inspect the field after them.
+      next = next.next;
     }
+    return next?.type !== "bit";
   }
 
   private generateBit(ctx: Context) {
