@@ -1591,6 +1591,11 @@ export class Parser {
         `if (offset <= ${start}) throw new Error("Array element did not consume any bytes");`,
       );
     }
+    if (lengthInBytes !== undefined && this.options.readUntil == null) {
+      ctx.pushCode(
+        `if (offset > ${counter}) throw new RangeError("Array element exceeds lengthInBytes");`,
+      );
+    }
 
     ctx.pushCode("}");
 

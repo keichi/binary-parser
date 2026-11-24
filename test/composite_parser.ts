@@ -14,6 +14,67 @@ function compositeParserTests(
 
   describe(`Composite parser (${name})`, () => {
     describe("Array parser", () => {
+      it("should reject a primitive that crosses lengthInBytes", () => {
+        const parser = new Parser()
+          .array("items", {
+            type: "uint16be",
+            lengthInBytes: 3,
+          })
+          .uint8("tail");
+        expect(() => parser.parse(factory([0, 1, 0, 2, 42]))).toThrow(
+          "Array element exceeds lengthInBytes",
+        );
+      });
+
+      for (const aliased of [false, true]) {
+        it(`should reject a variable element crossing lengthInBytes (alias ${aliased})`, () => {
+          const element = new Parser()
+            .uint8("size")
+            .buffer("data", { length: "size" });
+          const type = aliased
+            ? element.namely("byteBoundaryElement").alias!
+            : element;
+          const parser = new Parser()
+            .uint8("size")
+            .array("items", {
+              type,
+              lengthInBytes: "size",
+            })
+            .uint8("tail");
+          expect(() => parser.parse(factory([2, 2, 10, 20, 42]))).toThrow(
+            "Array element exceeds lengthInBytes",
+          );
+        });
+      }
+
+      it("should finish lengthInBytes exactly before the trailing field", () => {
+        const parser = new Parser()
+          .uint8("size")
+          .array("items", {
+            type: "uint16be",
+            lengthInBytes: function (this: any) {
+              return this.size;
+            },
+          })
+          .uint8("tail");
+        expect(parser.parse(factory([4, 0, 1, 0, 2, 42]))).toStrictEqual({
+          size: 4,
+          items: [1, 2],
+          tail: 42,
+        });
+      });
+
+      it("should retain readUntil precedence over lengthInBytes", () => {
+        const parser = new Parser().array("items", {
+          type: "uint8",
+          readUntil: "eof",
+          lengthInBytes: 1,
+        });
+        expect(parser.parse(factory([1, 2, 3]))).toStrictEqual({
+          items: [1, 2, 3],
+        });
+      });
+
       it("should resolve element type without endian suffix by endianness()", () => {
         const buffer = factory([0x01, 0x00, 0x00, 0x02]);
         expect(
