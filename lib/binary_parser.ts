@@ -47,6 +47,14 @@ class Context {
     this.pushCode(`throw new Error(${err});`);
   }
 
+  generateOptionOnce(val: number | string | Function): string {
+    const expression = this.generateOption(val);
+    if (typeof val === "number") return expression;
+    const variable = this.generateTmpVariable();
+    this.pushCode(`var ${variable} = ${expression};`);
+    return variable;
+  }
+
   generateTmpVariable(): string {
     return "$tmp" + this.tmpVariableCount++;
   }
@@ -1435,7 +1443,7 @@ export class Parser {
       ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
       ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
     } else if (this.options.length != null) {
-      const len = ctx.generateOption(this.options.length);
+      const len = ctx.generateOptionOnce(this.options.length);
       ctx.pushCode(
         `${name} = ${decode(`buffer.subarray(offset, offset + ${len})`)};`,
       );
@@ -1478,7 +1486,7 @@ export class Parser {
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${varName} = buffer.subarray(offset);`);
     } else {
-      const len = ctx.generateOption(this.options.length!);
+      const len = ctx.generateOptionOnce(this.options.length!);
 
       ctx.pushCode(`${varName} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
@@ -1490,7 +1498,10 @@ export class Parser {
   }
 
   private generateArray(ctx: Context) {
-    const length = ctx.generateOption(this.options.length!);
+    const length =
+      this.options.readUntil == null && this.options.lengthInBytes == null
+        ? ctx.generateOptionOnce(this.options.length!)
+        : "";
     const lengthInBytes =
       this.options.lengthInBytes == null
         ? undefined
@@ -1739,7 +1750,7 @@ export class Parser {
     } else if (this.options.readUntil === "eof") {
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset);`);
     } else {
-      const len = ctx.generateOption(this.options.length!);
+      const len = ctx.generateOptionOnce(this.options.length!);
       ctx.pushCode(`${wrappedBuf} = buffer.subarray(offset, offset + ${len});`);
       ctx.pushCode(`offset += ${len};`);
     }
