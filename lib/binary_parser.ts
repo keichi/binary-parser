@@ -705,6 +705,7 @@ export class Parser {
     this.sanitizeFieldName(alias);
     aliasRegistry.set(alias, this);
     this.alias = alias;
+    this.compiled = undefined;
     return this;
   }
 
@@ -963,6 +964,7 @@ export class Parser {
 
   useContextVars(useContextVariables = true): this {
     this.useContextVariables = useContextVariables;
+    this.compiled = undefined;
 
     return this;
   }
@@ -973,6 +975,7 @@ export class Parser {
     }
 
     this.constructorFn = constructorFn;
+    this.compiled = undefined;
 
     return this;
   }
@@ -1143,6 +1146,7 @@ export class Parser {
       this.next = parser;
     }
     this.head = parser;
+    this.compiled = undefined;
 
     return this;
   }
