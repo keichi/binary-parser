@@ -1406,6 +1406,11 @@ export class Parser {
     const name = ctx.generateVariable(this.varName);
     const start = ctx.generateTmpVariable();
     const decoder = this.options.decoder;
+    const unitSize =
+      decoder?.encoding === "utf-16le" || decoder?.encoding === "utf-16be"
+        ? 2
+        : 1;
+    const readUnit = `dataView.getUint${unitSize * 8}(offset)`;
     const latin1 = (bytes: string) =>
       `${ctx.addImport(bytesToLatin1)}(${bytes})`;
     const decode = (bytes: string) => {
@@ -1430,10 +1435,16 @@ export class Parser {
       ctx.pushCode(`var ${len} = ${ctx.generateOption(this.options.length)};`);
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode(
-        `while(offset - ${start} < ${len} && dataView.getUint8(offset) !== 0) offset++;`,
+        `while(offset - ${start} + ${unitSize} <= ${len} && ${readUnit} !== 0) offset += ${unitSize};`,
       );
+      if (unitSize === 2) {
+        // A byte limit can end partway through a UTF-16 code unit.
+        ctx.pushCode(
+          `if (offset - ${start} + 2 > ${len}) offset = ${start} + ${len};`,
+        );
+      }
       ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
-      ctx.pushCode(`if (offset - ${start} < ${len}) offset++;`);
+      ctx.pushCode(`if (offset - ${start} < ${len}) offset += ${unitSize};`);
     } else if (this.options.length != null) {
       const len = ctx.generateOption(this.options.length);
       ctx.pushCode(
@@ -1442,10 +1453,9 @@ export class Parser {
       ctx.pushCode(`offset += ${len};`);
     } else if (this.options.zeroTerminated) {
       ctx.pushCode(`var ${start} = offset;`);
-      ctx.pushCode("while(dataView.getUint8(offset++) !== 0);");
-      ctx.pushCode(
-        `${name} = ${decode(`buffer.subarray(${start}, offset - 1)`)};`,
-      );
+      ctx.pushCode(`while(${readUnit} !== 0) offset += ${unitSize};`);
+      ctx.pushCode(`${name} = ${decode(`buffer.subarray(${start}, offset)`)};`);
+      ctx.pushCode(`offset += ${unitSize};`);
     } else if (this.options.greedy) {
       ctx.pushCode(`var ${start} = offset;`);
       ctx.pushCode("offset = buffer.length;");

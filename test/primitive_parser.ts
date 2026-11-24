@@ -563,6 +563,72 @@ function primitiveParserTests(
     });
 
     describe("String parser", () => {
+      for (const encoding of ["utf-16le", "utf-16be", "utf-16"]) {
+        const textBytes =
+          encoding === "utf-16be" ? [0, 0x41, 1, 0] : [0x41, 0, 0, 1];
+
+        for (const length of [undefined, 8]) {
+          it(`should read a UTF-16 terminator (${encoding}, length ${length})`, () => {
+            const parser = new Parser()
+              .uint8("prefix")
+              .string("text", { encoding, zeroTerminated: true, length })
+              .saveOffset("offset")
+              .uint8("tail");
+
+            expect(
+              parser.parse(factory([17, ...textBytes, 0, 0, 42])),
+            ).toStrictEqual({
+              prefix: 17,
+              text: "A\u0100",
+              offset: 7,
+              tail: 42,
+            });
+          });
+        }
+
+        it(`should consume a complete empty UTF-16 terminator (${encoding})`, () => {
+          const parser = new Parser()
+            .string("text", { encoding, zeroTerminated: true })
+            .uint8("tail");
+          expect(parser.parse(factory([0, 0, 42]))).toStrictEqual({
+            text: "",
+            tail: 42,
+          });
+        });
+
+        it(`should respect a UTF-16 byte limit without a terminator (${encoding})`, () => {
+          const parser = new Parser()
+            .string("text", { encoding, zeroTerminated: true, length: 4 })
+            .uint8("tail");
+          expect(parser.parse(factory([...textBytes, 42]))).toStrictEqual({
+            text: "A\u0100",
+            tail: 42,
+          });
+        });
+
+        it(`should keep an odd UTF-16 byte limit (${encoding})`, () => {
+          const parser = new Parser()
+            .string("text", { encoding, zeroTerminated: true, length: 3 })
+            .uint8("tail");
+          expect(
+            parser.parse(factory([...textBytes.slice(0, 3), 42])),
+          ).toStrictEqual({
+            text: "A\ufffd",
+            tail: 42,
+          });
+        });
+
+        it(`should reject a truncated UTF-16 terminator (${encoding})`, () => {
+          const parser = new Parser().string("text", {
+            encoding,
+            zeroTerminated: true,
+          });
+          expect(() => parser.parse(factory([...textBytes, 0]))).toThrow(
+            RangeError,
+          );
+        });
+      }
+
       it("should parse string with length 0", () => {
         const parser = Parser.start()
           .string("a", { length: 0 })

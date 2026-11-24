@@ -170,7 +170,8 @@ the following keys:
   function. Use number for statically sized arrays, string to reference
   another variable and function to do some calculation.
 - `zeroTerminated` - (Optional, defaults to `false`) If true, then this parser
-  reads until it reaches zero.
+  reads until it reaches zero. UTF-16 encodings consume a two-byte null code
+  unit; other encodings consume one null byte. `length` remains a byte limit.
 - `greedy` - (Optional, defaults to `false`) If true, then this parser reads
   until it reaches the end of the buffer. Will consume zero-bytes.
 - `stripNull` - (Optional, must be used with `length`) If true, then strip
