@@ -23,8 +23,9 @@
     "build": "tsc",
     "format": "oxfmt --list-different \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
     "format:fix": "oxfmt \"{lib,example,test,benchmark}/**/*.{ts,js}\"",
-    "test": "vitest run --project node",
+    "test": "vitest run --project node && npm run test:types",
     "test:browser": "vitest run --project browser",
+    "test:types": "tsc --project test/types/tsconfig.json",
     "prepare": "npm run build",
     "lint": "oxlint --type-aware lib test"
   },
