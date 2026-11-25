@@ -1640,8 +1640,9 @@ export class Parser {
   }
 
   private generateChoice(ctx: Context) {
-    const tag = ctx.generateOption(this.options.tag!);
+    const tag = ctx.generateTmpVariable();
     const nestVar = ctx.generateVariable(this.varName);
+    ctx.pushCode(`var ${tag} = ${ctx.generateOption(this.options.tag!)};`);
 
     if (this.varName) {
       ctx.pushCode(`${nestVar} = {};`);
