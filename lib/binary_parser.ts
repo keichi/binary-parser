@@ -137,7 +137,7 @@ interface ParserOptions {
   key?: string;
   tag?: string | ((item: any) => number);
   offset?: number | string | ((item: any) => number);
-  wrapper?: (buffer: Buffer) => Buffer;
+  wrapper?: (buffer: Buffer) => Buffer | Uint8Array;
   skip?: boolean;
 }
 
