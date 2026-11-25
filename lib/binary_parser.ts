@@ -1720,6 +1720,7 @@ export class Parser {
   private generateWrapper(ctx: Context) {
     const wrapperVar = ctx.generateVariable(this.varName);
     const wrappedBuf = ctx.generateTmpVariable();
+    ctx.pushCode(`var ${wrappedBuf};`);
     if (typeof this.options.readUntil === "function") {
       const pred = this.options.readUntil;
       const start = ctx.generateTmpVariable();
